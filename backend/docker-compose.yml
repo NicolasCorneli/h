@@ -1,0 +1,91 @@
+# Ambiente de DESENVOLVIMENTO do backend: `docker compose up --build`, dentro de backend/.
+# Para produção, use ../docker-compose.yml (ver ../DEPLOY.md).
+#
+# O aplicativo Expo **não** entra no Docker, de propósito: para rodar no celular ele
+# precisa estar na mesma rede do aparelho e usar o Metro bundler, que é mais simples e
+# mais rápido fora de contêiner.
+#
+# As variáveis vêm do arquivo `.env` desta pasta (copie de .env.example).
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: espelho
+      POSTGRES_PASSWORD: espelho
+      POSTGRES_DB: espelho
+    # Só nesta máquina: a senha deste banco está na documentação.
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - dados_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U espelho -d espelho"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://espelho:espelho@db:5432/espelho
+      # Sem ele a API não sobe: defina JWT_SECRET no .env (não versionado).
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no arquivo .env (32+ caracteres)}
+      AMBIENTE: ${AMBIENTE:-desenvolvimento}
+      CORS_ORIGENS: ${CORS_ORIGENS:-http://localhost:8081,http://localhost:19006}
+      URL_PUBLICA: ${URL_PUBLICA:-}
+      LOG_FORMATO: ${LOG_FORMATO:-texto}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_DIR: /app/dados/imagens
+      AI_PROVIDER: ${AI_PROVIDER:-fake}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODELO: ${AI_MODELO:-flux-kontext-apps/change-haircut}
+      # O `.env` não entra na imagem: dentro do contêiner valem só as variáveis listadas
+      # aqui.
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.replicate.com/v1}
+      AI_TIMEOUT_S: ${AI_TIMEOUT_S:-60}
+      AI_INTERVALO_CONSULTA_S: ${AI_INTERVALO_CONSULTA_S:-1}
+      SIMULACAO_MAX_POR_HORA: ${SIMULACAO_MAX_POR_HORA:-3}
+      # Personalização (etapa "Estilo e cor"). AI_MODELO_TEXTO vazio desliga a descrição livre.
+      AI_MODELO_TEXTO: ${AI_MODELO_TEXTO-black-forest-labs/flux-kontext-pro}
+      AI_INSTRUCAO_IDIOMA: ${AI_INSTRUCAO_IDIOMA:-pt_com_termos}
+      AI_LIMITE_DATA_URI_KB: ${AI_LIMITE_DATA_URI_KB:-1024}
+      AI_LADO_MAXIMO_ENVIO: ${AI_LADO_MAXIMO_ENVIO:-1536}
+      AI_CACHE_ESQUEMA_MIN: ${AI_CACHE_ESQUEMA_MIN:-60}
+      JWT_MINUTOS_ACCESS: ${JWT_MINUTOS_ACCESS:-30}
+      JWT_DIAS_REFRESH: ${JWT_DIAS_REFRESH:-30}
+      # Entrar com Google: IDs de cliente OAuth separados por vírgula (vazio = desligado).
+      GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:-}
+      FUSO_HORARIO: ${FUSO_HORARIO:-America/Sao_Paulo}
+      IMAGEM_MAX_BYTES: ${IMAGEM_MAX_BYTES:-8388608}
+      IMAGEM_MIN_LADO: ${IMAGEM_MIN_LADO:-480}
+      IMAGEM_MAX_LADO: ${IMAGEM_MAX_LADO:-4096}
+      VALIDAR_ROSTO: ${VALIDAR_ROSTO:-true}
+      # Usados apenas com STORAGE_DRIVER=s3; vazios no padrão em disco.
+      STORAGE_URL: ${STORAGE_URL:-}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-espelho}
+      STORAGE_KEY: ${STORAGE_KEY:-}
+      STORAGE_SECRET: ${STORAGE_SECRET:-}
+      STORAGE_REGIAO: ${STORAGE_REGIAO:-us-east-1}
+      # Desenvolvimento e demonstração. Com AMBIENTE=producao a API se recusa a subir com
+      # MODO_DEMO=true, e os dados de demonstração (senha publicada) não são criados.
+      MODO_DEMO: ${MODO_DEMO:-true}
+      SEED_AO_SUBIR: ${SEED_AO_SUBIR:-true}
+    ports:
+      - "8000:8000"
+    volumes:
+      - dados_imagens:/app/dados/imagens
+    healthcheck:
+      # Prontidão: banco acessível e migrations aplicadas.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/saude', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+volumes:
+  dados_postgres:
+  dados_imagens:

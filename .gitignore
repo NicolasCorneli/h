@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+coverage.xml
+
+# Segredos — nunca versionados
+.env
+.env.*
+!.env.example
+
+# Dados locais
+backend/dados/
+
+# Node
+node_modules/
+.expo/
+dist/
+
+# Capturas das baterias de navegador: artefato de execução, não código
+espelho/e2e/telas/
+espelho/e2e/telas-*/
+
+# Backups gerados por scripts/backup_producao.sh: contêm dados pessoais
+backups/
+*.dump

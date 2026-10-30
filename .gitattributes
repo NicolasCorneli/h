@@ -1,0 +1,7 @@
+# Arquivos executados dentro de contêineres Linux: sempre com fim de linha LF, mesmo
+# quando o repositório é clonado no Windows (com CRLF, o entrypoint falha com "/bin/sh^M").
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+Caddyfile       text eol=lf
+*.yml           text eol=lf
+.env.example    text eol=lf

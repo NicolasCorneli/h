@@ -1,0 +1,49 @@
+# Caddy do Salão em Dia: site estático + API no mesmo domínio, com HTTPS automático.
+#
+# DOMINIO vem do docker-compose.yml (ex.: salao.exemplo.com.br). Com um domínio público
+# apontado para o servidor, o Caddy obtém e renova o certificado do Let's Encrypt sozinho.
+# Com DOMINIO=localhost, usa um certificado local (o navegador avisa; serve para testar).
+
+{$DOMINIO} {
+	encode zstd gzip
+
+	# Não anuncia o servidor em uso (nem o do Caddy, nem o da API).
+	header -Server
+
+	# API: tudo em /api/ vai para o contêiner da API, com o corpo das fotos (até 12 MB)
+	# e o tempo de envios lentos. O Caddy repassa Host e X-Forwarded-*; a API confia neles
+	# (ela só é alcançável por esta rede interna).
+	handle /api/* {
+		request_body {
+			max_size 12MB
+		}
+		reverse_proxy api:8000 {
+			transport http {
+				read_timeout 180s
+				write_timeout 180s
+			}
+		}
+	}
+
+	# Site: arquivos estáticos; rotas internas (/agenda, /cliente/...) recebem o index.html,
+	# porque o aplicativo resolve a rota no navegador.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+
+		header {
+			Strict-Transport-Security "max-age=31536000; includeSubDomains"
+			X-Content-Type-Options "nosniff"
+			X-Frame-Options "DENY"
+			Referrer-Policy "no-referrer"
+			Permissions-Policy "geolocation=(), microphone=()"
+		}
+		# Os pacotes têm o hash no nome: podem ficar em cache para sempre. O index.html não,
+		# para uma versão nova chegar no próximo acesso.
+		@pacotes path /_expo/* /assets/*
+		header @pacotes Cache-Control "public, max-age=31536000, immutable"
+		@pagina not path /_expo/* /assets/*
+		header @pagina Cache-Control "no-cache"
+	}
+}

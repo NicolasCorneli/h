@@ -1,0 +1,165 @@
+# Salão em Dia: a aplicação inteira, pronta para produção, num servidor com Docker.
+#
+#   cp .env.example .env        # preencha DOMINIO, POSTGRES_PASSWORD e JWT_SECRET
+#   docker compose up -d --build --wait
+#
+# Sobe quatro serviços, nesta ordem, sem esperas artificiais:
+#   db      PostgreSQL 16 (sem porta publicada: só a rede interna o alcança)
+#   migrar  aplica as migrations do banco e termina (uma vez por subida)
+#   api     a API (FastAPI), só alcançável pela rede interna
+#   web     Caddy: entrega o site, encaminha /api/ para a API e cuida do HTTPS
+#           (certificado do Let's Encrypt para DOMINIO, obtido e renovado sozinho)
+#
+# O aplicativo de celular não roda aqui: ele é gerado para as lojas (EAS) apontando para
+# https://DOMINIO. Ver DEPLOY.md.
+
+x-ambiente-da-api: &ambiente-da-api
+  AMBIENTE: producao
+  MODO_DEMO: "false"
+  DATABASE_URL: postgresql+psycopg://espelho:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@db:5432/espelho
+  JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env (32+ caracteres)}
+  # Site e API no mesmo domínio: o endereço público e a origem do site são os mesmos.
+  URL_PUBLICA: ${URL_PUBLICA:-https://${DOMINIO:?defina DOMINIO no .env}}
+  CORS_ORIGENS: ${CORS_ORIGENS:-https://${DOMINIO:?defina DOMINIO no .env}}
+  LOG_FORMATO: ${LOG_FORMATO:-json}
+  LOG_NIVEL: ${LOG_NIVEL:-INFO}
+  FUSO_HORARIO: ${FUSO_HORARIO:-America/Sao_Paulo}
+  JWT_MINUTOS_ACCESS: ${JWT_MINUTOS_ACCESS:-30}
+  JWT_DIAS_REFRESH: ${JWT_DIAS_REFRESH:-30}
+  GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:-}
+  STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+  STORAGE_DIR: /app/dados/imagens
+  STORAGE_URL: ${STORAGE_URL:-}
+  STORAGE_BUCKET: ${STORAGE_BUCKET:-espelho}
+  STORAGE_KEY: ${STORAGE_KEY:-}
+  STORAGE_SECRET: ${STORAGE_SECRET:-}
+  STORAGE_REGIAO: ${STORAGE_REGIAO:-us-east-1}
+  AI_PROVIDER: ${AI_PROVIDER:-fake}
+  AI_API_KEY: ${AI_API_KEY:-}
+  AI_MODELO: ${AI_MODELO:-flux-kontext-apps/change-haircut}
+  AI_MODELO_TEXTO: ${AI_MODELO_TEXTO-black-forest-labs/flux-kontext-pro}
+  AI_INSTRUCAO_IDIOMA: ${AI_INSTRUCAO_IDIOMA:-pt_com_termos}
+  AI_TIMEOUT_S: ${AI_TIMEOUT_S:-120}
+  AI_INTERVALO_CONSULTA_S: ${AI_INTERVALO_CONSULTA_S:-1}
+  AI_LIMITE_DATA_URI_KB: ${AI_LIMITE_DATA_URI_KB:-1024}
+  AI_LADO_MAXIMO_ENVIO: ${AI_LADO_MAXIMO_ENVIO:-1536}
+  AI_CACHE_ESQUEMA_MIN: ${AI_CACHE_ESQUEMA_MIN:-60}
+  SIMULACAO_MAX_POR_HORA: ${SIMULACAO_MAX_POR_HORA:-3}
+  IMAGEM_MAX_BYTES: ${IMAGEM_MAX_BYTES:-8388608}
+  IMAGEM_MIN_LADO: ${IMAGEM_MIN_LADO:-480}
+  IMAGEM_MAX_LADO: ${IMAGEM_MAX_LADO:-4096}
+  VALIDAR_ROSTO: ${VALIDAR_ROSTO:-true}
+  BANCO_POOL: ${BANCO_POOL:-5}
+  BANCO_POOL_EXCEDENTE: ${BANCO_POOL_EXCEDENTE:-10}
+
+x-endurecimento: &endurecimento
+  # O processo não ganha privilégio nenhum além do que a imagem já dá (usuário 1000).
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  read_only: true
+  tmpfs:
+    # Envios grandes passam por arquivo temporário antes de serem validados.
+    - /tmp:size=64m
+
+x-logs: &logs
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: espelho
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: espelho
+    # Sem `ports`: o banco só é alcançável pela rede interna do compose.
+    volumes:
+      - dados_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U espelho -d espelho"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    shm_size: 128mb
+    <<: *logs
+
+  migrar:
+    build: ./backend
+    image: salao-em-dia-api:${VERSAO:-local}
+    <<: *endurecimento
+    environment:
+      <<: *ambiente-da-api
+      MIGRAR_AO_SUBIR: "false"
+    entrypoint: ["alembic", "upgrade", "head"]
+    command: []
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: salao-em-dia-api:${VERSAO:-local}
+    <<: [*endurecimento, *logs]
+    restart: unless-stopped
+    environment:
+      <<: *ambiente-da-api
+      # As migrations são do serviço `migrar`, uma vez por subida.
+      MIGRAR_AO_SUBIR: "false"
+      SEED_AO_SUBIR: "false"
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
+      # Sem porta publicada: só o Caddy (serviço `web`) chega aqui, então os cabeçalhos
+      # X-Forwarded-* que ele manda são confiáveis.
+      FORWARDED_ALLOW_IPS: "*"
+      # Uma simulação em andamento pode levar até AI_TIMEOUT_S; o encerramento espera.
+      UVICORN_TIMEOUT_GRACEFUL_SHUTDOWN: ${UVICORN_TIMEOUT_GRACEFUL_SHUTDOWN:-150}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrar:
+        condition: service_completed_successfully
+    volumes:
+      - dados_imagens:/app/dados/imagens
+    healthcheck:
+      # Prontidão: banco acessível e migrations aplicadas (503 se não).
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/saude', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 30s
+    # Maior que UVICORN_TIMEOUT_GRACEFUL_SHUTDOWN: o Docker não mata o processo antes de
+    # ele terminar as gerações em andamento.
+    stop_grace_period: 160s
+
+  web:
+    build:
+      context: ./espelho
+      args:
+        EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:-}
+    image: salao-em-dia-web:${VERSAO:-local}
+    restart: unless-stopped
+    environment:
+      DOMINIO: ${DOMINIO:?defina DOMINIO no .env}
+    ports:
+      - "${PORTA_HTTP:-80}:80"
+      - "${PORTA_HTTPS:-443}:443"
+      - "${PORTA_HTTPS:-443}:443/udp"
+    volumes:
+      # Certificados e chaves do HTTPS: perder este volume obriga a pedir tudo de novo.
+      - caddy_dados:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    <<: *logs
+
+volumes:
+  dados_postgres:
+  dados_imagens:
+  caddy_dados:
+  caddy_config:

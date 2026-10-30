@@ -1,0 +1,41 @@
+# Dependências de execução (as da imagem de produção). As de teste estão em
+# requirements-dev.txt.
+
+# API
+fastapi==0.142.2
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32
+pydantic==2.13.5
+pydantic-settings==2.15.0
+# Exigida por EmailStr (app/schemas/auth.py). Sem ela a aplicação não importa:
+# o Pydantic só valida e-mail com este pacote presente.
+email-validator==2.3.0
+# Base de fusos horários. No Linux ela vem do sistema; no Windows, não — e sem ela
+# `zoneinfo.ZoneInfo("America/Sao_Paulo")` falha. É o que permite ao servidor saber
+# em que dia o atendimento aconteceu no horário do salão, e não no de Greenwich.
+tzdata==2026.5
+
+# Banco
+SQLAlchemy==2.1.2
+psycopg[binary]==3.3.6
+alembic==1.20.0
+
+# Segurança
+PyJWT==2.15.1
+bcrypt==5.0.0
+# Biblioteca oficial do Google para conferir o ID token do "Entrar com Google"
+# (assinatura, validade, emissor e público). Traz `cryptography` como dependência.
+google-auth==2.62.0
+# Transporte HTTP usado pela google-auth para baixar as chaves públicas do Google.
+requests==2.34.2
+
+# Imagens e provedores externos
+pillow==13.0.0
+opencv-python-headless==4.14.0.94
+httpx==0.28.1
+
+# Storage S3 / MinIO / Supabase (opcional: o padrão em desenvolvimento é o disco)
+boto3==1.43.108
+
+# numpy entra como dependência do OpenCV; fixada para a validação de imagem
+numpy==2.4.6

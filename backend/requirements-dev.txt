@@ -1,0 +1,8 @@
+# Dependências de desenvolvimento e teste: as de execução mais as ferramentas.
+#   pip install -r requirements-dev.txt
+-r requirements.txt
+
+pytest==9.1.1
+pytest-cov==7.1.0
+# Auditoria de vulnerabilidades conhecidas nas dependências (./qa.sh --tudo e CI).
+pip-audit==2.10.0

@@ -1,0 +1,14 @@
+# O contexto de build do site leva o código do aplicativo, sem dependências instaladas,
+# builds anteriores, segredos locais nem artefatos das baterias de navegador.
+node_modules/
+.expo/
+dist/
+web-build/
+.env
+.env.*
+!.env.example
+e2e/
+testes/
+*.log
+Dockerfile
+.dockerignore

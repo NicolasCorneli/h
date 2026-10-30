@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Salão em Dia",
+    "slug": "espelho",
+    "scheme": "espelho",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.nicolascorneli.espelho"
+    },
+    "android": {
+      "package": "com.nicolascorneli.espelho",
+      "adaptiveIcon": {
+        "backgroundColor": "#1B1714",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "O Salão em Dia usa a câmera para fotografar o cliente e gerar a simulação de corte e cor."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Salão em Dia acessa a galeria para usar uma foto já existente do cliente na simulação."
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}

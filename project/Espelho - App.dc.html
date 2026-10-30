@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Familjen+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"><style>
+*{box-sizing:border-box}
+body{margin:0;background:#ECE7E1;font-family:"Familjen Grotesk",system-ui,sans-serif;color:#1B1714;-webkit-font-smoothing:antialiased}
+a{color:#B96A52;text-decoration:none}a:hover{color:#8E4E3B}
+input,textarea,button{font-family:inherit}
+::-webkit-scrollbar{width:0;height:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style></helmet>
+<div style="display:flex;height:100vh;min-height:700px;width:100%;overflow:hidden">
+
+  <aside style="width:252px;flex:none;height:100%;overflow-y:auto;background:#1B1714;color:#EFE9E3;padding:26px 0 40px">
+    <div style="padding:0 22px 20px">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:27px;line-height:1;letter-spacing:-.01em">Espelho</div>
+      <div style="font:500 10px/1.5 ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#8A7E74;margin-top:7px">TCC · protótipo navegável</div>
+    </div>
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+      <div style="padding:0 12px;margin-bottom:4px">
+        <div style="font:600 9.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#7C6F64;padding:14px 10px 8px">{{ g.name }}</div>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+          <div onClick="{{ it.go }}" style="{{ it.style }}" style-hover="background:rgba(255,255,255,.07)">
+            <span style="font:500 10px ui-monospace,Menlo,monospace;color:#7C6F64;min-width:17px">{{ it.n }}</span>
+            <span style="font:500 12.5px/1.35 'Familjen Grotesk',sans-serif">{{ it.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+    <div style="padding:22px 22px 0;margin-top:18px;border-top:1px solid rgba(255,255,255,.09)">
+      <div style="font:400 11px/1.55 'Familjen Grotesk',sans-serif;color:#8A7E74">As telas são clicáveis: fluxo completo do login à simulação salva no histórico.</div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;height:100%;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:34px 24px 56px;gap:18px">
+    <div style="display:flex;align-items:baseline;gap:14px;width:100%;max-width:430px">
+      <div style="font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#8B8078">{{ screenNum }}</div>
+      <div style="font:600 15px/1.2 'Familjen Grotesk',sans-serif;color:#2A241F">{{ screenTitle }}</div>
+    </div>
+
+    <div style="position:relative;width:390px;height:844px;flex:none;border-radius:46px;background:#0F0D0B;padding:9px;box-shadow:0 34px 70px -24px rgba(40,28,18,.5),0 2px 0 rgba(255,255,255,.5) inset">
+      <div style="position:relative;width:100%;height:100%;border-radius:38px;overflow:hidden;background:#FAF7F4">
+
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column">
+          <div style="{{ statusStyle }}">
+            <span>9:41</span>
+            <span style="letter-spacing:.12em">••• ⌃ ▮</span>
+          </div>
+
+          <div style="flex:1;position:relative;overflow:hidden">
+
+            <sc-if value="{{ is.onb }}" hint-placeholder-val="{{ true }}">
+              <div style="position:absolute;inset:0;background:#1B1714;color:#F3EDE7;display:flex;flex-direction:column;padding:24px 26px 30px">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px">
+                  <div style="width:44px;height:44px;border-radius:14px;background:#B96A52;display:flex;align-items:center;justify-content:center;font-family:'Instrument Serif',serif;font-size:26px;color:#1B1714">E</div>
+                  <div style="font-family:'Instrument Serif',Georgia,serif;font-size:46px;line-height:1.02;letter-spacing:-.02em;text-wrap:pretty">Simule antes<br><i>da tesoura.</i></div>
+                  <div style="font:400 15px/1.55 'Familjen Grotesk',sans-serif;color:#A79B90;max-width:290px;text-wrap:pretty">Mostre ao cliente uma prévia visual do corte e da cor — e guarde a decisão no histórico dele.</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:14px;padding-bottom:26px">
+                  <div style="display:flex;gap:13px;align-items:baseline"><span style="font:500 10px ui-monospace,monospace;color:#B96A52;min-width:16px">01</span><span style="font:400 13.5px/1.4 'Familjen Grotesk',sans-serif;color:#DDD4CB">Fotografe, escolha estilo e cor, gere a simulação</span></div>
+                  <div style="display:flex;gap:13px;align-items:baseline"><span style="font:500 10px ui-monospace,monospace;color:#B96A52;min-width:16px">02</span><span style="font:400 13.5px/1.4 'Familjen Grotesk',sans-serif;color:#DDD4CB">Salve no histórico do cliente com observações</span></div>
+                  <div style="display:flex;gap:13px;align-items:baseline"><span style="font:500 10px ui-monospace,monospace;color:#B96A52;min-width:16px">03</span><span style="font:400 13.5px/1.4 'Familjen Grotesk',sans-serif;color:#DDD4CB">Agende o atendimento e retome tudo na próxima visita</span></div>
+                </div>
+                <div onClick="{{ nav.consent }}" style="background:#F3EDE7;color:#1B1714;border-radius:15px;height:54px;display:flex;align-items:center;justify-content:center;font:600 15.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#fff">Começar</div>
+                <div onClick="{{ nav.login }}" style="text-align:center;margin-top:16px;font:500 13.5px 'Familjen Grotesk',sans-serif;color:#A79B90;cursor:pointer" style-hover="color:#F3EDE7">Já tenho conta</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.consent }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 24px 0;display:flex;align-items:center;gap:14px">
+                  <div onClick="{{ nav.onb }}" style="width:36px;height:36px;border-radius:12px;border:1px solid #E4DBD2;display:flex;align-items:center;justify-content:center;font-size:17px;color:#6F655D;cursor:pointer;background:#fff" style-hover="background:#F2EBE4">←</div>
+                  <div style="font:600 10px ui-monospace,Menlo,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase">LGPD · art. 7º e 11</div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:22px 24px 12px">
+                  <div style="font-family:'Instrument Serif',Georgia,serif;font-size:33px;line-height:1.08;letter-spacing:-.01em;margin-bottom:14px;text-wrap:pretty">Sobre as fotos dos seus clientes</div>
+                  <div style="font:400 14px/1.6 'Familjen Grotesk',sans-serif;color:#5E554E;text-wrap:pretty">Para simular um corte, o app envia a foto a um serviço externo de geração de imagem. Você precisa do consentimento do cliente antes de fotografar.</div>
+                  <div style="margin-top:20px;display:flex;flex-direction:column;gap:1px;background:#E8E0D8;border:1px solid #E8E0D8;border-radius:16px;overflow:hidden">
+                    <div style="background:#fff;padding:15px 16px"><div style="font:600 13px 'Familjen Grotesk',sans-serif;margin-bottom:4px">Finalidade única</div><div style="font:400 12.5px/1.5 'Familjen Grotesk',sans-serif;color:#6F655D">A geometria facial é usada de forma transitória, só para recortar a região do cabelo. Nenhum padrão biométrico é armazenado.</div></div>
+                    <div style="background:#fff;padding:15px 16px"><div style="font:600 13px 'Familjen Grotesk',sans-serif;margin-bottom:4px">Guarda criptografada</div><div style="font:400 12.5px/1.5 'Familjen Grotesk',sans-serif;color:#6F655D">Imagens em AES-256 em repouso e TLS 1.3 em trânsito, visíveis só na sua conta.</div></div>
+                    <div style="background:#fff;padding:15px 16px"><div style="font:600 13px 'Familjen Grotesk',sans-serif;margin-bottom:4px">Exclusão quando quiser</div><div style="font:400 12.5px/1.5 'Familjen Grotesk',sans-serif;color:#6F655D">Você apaga as imagens de um cliente ou da conta inteira em Perfil › Privacidade.</div></div>
+                  </div>
+                  <div onClick="{{ nav.privacy }}" style="margin-top:14px;font:500 13px 'Familjen Grotesk',sans-serif;color:#B96A52;cursor:pointer" style-hover="color:#8E4E3B">Ler a política de privacidade completa →</div>
+                  <div onClick="{{ toggleAceite }}" style="margin-top:20px;display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid #E8E0D8;border-radius:16px;padding:16px;cursor:pointer">
+                    <div style="{{ boxAceite }}">
+                      <sc-if value="{{ aceite }}"><span style="color:#fff;font-size:13px;line-height:1">✓</span></sc-if>
+                    </div>
+                    <div style="font:500 12.8px/1.5 'Familjen Grotesk',sans-serif;color:#3A332D;text-wrap:pretty">Declaro que obtenho o consentimento livre e informado do cliente antes de capturar e enviar a imagem.</div>
+                  </div>
+                </div>
+                <div style="padding:12px 24px 26px;border-top:1px solid #EDE5DD;background:#FAF7F4">
+                  <div onClick="{{ aceitarConsent }}" style="{{ btnConsent }}">Aceitar e continuar</div>
+                  <div onClick="{{ nav.onb }}" style="text-align:center;margin-top:12px;font:500 13px 'Familjen Grotesk',sans-serif;color:#9A8F85;cursor:pointer">Recusar</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.login }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;background:#FAF7F4;padding:0 26px 40px">
+                <div style="width:44px;height:44px;border-radius:14px;background:#1B1714;display:flex;align-items:center;justify-content:center;font-family:'Instrument Serif',serif;font-size:26px;color:#F3EDE7;margin-bottom:22px">E</div>
+                <div style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;line-height:1.05;letter-spacing:-.01em">Entrar</div>
+                <div style="font:400 13.5px/1.5 'Familjen Grotesk',sans-serif;color:#7A6F66;margin-top:8px;margin-bottom:26px">Sua carteira de clientes é privada e só sua.</div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <div style="background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px">
+                    <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:4px">E-mail</div>
+                    <div style="font:500 14.5px 'Familjen Grotesk',sans-serif;color:#1B1714">nicolas@studio.com</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px;display:flex;justify-content:space-between;align-items:flex-end">
+                    <div><div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:4px">Senha</div><div style="font:500 14.5px 'Familjen Grotesk',sans-serif;letter-spacing:.18em;color:#1B1714">••••••••</div></div>
+                    <div style="font:500 12px 'Familjen Grotesk',sans-serif;color:#B96A52;cursor:pointer">mostrar</div>
+                  </div>
+                </div>
+                <div onClick="{{ nav.home }}" style="margin-top:20px;background:#1B1714;color:#F3EDE7;border-radius:15px;height:54px;display:flex;align-items:center;justify-content:center;font:600 15.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#33291F">Entrar</div>
+                <div style="display:flex;justify-content:space-between;margin-top:18px">
+                  <div style="font:500 13px 'Familjen Grotesk',sans-serif;color:#7A6F66;cursor:pointer" style-hover="color:#1B1714">Recuperar senha</div>
+                  <div onClick="{{ nav.homeEmpty }}" style="font:500 13px 'Familjen Grotesk',sans-serif;color:#B96A52;cursor:pointer">Criar conta</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.home }}">
+              <div style="position:absolute;inset:0;overflow-y:auto;background:#FAF7F4;padding:10px 20px 108px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+                  <div>
+                    <div style="font:500 12px 'Familjen Grotesk',sans-serif;color:#9A8F85">Quinta, 12 de março</div>
+                    <div style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1.1;margin-top:2px">Boa tarde, Nícolas</div>
+                  </div>
+                  <div onClick="{{ nav.profile }}" style="width:42px;height:42px;flex:none;border-radius:50%;background:#1B1714;color:#F3EDE7;display:flex;align-items:center;justify-content:center;font:600 14px 'Familjen Grotesk',sans-serif;cursor:pointer">NC</div>
+                </div>
+                <div style="background:#1B1714;border-radius:22px;padding:20px;color:#F3EDE7;margin-bottom:14px">
+                  <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:#8A7E74">Próximo atendimento</div>
+                  <div style="display:flex;align-items:flex-end;gap:10px;margin-top:12px">
+                    <div style="font-family:'Instrument Serif',serif;font-size:40px;line-height:.9">14:30</div>
+                    <div style="padding-bottom:5px;font:400 13.5px 'Familjen Grotesk',sans-serif;color:#C3B8AE">em 45 min</div>
+                  </div>
+                  <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:11px">
+                    <div style="width:34px;height:34px;border-radius:50%;background:#B96A52;display:flex;align-items:center;justify-content:center;font:600 12px 'Familjen Grotesk',sans-serif;color:#1B1714">MA</div>
+                    <div style="flex:1"><div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Marina Alves</div><div style="font:400 12px 'Familjen Grotesk',sans-serif;color:#A79B90">Coloração · simulação aprovada em 02/03</div></div>
+                    <div onClick="{{ nav.client }}" style="font-size:18px;color:#8A7E74;cursor:pointer">›</div>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px">
+                  <div style="background:#fff;border:1px solid #EDE5DD;border-radius:16px;padding:13px 12px"><div style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1">48</div><div style="font:500 10.5px/1.3 'Familjen Grotesk',sans-serif;color:#8A7E74;margin-top:3px">clientes</div></div>
+                  <div style="background:#fff;border:1px solid #EDE5DD;border-radius:16px;padding:13px 12px"><div style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1">5</div><div style="font:500 10.5px/1.3 'Familjen Grotesk',sans-serif;color:#8A7E74;margin-top:3px">simulações hoje</div></div>
+                  <div style="background:#fff;border:1px solid #EDE5DD;border-radius:16px;padding:13px 12px"><div style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1">3</div><div style="font:500 10.5px/1.3 'Familjen Grotesk',sans-serif;color:#8A7E74;margin-top:3px">na agenda</div></div>
+                </div>
+                <div onClick="{{ nav.capture }}" style="display:flex;align-items:center;gap:14px;background:#B96A52;border-radius:20px;padding:17px 18px;cursor:pointer;margin-bottom:22px" style-hover="background:#A85C46">
+                  <div style="width:40px;height:40px;border-radius:13px;background:rgba(27,23,20,.16);display:flex;align-items:center;justify-content:center;font-size:19px;color:#2A1C14">✳</div>
+                  <div style="flex:1"><div style="font:600 15px 'Familjen Grotesk',sans-serif;color:#1B1714">Nova simulação</div><div style="font:400 12px 'Familjen Grotesk',sans-serif;color:rgba(27,23,20,.68)">Foto, estilo e cor em menos de 3 minutos</div></div>
+                  <div style="font-size:19px;color:#2A1C14">→</div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+                  <div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Ainda hoje</div>
+                  <div onClick="{{ nav.agenda }}" style="font:500 12.5px 'Familjen Grotesk',sans-serif;color:#B96A52;cursor:pointer">Ver agenda</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div onClick="{{ nav.client }}" style="background:#fff;border:1px solid #EDE5DD;border-radius:16px;padding:14px;display:flex;gap:13px;align-items:center;cursor:pointer" style-hover="border-color:#D8CCC1">
+                    <div style="font:600 13px ui-monospace,monospace;color:#B96A52;min-width:42px">14:30</div>
+                    <div style="flex:1"><div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Marina Alves</div><div style="font:400 12px 'Familjen Grotesk',sans-serif;color:#8A7E74">Coloração + corte</div></div>
+                    <div style="font:600 10px ui-monospace,monospace;letter-spacing:.06em;color:#2E7A5E;background:#E7F2EC;padding:5px 8px;border-radius:7px">CONFIRMADO</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid #EDE5DD;border-radius:16px;padding:14px;display:flex;gap:13px;align-items:center">
+                    <div style="font:600 13px ui-monospace,monospace;color:#B96A52;min-width:42px">16:00</div>
+                    <div style="flex:1"><div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Rafael Prado</div><div style="font:400 12px 'Familjen Grotesk',sans-serif;color:#8A7E74">Corte masculino</div></div>
+                    <div style="font:600 10px ui-monospace,monospace;letter-spacing:.06em;color:#8A6A22;background:#F6EEDC;padding:5px 8px;border-radius:7px">PENDENTE</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid #EDE5DD;border-radius:16px;padding:14px;display:flex;gap:13px;align-items:center">
+                    <div style="font:600 13px ui-monospace,monospace;color:#B96A52;min-width:42px">18:15</div>
+                    <div style="flex:1"><div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Júlia Stein</div><div style="font:400 12px 'Familjen Grotesk',sans-serif;color:#8A7E74">Avaliação de coloração</div></div>
+                    <div style="font:600 10px ui-monospace,monospace;letter-spacing:.06em;color:#2E7A5E;background:#E7F2EC;padding:5px 8px;border-radius:7px">CONFIRMADO</div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.homeEmpty }}">
+              <div style="position:absolute;inset:0;overflow-y:auto;background:#FAF7F4;padding:10px 20px 108px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+                  <div>
+                    <div style="font:500 12px 'Familjen Grotesk',sans-serif;color:#9A8F85">Quinta, 12 de março</div>
+                    <div style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1.1;margin-top:2px">Bem-vindo, Nícolas</div>
+                  </div>
+                  <div onClick="{{ nav.profile }}" style="width:42px;height:42px;flex:none;border-radius:50%;background:#EDE5DD;color:#9A8F85;display:flex;align-items:center;justify-content:center;font:600 14px 'Familjen Grotesk',sans-serif;cursor:pointer">NC</div>
+                </div>
+                <div style="border:1px dashed #D9CEC3;border-radius:22px;background:#fff;padding:26px 22px;text-align:center">
+                  <div style="height:104px;border-radius:14px;margin-bottom:20px;background:repeating-linear-gradient(135deg,#F1E9E1 0 8px,#E9DFD5 8px 16px);display:flex;align-items:center;justify-content:center;color:#A2958A;font:500 10px ui-monospace,Menlo,monospace;letter-spacing:.06em">ilustração de primeiro uso</div>
+                  <div style="font-family:'Instrument Serif',serif;font-size:24px;line-height:1.15;margin-bottom:8px">Sua carteira começa aqui</div>
+                  <div style="font:400 13px/1.55 'Familjen Grotesk',sans-serif;color:#7A6F66;text-wrap:pretty">Cadastre um cliente para poder salvar simulações, histórico e agendamentos no nome dele.</div>
+                  <div onClick="{{ nav.clientNew }}" style="margin-top:20px;background:#1B1714;color:#F3EDE7;border-radius:14px;height:50px;display:flex;align-items:center;justify-content:center;font:600 14.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#33291F">Cadastrar primeiro cliente</div>
+                  <div onClick="{{ nav.capture }}" style="margin-top:11px;font:500 13px 'Familjen Grotesk',sans-serif;color:#B96A52;cursor:pointer">Só testar o simulador primeiro</div>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:11px;align-items:flex-start;background:#F3EDE6;border-radius:16px;padding:15px">
+                  <div style="font-size:15px;line-height:1.1">◔</div>
+                  <div style="font:400 12.3px/1.5 'Familjen Grotesk',sans-serif;color:#6F655D">Clientes, histórico e agenda funcionam offline do serviço de IA — se a simulação cair, a gestão continua de pé.</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.clients }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 20px 12px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                    <div style="font-family:'Instrument Serif',Georgia,serif;font-size:29px;line-height:1.1">Clientes</div>
+                    <div onClick="{{ nav.clientNew }}" style="width:38px;height:38px;border-radius:12px;background:#1B1714;color:#F3EDE7;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer" style-hover="background:#33291F">+</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid #E4DBD2;border-radius:13px;height:44px;display:flex;align-items:center;gap:10px;padding:0 14px">
+                    <span style="color:#B0A49A;font-size:14px">⌕</span>
+                    <span style="font:400 14px 'Familjen Grotesk',sans-serif;color:#B0A49A">Buscar por nome ou telefone</span>
+                  </div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:0 20px 108px">
+                  <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.14em;color:#A2958A;padding:10px 4px 8px">48 CLIENTES · A–Z</div>
+                  <div style="display:flex;flex-direction:column;gap:1px;background:#EDE5DD;border:1px solid #EDE5DD;border-radius:18px;overflow:hidden">
+                    <sc-for list="{{ clientes }}" as="c" hint-placeholder-count="6">
+                      <div onClick="{{ c.go }}" style="background:#fff;padding:13px 14px;display:flex;align-items:center;gap:12px;cursor:pointer" style-hover="background:#FBF7F3">
+                        <div style="{{ c.avatar }}">{{ c.iniciais }}</div>
+                        <div style="flex:1;min-width:0"><div style="font:600 13.8px 'Familjen Grotesk',sans-serif">{{ c.nome }}</div><div style="font:400 11.8px 'Familjen Grotesk',sans-serif;color:#8A7E74">{{ c.ultimo }}</div></div>
+                        <sc-if value="{{ c.temSim }}"><div style="font:600 9px ui-monospace,monospace;color:#8E4E3B;background:#F7EAE4;padding:4px 7px;border-radius:6px;letter-spacing:.05em">{{ c.sims }}</div></sc-if>
+                        <div style="font-size:17px;color:#C4B8AD">›</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.clientsEmpty }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 20px 12px">
+                  <div style="font-family:'Instrument Serif',Georgia,serif;font-size:29px;line-height:1.1;margin-bottom:14px">Clientes</div>
+                  <div style="background:#F2EBE4;border:1px solid #E8E0D8;border-radius:13px;height:44px;display:flex;align-items:center;gap:10px;padding:0 14px"><span style="color:#C0B4AA;font-size:14px">⌕</span><span style="font:400 14px 'Familjen Grotesk',sans-serif;color:#C0B4AA">Buscar</span></div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 34px 90px;text-align:center">
+                  <div style="width:74px;height:74px;border-radius:24px;border:1px dashed #D3C7BB;display:flex;align-items:center;justify-content:center;font-size:26px;color:#C0B4AA;margin-bottom:20px">☺</div>
+                  <div style="font-family:'Instrument Serif',serif;font-size:23px;line-height:1.2;margin-bottom:8px">Nenhum cliente cadastrado</div>
+                  <div style="font:400 13px/1.55 'Familjen Grotesk',sans-serif;color:#7A6F66;text-wrap:pretty">Cada simulação precisa estar vinculada a alguém — é isso que cria o histórico do atendimento.</div>
+                  <div onClick="{{ nav.clientNew }}" style="margin-top:22px;background:#1B1714;color:#F3EDE7;border-radius:14px;padding:0 24px;height:48px;display:flex;align-items:center;justify-content:center;font:600 14.5px 'Familjen Grotesk',sans-serif;cursor:pointer">Cadastrar cliente</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.clientNew }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 20px 10px;display:flex;align-items:center;gap:13px;border-bottom:1px solid #EDE5DD">
+                  <div onClick="{{ nav.clients }}" style="width:36px;height:36px;border-radius:12px;border:1px solid #E4DBD2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#6F655D;cursor:pointer">←</div>
+                  <div style="font:600 15px 'Familjen Grotesk',sans-serif;flex:1">Novo cliente</div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:20px 20px 30px">
+                  <div style="display:flex;gap:14px;align-items:center;margin-bottom:22px">
+                    <div style="width:76px;height:76px;border-radius:24px;background:repeating-linear-gradient(135deg,#F1E9E1 0 7px,#E9DFD5 7px 14px);display:flex;align-items:center;justify-content:center;font:500 9px ui-monospace,monospace;color:#A2958A;text-align:center;padding:6px">foto do cliente</div>
+                    <div><div style="font:600 13.5px 'Familjen Grotesk',sans-serif;margin-bottom:5px">Foto de perfil</div><div style="font:400 12px/1.45 'Familjen Grotesk',sans-serif;color:#8A7E74;max-width:170px">Opcional. Ajuda a reconhecer o cliente na lista.</div><div style="margin-top:8px;font:500 12.5px 'Familjen Grotesk',sans-serif;color:#B96A52;cursor:pointer">Adicionar foto</div></div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:11px">
+                    <div style="background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px"><div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:4px">Nome completo *</div><div style="font:500 14.5px 'Familjen Grotesk',sans-serif">Marina Alves</div></div>
+                    <div style="background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px"><div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:4px">Telefone *</div><div style="font:500 14.5px 'Familjen Grotesk',sans-serif">(55) 99123-4567</div></div>
+                    <div style="background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px;min-height:104px"><div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:6px">Observações</div><div style="font:400 13.5px/1.5 'Familjen Grotesk',sans-serif;color:#4A423B">Cabelo com histórico de descoloração. Prefere tons quentes. Sensível a amônia.</div></div>
+                  </div>
+                  <div style="margin-top:14px;font:400 11.5px/1.5 'Familjen Grotesk',sans-serif;color:#9A8F85">Observações aparecem no topo do perfil e viajam com o cliente entre atendimentos.</div>
+                </div>
+                <div style="padding:12px 20px 26px;border-top:1px solid #EDE5DD">
+                  <div onClick="{{ nav.client }}" style="background:#1B1714;color:#F3EDE7;border-radius:15px;height:52px;display:flex;align-items:center;justify-content:center;font:600 15px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#33291F">Salvar cliente</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.client }}">
+              <div style="position:absolute;inset:0;overflow-y:auto;background:#FAF7F4;padding-bottom:108px">
+                <div style="background:#1B1714;padding:8px 20px 22px;color:#F3EDE7">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <div onClick="{{ nav.clients }}" style="width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer">←</div>
+                    <div onClick="{{ nav.clientNew }}" style="font:500 13px 'Familjen Grotesk',sans-serif;color:#C3B8AE;cursor:pointer" style-hover="color:#fff">Editar</div>
+                  </div>
+                  <div style="display:flex;gap:15px;align-items:center">
+                    <div style="width:66px;height:66px;flex:none;border-radius:22px;background:repeating-linear-gradient(135deg,#3A322B 0 7px,#332B25 7px 14px);display:flex;align-items:center;justify-content:center;font:500 8.5px ui-monospace,monospace;color:#8A7E74;text-align:center;padding:5px">foto perfil</div>
+                    <div>
+                      <div style="font-family:'Instrument Serif',serif;font-size:27px;line-height:1.1">Marina Alves</div>
+                      <div style="font:400 12.5px 'Familjen Grotesk',sans-serif;color:#A79B90;margin-top:3px">(55) 99123-4567 · cliente desde 2024</div>
+                    </div>
+                  </div>
+                  <div style="margin-top:16px;background:rgba(255,255,255,.07);border-radius:14px;padding:13px 14px">
+                    <div style="font:600 9px ui-monospace,monospace;letter-spacing:.14em;color:#8A7E74;margin-bottom:5px">OBSERVAÇÕES</div>
+                    <div style="font:400 12.5px/1.5 'Familjen Grotesk',sans-serif;color:#DDD4CB">Histórico de descoloração. Prefere tons quentes. Sensível a amônia.</div>
+                  </div>
+                </div>
+                <div style="padding:16px 20px 0">
+                  <div style="display:flex;gap:9px">
+                    <div onClick="{{ nav.capture }}" style="flex:1;background:#B96A52;border-radius:15px;height:50px;display:flex;align-items:center;justify-content:center;gap:8px;font:600 14px 'Familjen Grotesk',sans-serif;color:#1B1714;cursor:pointer" style-hover="background:#A85C46"><span style="font-size:15px">✳</span>Nova simulação</div>
+                    <div onClick="{{ nav.service }}" style="flex:none;padding:0 16px;background:#fff;border:1px solid #E4DBD2;border-radius:15px;height:50px;display:flex;align-items:center;justify-content:center;font:600 14px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#F2EBE4">Registrar</div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;margin:24px 0 10px">
+                    <div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Simulações salvas</div>
+                    <div onClick="{{ nav.compare }}" style="font:500 12.5px 'Familjen Grotesk',sans-serif;color:#B96A52;cursor:pointer">Comparar</div>
+                  </div>
+                  <div style="display:flex;gap:9px;overflow-x:auto;padding-bottom:4px">
+                    <div onClick="{{ nav.result }}" style="width:104px;flex:none;cursor:pointer"><div style="height:132px;border-radius:14px;background:repeating-linear-gradient(135deg,#EFE7DE 0 7px,#E7DDD3 7px 14px);border:1px solid #E4DBD2;display:flex;align-items:flex-end;padding:8px"><span style="font:500 8.5px ui-monospace,monospace;color:#9C8F84">simulação</span></div><div style="font:500 11px 'Familjen Grotesk',sans-serif;margin-top:6px">02/03 · Acobreado</div></div>
+                    <div onClick="{{ nav.result }}" style="width:104px;flex:none;cursor:pointer"><div style="height:132px;border-radius:14px;background:repeating-linear-gradient(135deg,#EFE7DE 0 7px,#E7DDD3 7px 14px);border:1px solid #E4DBD2;display:flex;align-items:flex-end;padding:8px"><span style="font:500 8.5px ui-monospace,monospace;color:#9C8F84">simulação</span></div><div style="font:500 11px 'Familjen Grotesk',sans-serif;margin-top:6px">18/02 · Curto</div></div>
+                    <div onClick="{{ nav.result }}" style="width:104px;flex:none;cursor:pointer"><div style="height:132px;border-radius:14px;background:repeating-linear-gradient(135deg,#EFE7DE 0 7px,#E7DDD3 7px 14px);border:1px solid #E4DBD2;display:flex;align-items:flex-end;padding:8px"><span style="font:500 8.5px ui-monospace,monospace;color:#9C8F84">simulação</span></div><div style="font:500 11px 'Familjen Grotesk',sans-serif;margin-top:6px">05/01 · Loiro mel</div></div>
+                  </div>
+                  <div style="font:600 13.5px 'Familjen Grotesk',sans-serif;margin:24px 0 10px">Histórico de atendimentos</div>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="background:#fff;border:1px solid #EDE5DD;border-radius:16px;padding:14px">
+                      <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Coloração acobreada + corte médio</div><div style="font:500 11px ui-monospace,monospace;color:#9A8F85">02/03</div></div>
+                      <div style="font:400 12.3px/1.5 'Familjen Grotesk',sans-serif;color:#6F655D;margin-top:5px">Aprovou a simulação de tom acobreado. Executado com 2 tons abaixo do simulado.</div>
+                      <div style="margin-top:9px;display:inline-flex;align-items:center;gap:6px;background:#F7EAE4;padding:5px 9px;border-radius:8px"><span style="font-size:10px">🔗</span><span style="font:600 10.5px 'Familjen Grotesk',sans-serif;color:#8E4E3B">vinculado a 1 simulação</span></div>
+                    </div>
+                    <div style="background:#fff;border:1px solid #EDE5DD;border-radius:16px;padding:14px">
+                      <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Hidratação</div><div style="font:500 11px ui-monospace,monospace;color:#9A8F85">18/02</div></div>
+                      <div style="font:400 12.3px/1.5 'Familjen Grotesk',sans-serif;color:#6F655D;margin-top:5px">Sem simulação. Cliente pediu para ver opções de corte curto na próxima visita.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.capture }}">
+              <div style="position:absolute;inset:0;background:#0C0A09;display:flex;flex-direction:column">
+                <div style="padding:8px 20px 0;display:flex;justify-content:space-between;align-items:center">
+                  <div onClick="{{ nav.client }}" style="width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.12);color:#F3EDE7;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer">✕</div>
+                  <div style="font:600 12.5px 'Familjen Grotesk',sans-serif;color:#F3EDE7">Marina Alves</div>
+                  <div style="width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.12);color:#F3EDE7;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer">⟲</div>
+                </div>
+                <div style="flex:1;position:relative;margin:16px 0;display:flex;align-items:center;justify-content:center">
+                  <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,#1A1614 0 10px,#15110F 10px 20px)"></div>
+                  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 10px ui-monospace,Menlo,monospace;color:#4E453E;letter-spacing:.08em">visor da câmera ao vivo</div>
+                  <div style="position:relative;width:216px;height:290px;border-radius:50% 50% 46% 46%/58% 58% 42% 42%;border:2px dashed rgba(243,237,231,.55)"></div>
+                  <div style="position:absolute;left:20px;right:20px;bottom:18px;display:flex;gap:8px;justify-content:center">
+                    <div style="background:rgba(46,122,94,.92);color:#EFF7F2;padding:7px 11px;border-radius:9px;font:600 10.5px 'Familjen Grotesk',sans-serif">✓ Rosto centralizado</div>
+                    <div style="background:rgba(138,106,34,.92);color:#FBF5E6;padding:7px 11px;border-radius:9px;font:600 10.5px 'Familjen Grotesk',sans-serif">Aproxime a luz frontal</div>
+                  </div>
+                </div>
+                <div style="padding:0 20px 26px">
+                  <div style="display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.08);border-radius:12px;padding:11px 13px;margin-bottom:18px">
+                    <span style="color:#2E9877;font-size:13px">✓</span>
+                    <span style="font:400 11.5px/1.45 'Familjen Grotesk',sans-serif;color:#B6AAA0">Consentimento de Marina registrado em 12/03 · foto usada só para simulação</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <div onClick="{{ nav.params }}" style="width:62px;height:62px;border-radius:18px;background:repeating-linear-gradient(135deg,#2A241F 0 7px,#231E1A 7px 14px);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:500 8.5px ui-monospace,monospace;color:#8A7E74;text-align:center;cursor:pointer;padding:5px">galeria</div>
+                    <div onClick="{{ nav.params }}" style="width:76px;height:76px;border-radius:50%;background:#F3EDE7;border:5px solid rgba(243,237,231,.28);cursor:pointer" style-hover="background:#fff"></div>
+                    <div onClick="{{ nav.captureErr }}" style="width:62px;text-align:center;font:500 10.5px/1.3 'Familjen Grotesk',sans-serif;color:#8A7E74;cursor:pointer" style-hover="color:#F3EDE7">simular foto ruim</div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.captureErr }}">
+              <div style="position:absolute;inset:0;background:#0C0A09;display:flex;flex-direction:column">
+                <div style="padding:8px 20px 0;display:flex;justify-content:space-between;align-items:center">
+                  <div onClick="{{ nav.client }}" style="width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.12);color:#F3EDE7;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer">✕</div>
+                  <div style="font:600 12.5px 'Familjen Grotesk',sans-serif;color:#F3EDE7">Marina Alves</div>
+                  <div style="width:36px"></div>
+                </div>
+                <div style="flex:1;position:relative;margin:16px 0;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#1A1614 0 10px,#15110F 10px 20px)">
+                  <div style="position:absolute;inset:0;background:rgba(12,10,9,.62)"></div>
+                  <div style="position:relative;width:216px;height:290px;border-radius:50% 50% 46% 46%/58% 58% 42% 42%;border:2px solid rgba(190,74,58,.9)"></div>
+                </div>
+                <div style="padding:0 20px 26px">
+                  <div style="background:#241B18;border:1px solid rgba(190,74,58,.45);border-radius:18px;padding:17px">
+                    <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px">
+                      <div style="width:24px;height:24px;border-radius:8px;background:#BE4A3A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px">!</div>
+                      <div style="font:600 14.5px 'Familjen Grotesk',sans-serif;color:#F3EDE7">Foto recusada antes do envio</div>
+                    </div>
+                    <div style="font:400 12.3px/1.55 'Familjen Grotesk',sans-serif;color:#B6AAA0;margin-bottom:12px">Nenhum crédito de simulação foi usado. Dois pontos impedem um resultado confiável:</div>
+                    <div style="display:flex;flex-direction:column;gap:7px">
+                      <div style="display:flex;gap:9px;align-items:flex-start"><span style="color:#D9705C;font-size:11px;padding-top:2px">●</span><span style="font:400 12.3px/1.45 'Familjen Grotesk',sans-serif;color:#DDD4CB">Imagem muito escura — a borda do cabelo não é separável do fundo</span></div>
+                      <div style="display:flex;gap:9px;align-items:flex-start"><span style="color:#D9705C;font-size:11px;padding-top:2px">●</span><span style="font:400 12.3px/1.45 'Familjen Grotesk',sans-serif;color:#DDD4CB">Rosto em ângulo — vire para frente e reenquadre no guia</span></div>
+                    </div>
+                    <div onClick="{{ nav.capture }}" style="margin-top:17px;background:#F3EDE7;color:#1B1714;border-radius:13px;height:48px;display:flex;align-items:center;justify-content:center;font:600 14.5px 'Familjen Grotesk',sans-serif;cursor:pointer">Tentar novamente</div>
+                    <div onClick="{{ nav.params }}" style="text-align:center;margin-top:11px;font:500 12.5px 'Familjen Grotesk',sans-serif;color:#8A7E74;cursor:pointer">Usar assim mesmo</div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.params }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 20px 10px;display:flex;align-items:center;gap:13px;border-bottom:1px solid #EDE5DD">
+                  <div onClick="{{ nav.capture }}" style="width:36px;height:36px;border-radius:12px;border:1px solid #E4DBD2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#6F655D;cursor:pointer">←</div>
+                  <div style="flex:1"><div style="font:600 15px 'Familjen Grotesk',sans-serif">Parâmetros</div><div style="font:400 11.5px 'Familjen Grotesk',sans-serif;color:#9A8F85">Etapa 2 de 3 · Marina Alves</div></div>
+                  <div style="width:52px;height:64px;border-radius:10px;background:repeating-linear-gradient(135deg,#EFE7DE 0 6px,#E7DDD3 6px 12px);border:1px solid #E4DBD2"></div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:18px 20px 20px">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+                    <div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Estilo de corte</div>
+                    <div style="font:500 12px 'Familjen Grotesk',sans-serif;color:#B96A52">{{ estilo }}</div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                    <div onClick="{{ pickEstilo.curtotexturizado }}" style="cursor:pointer"><div style="height:82px;border-radius:13px;background:repeating-linear-gradient(135deg,#EFE7DE 0 6px,#E7DDD3 6px 12px);border:1px solid #E4DBD2;position:relative"><sc-if value="{{ selEstilo.curtotexturizado }}"><div style="position:absolute;inset:-2px;border:2.5px solid #B96A52;border-radius:14px"></div></sc-if></div><div style="font:500 10.5px/1.3 'Familjen Grotesk',sans-serif;margin-top:5px;color:#4A423B">Curto texturizado</div></div>
+                    <div onClick="{{ pickEstilo.mdioemcamadas }}" style="cursor:pointer"><div style="height:82px;border-radius:13px;background:repeating-linear-gradient(135deg,#EFE7DE 0 6px,#E7DDD3 6px 12px);border:1px solid #E4DBD2;position:relative"><sc-if value="{{ selEstilo.mdioemcamadas }}"><div style="position:absolute;inset:-2px;border:2.5px solid #B96A52;border-radius:14px"></div></sc-if></div><div style="font:500 10.5px/1.3 'Familjen Grotesk',sans-serif;margin-top:5px;color:#4A423B">Médio em camadas</div></div>
+                    <div onClick="{{ pickEstilo.longoliso }}" style="cursor:pointer"><div style="height:82px;border-radius:13px;background:repeating-linear-gradient(135deg,#EFE7DE 0 6px,#E7DDD3 6px 12px);border:1px solid #E4DBD2;position:relative"><sc-if value="{{ selEstilo.longoliso }}"><div style="position:absolute;inset:-2px;border:2.5px solid #B96A52;border-radius:14px"></div></sc-if></div><div style="font:500 10.5px/1.3 'Familjen Grotesk',sans-serif;margin-top:5px;color:#4A423B">Longo liso</div></div>
+                    <div onClick="{{ pickEstilo.franjacortina }}" style="cursor:pointer"><div style="height:82px;border-radius:13px;background:repeating-linear-gradient(135deg,#EFE7DE 0 6px,#E7DDD3 6px 12px);border:1px solid #E4DBD2;position:relative"><sc-if value="{{ selEstilo.franjacortina }}"><div style="position:absolute;inset:-2px;border:2.5px solid #B96A52;border-radius:14px"></div></sc-if></div><div style="font:500 10.5px/1.3 'Familjen Grotesk',sans-serif;margin-top:5px;color:#4A423B">Franja cortina</div></div>
+                    <div onClick="{{ pickEstilo.bobcurto }}" style="cursor:pointer"><div style="height:82px;border-radius:13px;background:repeating-linear-gradient(135deg,#EFE7DE 0 6px,#E7DDD3 6px 12px);border:1px solid #E4DBD2;position:relative"><sc-if value="{{ selEstilo.bobcurto }}"><div style="position:absolute;inset:-2px;border:2.5px solid #B96A52;border-radius:14px"></div></sc-if></div><div style="font:500 10.5px/1.3 'Familjen Grotesk',sans-serif;margin-top:5px;color:#4A423B">Bob curto</div></div>
+                    <div onClick="{{ pickEstilo.cacheadodefinido }}" style="cursor:pointer"><div style="height:82px;border-radius:13px;background:repeating-linear-gradient(135deg,#EFE7DE 0 6px,#E7DDD3 6px 12px);border:1px solid #E4DBD2;position:relative"><sc-if value="{{ selEstilo.cacheadodefinido }}"><div style="position:absolute;inset:-2px;border:2.5px solid #B96A52;border-radius:14px"></div></sc-if></div><div style="font:500 10.5px/1.3 'Familjen Grotesk',sans-serif;margin-top:5px;color:#4A423B">Cacheado definido</div></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 10px">
+                    <div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Cor</div>
+                    <div style="font:500 12px 'Familjen Grotesk',sans-serif;color:#B96A52">{{ cor }}</div>
+                  </div>
+                  <div style="display:flex;gap:10px">
+                    <div onClick="{{ pickCor.castanhoacobreado }}" style="flex:1;cursor:pointer"><div style="height:46px;border-radius:12px;background:#A25A34;position:relative"><sc-if value="{{ sel.castanhoacobreado }}"><div style="position:absolute;inset:-3px;border:2.5px solid #1B1714;border-radius:14px"></div></sc-if></div></div>
+                    <div onClick="{{ pickCor.loiromel }}" style="flex:1;cursor:pointer"><div style="height:46px;border-radius:12px;background:#C79A5B;position:relative"><sc-if value="{{ sel.loiromel }}"><div style="position:absolute;inset:-3px;border:2.5px solid #1B1714;border-radius:14px"></div></sc-if></div></div>
+                    <div onClick="{{ pickCor.castanhoescuro }}" style="flex:1;cursor:pointer"><div style="height:46px;border-radius:12px;background:#4A322A;position:relative"><sc-if value="{{ sel.castanhoescuro }}"><div style="position:absolute;inset:-3px;border:2.5px solid #1B1714;border-radius:14px"></div></sc-if></div></div>
+                    <div onClick="{{ pickCor.pretoazulado }}" style="flex:1;cursor:pointer"><div style="height:46px;border-radius:12px;background:#1F2028;position:relative"><sc-if value="{{ sel.pretoazulado }}"><div style="position:absolute;inset:-3px;border:2.5px solid #1B1714;border-radius:14px"></div></sc-if></div></div>
+                    <div onClick="{{ pickCor.ruivointenso }}" style="flex:1;cursor:pointer"><div style="height:46px;border-radius:12px;background:#8E3B24;position:relative"><sc-if value="{{ sel.ruivointenso }}"><div style="position:absolute;inset:-3px;border:2.5px solid #1B1714;border-radius:14px"></div></sc-if></div></div>
+                    <div onClick="{{ pickCor.platinado }}" style="flex:1;cursor:pointer"><div style="height:46px;border-radius:12px;background:#D8D2C8;position:relative"><sc-if value="{{ sel.platinado }}"><div style="position:absolute;inset:-3px;border:2.5px solid #1B1714;border-radius:14px"></div></sc-if></div></div>
+                  </div>
+                  <div style="font:400 11.5px/1.5 'Familjen Grotesk',sans-serif;color:#9A8F85;margin-top:9px">Tons muito claros sobre cabelo escuro tendem a sair menos fiéis — considere um passo intermediário.</div>
+                  <div style="background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px;min-height:88px;margin-top:20px">
+                    <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:6px">Observações da simulação</div>
+                    <div style="font:400 13.5px/1.5 'Familjen Grotesk',sans-serif;color:#4A423B">Manter comprimento nos ombros, testar antes de decidir a cor.</div>
+                  </div>
+                </div>
+                <div style="padding:12px 20px 26px;border-top:1px solid #EDE5DD">
+                  <div onClick="{{ nav.processing }}" style="background:#B96A52;color:#1B1714;border-radius:15px;height:54px;display:flex;align-items:center;justify-content:center;gap:9px;font:600 15.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#A85C46"><span style="font-size:16px">✳</span>Gerar simulação</div>
+                  <div style="text-align:center;margin-top:10px;font:400 11.5px 'Familjen Grotesk',sans-serif;color:#9A8F85">Costuma levar de 8 a 25 segundos</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.processing }}">
+              <div style="position:absolute;inset:0;background:#1B1714;display:flex;flex-direction:column;padding:0 26px 30px">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+                  <div style="width:112px;height:112px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:#B96A52;animation:spin 1.1s linear infinite;margin-bottom:26px"></div>
+                  <div style="font-family:'Instrument Serif',serif;font-size:28px;line-height:1.15;color:#F3EDE7">Gerando a simulação</div>
+                  <div style="font:400 13px/1.5 'Familjen Grotesk',sans-serif;color:#A79B90;margin-top:8px;max-width:250px">Você pode sair desta tela — avisamos quando ficar pronto.</div>
+                  <div style="width:190px;height:6px;border-radius:99px;background:rgba(255,255,255,.12);margin-top:26px;overflow:hidden"><div style="{{ progBar }}"></div></div>
+                  <div style="font:600 12px ui-monospace,monospace;color:#B96A52;margin-top:10px">{{ progLabel }} · {{ segundos }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:13px;padding-bottom:20px">
+                  <div style="display:flex;gap:11px;align-items:center"><span style="color:#2E9877;font-size:12px">✓</span><span style="{{ etapa1 }}">Imagem validada e enviada com segurança</span></div>
+                  <div style="display:flex;gap:11px;align-items:center"><span style="color:#2E9877;font-size:12px">✓</span><span style="{{ etapa2 }}">Região do cabelo recortada</span></div>
+                  <div style="display:flex;gap:11px;align-items:center"><span style="color:#2E9877;font-size:12px">✓</span><span style="{{ etapa3 }}">Aplicando estilo e cor escolhidos</span></div>
+                </div>
+                <div onClick="{{ nav.aiErr }}" style="text-align:center;font:500 12.5px 'Familjen Grotesk',sans-serif;color:#7C6F64;cursor:pointer" style-hover="color:#F3EDE7">ver o que acontece se a IA falhar</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.result }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 20px 10px;display:flex;align-items:center;gap:13px">
+                  <div onClick="{{ nav.params }}" style="width:36px;height:36px;border-radius:12px;border:1px solid #E4DBD2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#6F655D;cursor:pointer">←</div>
+                  <div style="flex:1"><div style="font:600 15px 'Familjen Grotesk',sans-serif">Resultado</div><div style="font:400 11.5px 'Familjen Grotesk',sans-serif;color:#9A8F85">Etapa 3 de 3 · gerado em 14s</div></div>
+                  <div onClick="{{ nav.compare }}" style="font:500 12.5px 'Familjen Grotesk',sans-serif;color:#B96A52;cursor:pointer">Comparar</div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:8px 20px 16px">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <div><div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;margin-bottom:6px">ANTES</div><div style="height:238px;border-radius:16px;background:repeating-linear-gradient(135deg,#EFE7DE 0 7px,#E7DDD3 7px 14px);border:1px solid #E4DBD2;display:flex;align-items:flex-end;padding:9px"><span style="font:500 8.5px ui-monospace,monospace;color:#9C8F84">foto original</span></div></div>
+                    <div><div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#B96A52;margin-bottom:6px">SIMULAÇÃO</div><div style="height:238px;border-radius:16px;background:repeating-linear-gradient(135deg,#E4D3C6 0 7px,#DCC8B8 7px 14px);border:2px solid #B96A52;display:flex;align-items:flex-end;padding:9px"><span style="font:500 8.5px ui-monospace,monospace;color:#8E6A55">imagem gerada</span></div></div>
+                  </div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px">
+                    <div style="background:#fff;border:1px solid #E4DBD2;border-radius:9px;padding:6px 10px;font:500 11.5px 'Familjen Grotesk',sans-serif">{{ estilo }}</div>
+                    <div style="background:#fff;border:1px solid #E4DBD2;border-radius:9px;padding:6px 10px;font:500 11.5px 'Familjen Grotesk',sans-serif">{{ cor }}</div>
+                    <div style="background:#fff;border:1px solid #E4DBD2;border-radius:9px;padding:6px 10px;font:500 11.5px 'Familjen Grotesk',sans-serif;color:#8A7E74">SDXL img2img</div>
+                  </div>
+                  <div style="margin-top:16px;background:#F6EEDC;border:1px solid #E8D9B8;border-radius:16px;padding:15px;display:flex;gap:11px;align-items:flex-start">
+                    <div style="width:22px;height:22px;flex:none;border-radius:7px;background:#8A6A22;color:#FBF5E6;display:flex;align-items:center;justify-content:center;font:600 13px 'Familjen Grotesk',sans-serif">!</div>
+                    <div><div style="font:600 12.8px 'Familjen Grotesk',sans-serif;color:#5E4A12;margin-bottom:4px">Isto é uma aproximação visual</div><div style="font:400 12.2px/1.5 'Familjen Grotesk',sans-serif;color:#6B5720;text-wrap:pretty">Textura real do fio, volume e histórico químico podem mudar o resultado executado. Use a imagem para conversar, não como promessa.</div></div>
+                  </div>
+                </div>
+                <div style="padding:12px 20px 26px;border-top:1px solid #EDE5DD;display:flex;gap:9px">
+                  <div onClick="{{ nav.params }}" style="flex:none;padding:0 18px;background:#fff;border:1px solid #E4DBD2;border-radius:15px;height:52px;display:flex;align-items:center;justify-content:center;font:600 14.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#F2EBE4">Refazer</div>
+                  <div onClick="{{ nav.service }}" style="flex:1;background:#1B1714;color:#F3EDE7;border-radius:15px;height:52px;display:flex;align-items:center;justify-content:center;font:600 14.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#33291F">Salvar no histórico</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.aiErr }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 20px 10px;display:flex;align-items:center;gap:13px">
+                  <div onClick="{{ nav.params }}" style="width:36px;height:36px;border-radius:12px;border:1px solid #E4DBD2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#6F655D;cursor:pointer">←</div>
+                  <div style="font:600 15px 'Familjen Grotesk',sans-serif">Simulação</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px 40px">
+                  <div style="width:56px;height:56px;border-radius:18px;background:#F7EAE4;border:1px solid #E8CDC2;display:flex;align-items:center;justify-content:center;font-size:24px;color:#BE4A3A;margin-bottom:20px">⚠</div>
+                  <div style="font-family:'Instrument Serif',serif;font-size:29px;line-height:1.12;margin-bottom:10px;text-wrap:pretty">O serviço de simulação não respondeu</div>
+                  <div style="font:400 13.5px/1.6 'Familjen Grotesk',sans-serif;color:#6F655D;text-wrap:pretty">A falha é do provedor externo de IA, não do seu app. Seus parâmetros — {{ estilo }}, {{ cor }} — e a foto continuam guardados.</div>
+                  <div style="margin-top:22px;background:#E7F2EC;border:1px solid #CFE4D9;border-radius:16px;padding:15px;display:flex;gap:11px;align-items:flex-start">
+                    <span style="color:#2E7A5E;font-size:13px;padding-top:1px">✓</span>
+                    <div style="font:400 12.3px/1.5 'Familjen Grotesk',sans-serif;color:#265C47">Clientes, histórico e agenda seguem funcionando normalmente — eles não dependem da IA.</div>
+                  </div>
+                  <div onClick="{{ nav.processing }}" style="margin-top:24px;background:#1B1714;color:#F3EDE7;border-radius:15px;height:52px;display:flex;align-items:center;justify-content:center;font:600 14.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#33291F">Tentar novamente</div>
+                  <div onClick="{{ nav.client }}" style="margin-top:11px;text-align:center;font:500 13px 'Familjen Grotesk',sans-serif;color:#7A6F66;cursor:pointer">Voltar ao perfil de Marina</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.compare }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 20px 10px;display:flex;align-items:center;gap:13px;border-bottom:1px solid #EDE5DD">
+                  <div onClick="{{ nav.client }}" style="width:36px;height:36px;border-radius:12px;border:1px solid #E4DBD2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#6F655D;cursor:pointer">←</div>
+                  <div style="flex:1"><div style="font:600 15px 'Familjen Grotesk',sans-serif">Comparar simulações</div><div style="font:400 11.5px 'Familjen Grotesk',sans-serif;color:#9A8F85">Marina Alves · 3 salvas</div></div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:16px 20px 20px">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div>
+                      <div style="height:222px;border-radius:16px;background:repeating-linear-gradient(135deg,#E4D3C6 0 7px,#DCC8B8 7px 14px);border:2px solid #B96A52;display:flex;align-items:flex-end;padding:9px"><span style="font:500 8.5px ui-monospace,monospace;color:#8E6A55">simulação 02/03</span></div>
+                      <div style="margin-top:9px;background:#fff;border:1px solid #EDE5DD;border-radius:13px;padding:11px">
+                        <div style="font:600 12.5px 'Familjen Grotesk',sans-serif;margin-bottom:5px">Castanho acobreado</div>
+                        <div style="font:400 11.5px/1.45 'Familjen Grotesk',sans-serif;color:#7A6F66">Médio em camadas<br>02/03 · 14s</div>
+                        <div style="margin-top:9px;display:flex;align-items:center;gap:7px"><div style="width:17px;height:17px;border-radius:50%;border:1.5px solid #B96A52;display:flex;align-items:center;justify-content:center"><div style="width:9px;height:9px;border-radius:50%;background:#B96A52"></div></div><span style="font:600 11px 'Familjen Grotesk',sans-serif;color:#8E4E3B">Preferida</span></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div style="height:222px;border-radius:16px;background:repeating-linear-gradient(135deg,#EFE7DE 0 7px,#E7DDD3 7px 14px);border:1px solid #E4DBD2;display:flex;align-items:flex-end;padding:9px"><span style="font:500 8.5px ui-monospace,monospace;color:#9C8F84">simulação 18/02</span></div>
+                      <div style="margin-top:9px;background:#fff;border:1px solid #EDE5DD;border-radius:13px;padding:11px">
+                        <div style="font:600 12.5px 'Familjen Grotesk',sans-serif;margin-bottom:5px">Loiro mel</div>
+                        <div style="font:400 11.5px/1.45 'Familjen Grotesk',sans-serif;color:#7A6F66">Bob curto<br>18/02 · 19s</div>
+                        <div style="margin-top:9px;display:flex;align-items:center;gap:7px"><div style="width:17px;height:17px;border-radius:50%;border:1.5px solid #CFC3B8"></div><span style="font:500 11px 'Familjen Grotesk',sans-serif;color:#9A8F85">Marcar</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="margin-top:14px;display:flex;gap:9px;align-items:center;background:#F3EDE6;border-radius:14px;padding:13px 14px">
+                    <span style="font-size:14px">↔</span>
+                    <div style="font:400 12.2px/1.45 'Familjen Grotesk',sans-serif;color:#6F655D">Arraste para trazer a terceira simulação (05/01 · Platinado) para a comparação.</div>
+                  </div>
+                  <div onClick="{{ nav.service }}" style="margin-top:18px;background:#1B1714;color:#F3EDE7;border-radius:15px;height:52px;display:flex;align-items:center;justify-content:center;font:600 14.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#33291F">Registrar atendimento com a preferida</div>
+                  <div onClick="{{ nav.agendaNew }}" style="margin-top:11px;text-align:center;font:500 13px 'Familjen Grotesk',sans-serif;color:#B96A52;cursor:pointer">Agendar para depois</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.service }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 20px 10px;display:flex;align-items:center;gap:13px;border-bottom:1px solid #EDE5DD">
+                  <div onClick="{{ nav.result }}" style="width:36px;height:36px;border-radius:12px;border:1px solid #E4DBD2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#6F655D;cursor:pointer">←</div>
+                  <div style="flex:1"><div style="font:600 15px 'Familjen Grotesk',sans-serif">Registrar atendimento</div><div style="font:400 11.5px 'Familjen Grotesk',sans-serif;color:#9A8F85">Marina Alves</div></div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:18px 20px 20px">
+                  <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;margin-bottom:9px">SERVIÇO EXECUTADO</div>
+                  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px">
+                    <div style="background:#1B1714;color:#F3EDE7;border-radius:10px;padding:8px 13px;font:600 12.5px 'Familjen Grotesk',sans-serif;cursor:pointer">Coloração</div>
+                    <div style="background:#fff;border:1px solid #E4DBD2;border-radius:10px;padding:8px 13px;font:500 12.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#F2EBE4">Corte</div>
+                    <div style="background:#fff;border:1px solid #E4DBD2;border-radius:10px;padding:8px 13px;font:500 12.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#F2EBE4">Hidratação</div>
+                    <div style="background:#fff;border:1px solid #E4DBD2;border-radius:10px;padding:8px 13px;font:500 12.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#F2EBE4">Escova</div>
+                    <div style="background:#fff;border:1px dashed #D3C7BB;border-radius:10px;padding:8px 13px;font:500 12.5px 'Familjen Grotesk',sans-serif;color:#8A7E74;cursor:pointer">+ outro</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px;margin-bottom:11px;display:flex;justify-content:space-between;align-items:center">
+                    <div><div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:4px">Data do serviço</div><div style="font:500 14.5px 'Familjen Grotesk',sans-serif">12 de março de 2026</div></div>
+                    <span style="font-size:15px;color:#B0A49A">▤</span>
+                  </div>
+                  <div style="background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:13px 15px;margin-bottom:11px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+                      <div style="font:600 13px 'Familjen Grotesk',sans-serif">Vincular à simulação</div>
+                      <div style="width:44px;height:26px;border-radius:99px;background:#2E7A5E;position:relative;cursor:pointer"><div style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff"></div></div>
+                    </div>
+                    <div style="display:flex;gap:11px;align-items:center;background:#FAF7F4;border-radius:11px;padding:9px">
+                      <div style="width:38px;height:48px;border-radius:8px;background:repeating-linear-gradient(135deg,#E4D3C6 0 6px,#DCC8B8 6px 12px);border:1px solid #D9C4B4"></div>
+                      <div style="font:400 11.8px/1.45 'Familjen Grotesk',sans-serif;color:#6F655D">{{ cor }} · {{ estilo }}<br>gerada hoje às 14:52</div>
+                    </div>
+                    <div style="font:400 11.3px/1.45 'Familjen Grotesk',sans-serif;color:#9A8F85;margin-top:9px">O vínculo é opcional: um atendimento pode existir sem simulação.</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px;min-height:106px">
+                    <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:6px">Observações do atendimento</div>
+                    <div style="font:400 13.5px/1.5 'Familjen Grotesk',sans-serif;color:#4A423B">Executado dois tons abaixo do simulado por causa do histórico de descoloração. Cliente aprovou.</div>
+                  </div>
+                </div>
+                <div style="padding:12px 20px 26px;border-top:1px solid #EDE5DD">
+                  <div onClick="{{ nav.success }}" style="background:#1B1714;color:#F3EDE7;border-radius:15px;height:54px;display:flex;align-items:center;justify-content:center;font:600 15px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#33291F">Salvar atendimento</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.success }}">
+              <div style="position:absolute;inset:0;background:#FAF7F4;display:flex;flex-direction:column;padding:0 26px 34px">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;animation:fadeup .4s ease both">
+                  <div style="width:74px;height:74px;border-radius:26px;background:#2E7A5E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:24px">✓</div>
+                  <div style="font-family:'Instrument Serif',serif;font-size:30px;line-height:1.12">Atendimento registrado</div>
+                  <div style="font:400 13.5px/1.6 'Familjen Grotesk',sans-serif;color:#6F655D;margin-top:10px;max-width:270px;text-wrap:pretty">Coloração de 12/03 salva no histórico de Marina, vinculada à simulação {{ cor }}.</div>
+                  <div style="margin-top:24px;background:#fff;border:1px solid #EDE5DD;border-radius:16px;padding:14px 16px;width:100%;text-align:left">
+                    <div style="display:flex;justify-content:space-between;padding:5px 0"><span style="font:400 12.3px 'Familjen Grotesk',sans-serif;color:#8A7E74">Cliente</span><span style="font:600 12.3px 'Familjen Grotesk',sans-serif">Marina Alves</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:5px 0"><span style="font:400 12.3px 'Familjen Grotesk',sans-serif;color:#8A7E74">Serviço</span><span style="font:600 12.3px 'Familjen Grotesk',sans-serif">Coloração</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:5px 0"><span style="font:400 12.3px 'Familjen Grotesk',sans-serif;color:#8A7E74">Simulação</span><span style="font:600 12.3px 'Familjen Grotesk',sans-serif;color:#8E4E3B">vinculada</span></div>
+                  </div>
+                </div>
+                <div onClick="{{ nav.agendaNew }}" style="background:#1B1714;color:#F3EDE7;border-radius:15px;height:52px;display:flex;align-items:center;justify-content:center;font:600 14.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#33291F">Agendar retorno</div>
+                <div onClick="{{ nav.client }}" style="margin-top:12px;text-align:center;font:500 13.5px 'Familjen Grotesk',sans-serif;color:#7A6F66;cursor:pointer" style-hover="color:#1B1714">Voltar ao perfil do cliente</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.agenda }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 20px 12px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                    <div><div style="font-family:'Instrument Serif',Georgia,serif;font-size:29px;line-height:1.1">Março</div><div style="font:500 11.5px 'Familjen Grotesk',sans-serif;color:#9A8F85">2026 · 14 atendimentos no mês</div></div>
+                    <div onClick="{{ nav.agendaNew }}" style="width:38px;height:38px;border-radius:12px;background:#1B1714;color:#F3EDE7;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer" style-hover="background:#33291F">+</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid #EDE5DD;border-radius:18px;padding:14px 12px">
+                    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">
+                      <div style="text-align:center;font:600 9.5px ui-monospace,monospace;color:#B0A49A">D</div><div style="text-align:center;font:600 9.5px ui-monospace,monospace;color:#B0A49A">S</div><div style="text-align:center;font:600 9.5px ui-monospace,monospace;color:#B0A49A">T</div><div style="text-align:center;font:600 9.5px ui-monospace,monospace;color:#B0A49A">Q</div><div style="text-align:center;font:600 9.5px ui-monospace,monospace;color:#B0A49A">Q</div><div style="text-align:center;font:600 9.5px ui-monospace,monospace;color:#B0A49A">S</div><div style="text-align:center;font:600 9.5px ui-monospace,monospace;color:#B0A49A">S</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">
+                      <sc-for list="{{ dias }}" as="d" hint-placeholder-count="35">
+                        <div style="{{ d.style }}"><span>{{ d.n }}</span><sc-if value="{{ d.dot }}"><div style="{{ d.dotStyle }}"></div></sc-if></div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:6px 20px 108px">
+                  <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.14em;color:#A2958A;padding:8px 2px 10px">QUINTA, 12 DE MARÇO · 3 COMPROMISSOS</div>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div onClick="{{ nav.client }}" style="background:#fff;border:1px solid #EDE5DD;border-left:3px solid #2E7A5E;border-radius:14px;padding:14px;cursor:pointer" style-hover="border-color:#D8CCC1">
+                      <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Marina Alves</div><div style="font:600 12px ui-monospace,monospace;color:#B96A52">14:30</div></div>
+                      <div style="font:400 12.2px 'Familjen Grotesk',sans-serif;color:#7A6F66;margin-top:4px">Coloração + corte · 2h</div>
+                      <div style="margin-top:9px;display:flex;gap:6px"><span style="font:600 10px ui-monospace,monospace;color:#2E7A5E;background:#E7F2EC;padding:4px 8px;border-radius:7px">CONFIRMADO</span><span style="font:600 10px ui-monospace,monospace;color:#8E4E3B;background:#F7EAE4;padding:4px 8px;border-radius:7px">1 SIMULAÇÃO</span></div>
+                    </div>
+                    <div style="background:#fff;border:1px solid #EDE5DD;border-left:3px solid #8A6A22;border-radius:14px;padding:14px">
+                      <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Rafael Prado</div><div style="font:600 12px ui-monospace,monospace;color:#B96A52">16:00</div></div>
+                      <div style="font:400 12.2px 'Familjen Grotesk',sans-serif;color:#7A6F66;margin-top:4px">Corte masculino · 45min</div>
+                      <div style="margin-top:9px"><span style="font:600 10px ui-monospace,monospace;color:#8A6A22;background:#F6EEDC;padding:4px 8px;border-radius:7px">AGUARDANDO CONFIRMAÇÃO</span></div>
+                    </div>
+                    <div style="background:#fff;border:1px solid #EDE5DD;border-left:3px solid #2E7A5E;border-radius:14px;padding:14px">
+                      <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:600 13.5px 'Familjen Grotesk',sans-serif">Júlia Stein</div><div style="font:600 12px ui-monospace,monospace;color:#B96A52">18:15</div></div>
+                      <div style="font:400 12.2px 'Familjen Grotesk',sans-serif;color:#7A6F66;margin-top:4px">Avaliação de coloração · 30min</div>
+                      <div style="margin-top:9px"><span style="font:600 10px ui-monospace,monospace;color:#2E7A5E;background:#E7F2EC;padding:4px 8px;border-radius:7px">CONFIRMADO</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.agendaNew }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 20px 10px;display:flex;align-items:center;gap:13px;border-bottom:1px solid #EDE5DD">
+                  <div onClick="{{ nav.agenda }}" style="width:36px;height:36px;border-radius:12px;border:1px solid #E4DBD2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#6F655D;cursor:pointer">←</div>
+                  <div style="font:600 15px 'Familjen Grotesk',sans-serif;flex:1">Novo agendamento</div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:18px 20px 20px">
+                  <div style="background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px;display:flex;align-items:center;gap:12px;margin-bottom:11px;cursor:pointer">
+                    <div style="width:36px;height:36px;border-radius:50%;background:#B96A52;color:#FAF7F4;display:flex;align-items:center;justify-content:center;font:600 12px 'Familjen Grotesk',sans-serif">MA</div>
+                    <div style="flex:1"><div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:2px">Cliente</div><div style="font:600 14px 'Familjen Grotesk',sans-serif">Marina Alves</div></div>
+                    <span style="font-size:17px;color:#C4B8AD">›</span>
+                  </div>
+                  <div style="display:flex;gap:11px;margin-bottom:11px">
+                    <div style="flex:1;background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px"><div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:4px">Data</div><div style="font:500 14px 'Familjen Grotesk',sans-serif">26/03/2026</div></div>
+                    <div style="flex:none;width:118px;background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px"><div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:4px">Hora</div><div style="font:500 14px 'Familjen Grotesk',sans-serif">15:00</div></div>
+                  </div>
+                  <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;margin:18px 0 9px">SERVIÇO PREVISTO</div>
+                  <div style="display:flex;gap:7px;flex-wrap:wrap">
+                    <div style="background:#1B1714;color:#F3EDE7;border-radius:10px;padding:8px 13px;font:600 12.5px 'Familjen Grotesk',sans-serif;cursor:pointer">Retoque de cor</div>
+                    <div style="background:#fff;border:1px solid #E4DBD2;border-radius:10px;padding:8px 13px;font:500 12.5px 'Familjen Grotesk',sans-serif;cursor:pointer">Corte</div>
+                    <div style="background:#fff;border:1px solid #E4DBD2;border-radius:10px;padding:8px 13px;font:500 12.5px 'Familjen Grotesk',sans-serif;cursor:pointer">Hidratação</div>
+                  </div>
+                  <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;margin:20px 0 9px">STATUS</div>
+                  <div style="display:flex;gap:7px">
+                    <div style="flex:1;text-align:center;background:#F6EEDC;border:1.5px solid #E8D9B8;border-radius:10px;padding:9px;font:600 12px 'Familjen Grotesk',sans-serif;color:#8A6A22;cursor:pointer">Pendente</div>
+                    <div style="flex:1;text-align:center;background:#fff;border:1px solid #E4DBD2;border-radius:10px;padding:9px;font:500 12px 'Familjen Grotesk',sans-serif;color:#7A6F66;cursor:pointer">Confirmado</div>
+                  </div>
+                  <div style="margin-top:18px;background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center">
+                    <div style="max-width:220px"><div style="font:600 13px 'Familjen Grotesk',sans-serif;margin-bottom:3px">Lembrete local</div><div style="font:400 11.5px/1.4 'Familjen Grotesk',sans-serif;color:#8A7E74">Notificação no aparelho 1h antes</div></div>
+                    <div style="width:44px;height:26px;border-radius:99px;background:#2E7A5E;position:relative;cursor:pointer"><div style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff"></div></div>
+                  </div>
+                  <div style="margin-top:11px;background:#fff;border:1px solid #E4DBD2;border-radius:14px;padding:12px 15px;min-height:86px"><div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.12em;color:#9A8F85;text-transform:uppercase;margin-bottom:6px">Observações</div><div style="font:400 13.5px/1.5 'Familjen Grotesk',sans-serif;color:#4A423B">Retomar a simulação acobreada aprovada em 12/03.</div></div>
+                </div>
+                <div style="padding:12px 20px 26px;border-top:1px solid #EDE5DD">
+                  <div onClick="{{ nav.agenda }}" style="background:#1B1714;color:#F3EDE7;border-radius:15px;height:54px;display:flex;align-items:center;justify-content:center;font:600 15px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#33291F">Criar agendamento</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.profile }}">
+              <div style="position:absolute;inset:0;overflow-y:auto;background:#FAF7F4;padding-bottom:108px">
+                <div style="background:#1B1714;padding:14px 20px 24px;color:#F3EDE7">
+                  <div style="display:flex;gap:14px;align-items:center">
+                    <div style="width:58px;height:58px;flex:none;border-radius:20px;background:#B96A52;color:#1B1714;display:flex;align-items:center;justify-content:center;font:600 20px 'Familjen Grotesk',sans-serif">NC</div>
+                    <div><div style="font-family:'Instrument Serif',serif;font-size:25px;line-height:1.1">Nícolas Corneli</div><div style="font:400 12.5px 'Familjen Grotesk',sans-serif;color:#A79B90;margin-top:2px">nicolas@studio.com · autônomo</div></div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;margin-top:20px;background:rgba(255,255,255,.1);border-radius:14px;overflow:hidden">
+                    <div style="padding:12px 10px;background:rgba(255,255,255,.04)"><div style="font-family:'Instrument Serif',serif;font-size:21px;line-height:1">48</div><div style="font:500 10px 'Familjen Grotesk',sans-serif;color:#8A7E74;margin-top:2px">clientes</div></div>
+                    <div style="padding:12px 10px;background:rgba(255,255,255,.04)"><div style="font-family:'Instrument Serif',serif;font-size:21px;line-height:1">137</div><div style="font:500 10px 'Familjen Grotesk',sans-serif;color:#8A7E74;margin-top:2px">simulações</div></div>
+                    <div style="padding:12px 10px;background:rgba(255,255,255,.04)"><div style="font-family:'Instrument Serif',serif;font-size:21px;line-height:1">92</div><div style="font:500 10px 'Familjen Grotesk',sans-serif;color:#8A7E74;margin-top:2px">atendimentos</div></div>
+                  </div>
+                </div>
+                <div style="padding:18px 20px 0">
+                  <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.14em;color:#A2958A;margin-bottom:9px">CONTA</div>
+                  <div style="display:flex;flex-direction:column;gap:1px;background:#EDE5DD;border:1px solid #EDE5DD;border-radius:16px;overflow:hidden">
+                    <div style="background:#fff;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer" style-hover="background:#FBF7F3"><span style="font-size:14px;color:#8A7E74">◍</span><span style="flex:1;font:500 13.5px 'Familjen Grotesk',sans-serif">Dados pessoais e negócio</span><span style="font-size:16px;color:#C4B8AD">›</span></div>
+                    <div style="background:#fff;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer" style-hover="background:#FBF7F3"><span style="font-size:14px;color:#8A7E74">▤</span><span style="flex:1;font:500 13.5px 'Familjen Grotesk',sans-serif">Serviços e duração padrão</span><span style="font-size:16px;color:#C4B8AD">›</span></div>
+                    <div style="background:#fff;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer" style-hover="background:#FBF7F3"><span style="font-size:14px;color:#8A7E74">◔</span><span style="flex:1;font:500 13.5px 'Familjen Grotesk',sans-serif">Notificações e lembretes</span><span style="font:500 12px 'Familjen Grotesk',sans-serif;color:#8A7E74">Ativas</span><span style="font-size:16px;color:#C4B8AD">›</span></div>
+                  </div>
+                  <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.14em;color:#A2958A;margin:20px 0 9px">SIMULAÇÃO E DADOS</div>
+                  <div style="display:flex;flex-direction:column;gap:1px;background:#EDE5DD;border:1px solid #EDE5DD;border-radius:16px;overflow:hidden">
+                    <div onClick="{{ nav.privacy }}" style="background:#fff;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer" style-hover="background:#FBF7F3"><span style="font-size:14px;color:#8A7E74">⚿</span><span style="flex:1;font:500 13.5px 'Familjen Grotesk',sans-serif">Privacidade e meus dados</span><span style="font-size:16px;color:#C4B8AD">›</span></div>
+                    <div style="background:#fff;padding:14px;display:flex;align-items:flex-start;gap:12px;cursor:pointer" style-hover="background:#FBF7F3"><span style="font-size:14px;color:#8A7E74">◇</span><div style="flex:1"><div style="font:500 13.5px 'Familjen Grotesk',sans-serif">Como ler uma simulação</div><div style="font:400 11.5px/1.4 'Familjen Grotesk',sans-serif;color:#8A7E74;margin-top:3px">O que a IA acerta, onde ela erra e o que dizer ao cliente</div></div><span style="font-size:16px;color:#C4B8AD">›</span></div>
+                  </div>
+                  <div onClick="{{ nav.login }}" style="margin-top:20px;text-align:center;padding:15px;background:#fff;border:1px solid #EDE5DD;border-radius:14px;font:600 13.5px 'Familjen Grotesk',sans-serif;color:#BE4A3A;cursor:pointer" style-hover="background:#FDF6F4">Sair da conta</div>
+                  <div style="text-align:center;font:400 11px ui-monospace,monospace;color:#B0A49A;margin-top:14px">Espelho · protótipo TCC 2026</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ is.privacy }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;background:#FAF7F4">
+                <div style="padding:8px 20px 10px;display:flex;align-items:center;gap:13px;border-bottom:1px solid #EDE5DD">
+                  <div onClick="{{ nav.profile }}" style="width:36px;height:36px;border-radius:12px;border:1px solid #E4DBD2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#6F655D;cursor:pointer">←</div>
+                  <div style="flex:1"><div style="font:600 15px 'Familjen Grotesk',sans-serif">Privacidade e meus dados</div><div style="font:400 11.5px 'Familjen Grotesk',sans-serif;color:#9A8F85">LGPD · art. 18</div></div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:18px 20px 26px">
+                  <div style="background:#E7F2EC;border:1px solid #CFE4D9;border-radius:16px;padding:15px;display:flex;gap:11px;align-items:flex-start">
+                    <span style="color:#2E7A5E;font-size:13px;padding-top:1px">✓</span>
+                    <div><div style="font:600 12.8px 'Familjen Grotesk',sans-serif;color:#265C47;margin-bottom:3px">Consentimento ativo</div><div style="font:400 12.2px/1.5 'Familjen Grotesk',sans-serif;color:#2F6B53">Registrado em 12/03/2026, às 09:14. Você declarou obter o consentimento do cliente antes de cada captura.</div><div style="margin-top:9px;font:600 12px 'Familjen Grotesk',sans-serif;color:#265C47;cursor:pointer;text-decoration:underline">Revogar consentimento</div></div>
+                  </div>
+                  <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.14em;color:#A2958A;margin:20px 0 9px">COMO SEUS DADOS FICAM</div>
+                  <div style="display:flex;flex-direction:column;gap:1px;background:#EDE5DD;border:1px solid #EDE5DD;border-radius:16px;overflow:hidden">
+                    <div style="background:#fff;padding:14px"><div style="font:600 13px 'Familjen Grotesk',sans-serif;margin-bottom:4px">Criptografia</div><div style="font:400 12.2px/1.5 'Familjen Grotesk',sans-serif;color:#6F655D">AES-256 em repouso, TLS 1.3 em trânsito. Imagens abertas só por links temporários da sua sessão.</div></div>
+                    <div style="background:#fff;padding:14px"><div style="font:600 13px 'Familjen Grotesk',sans-serif;margin-bottom:4px">Sem compartilhamento</div><div style="font:400 12.2px/1.5 'Familjen Grotesk',sans-serif;color:#6F655D">As imagens ficam vinculadas só à sua conta. O serviço de IA recebe a foto para gerar e não a retém para treino.</div></div>
+                    <div style="background:#fff;padding:14px"><div style="font:600 13px 'Familjen Grotesk',sans-serif;margin-bottom:4px">Retenção</div><div style="font:400 12.2px/1.5 'Familjen Grotesk',sans-serif;color:#6F655D">Simulações ficam guardadas enquanto o cliente existir no app, ou até você excluí-las.</div></div>
+                  </div>
+                  <div style="font:600 9.5px ui-monospace,monospace;letter-spacing:.14em;color:#A2958A;margin:20px 0 9px">EXCLUSÃO</div>
+                  <div style="background:#fff;border:1px solid #E8CDC2;border-radius:16px;padding:15px;margin-bottom:10px">
+                    <div style="font:600 13px 'Familjen Grotesk',sans-serif;margin-bottom:4px">Excluir todas as imagens de simulação</div>
+                    <div style="font:400 12.2px/1.5 'Familjen Grotesk',sans-serif;color:#6F655D;margin-bottom:11px">Apaga 137 imagens do armazenamento. Clientes, histórico e agenda continuam intactos.</div>
+                    <div style="border:1.5px solid #BE4A3A;color:#BE4A3A;border-radius:12px;height:44px;display:flex;align-items:center;justify-content:center;font:600 13.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#FDF6F4">Excluir imagens</div>
+                  </div>
+                  <div style="background:#fff;border:1px solid #E8CDC2;border-radius:16px;padding:15px">
+                    <div style="font:600 13px 'Familjen Grotesk',sans-serif;margin-bottom:4px">Excluir minha conta e todos os dados</div>
+                    <div style="font:400 12.2px/1.5 'Familjen Grotesk',sans-serif;color:#6F655D;margin-bottom:11px">Remove conta, 48 clientes, histórico, agenda e imagens. A ação é irreversível e pede confirmação por e-mail.</div>
+                    <div style="background:#BE4A3A;color:#fff;border-radius:12px;height:44px;display:flex;align-items:center;justify-content:center;font:600 13.5px 'Familjen Grotesk',sans-serif;cursor:pointer" style-hover="background:#A63C2E">Excluir conta</div>
+                  </div>
+                  <div style="font:400 11.3px/1.55 'Familjen Grotesk',sans-serif;color:#9A8F85;margin-top:14px">Pedidos de exclusão são atendidos imediatamente no app e confirmados por e-mail, conforme art. 18 da Lei nº 13.709/2018.</div>
+                </div>
+              </div>
+            </sc-if>
+
+          </div>
+
+          <sc-if value="{{ showTabs }}">
+            <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:rgba(250,247,244,.94);backdrop-filter:blur(14px);border-top:1px solid #E8E0D8;display:flex;align-items:flex-start;padding:10px 8px 0;z-index:4">
+              <div onClick="{{ nav.home }}" style="{{ tab.home }}"><span style="font-size:16px">◈</span><span>Início</span></div>
+              <div onClick="{{ nav.clients }}" style="{{ tab.clients }}"><span style="font-size:16px">☰</span><span>Clientes</span></div>
+              <div onClick="{{ nav.capture }}" style="flex:1;display:flex;justify-content:center"><div style="width:52px;height:52px;border-radius:18px;background:#B96A52;color:#1B1714;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;box-shadow:0 8px 18px -6px rgba(185,106,82,.8)" style-hover="background:#A85C46">✳</div></div>
+              <div onClick="{{ nav.agenda }}" style="{{ tab.agenda }}"><span style="font-size:16px">▤</span><span>Agenda</span></div>
+              <div onClick="{{ nav.profile }}" style="{{ tab.profile }}"><span style="font-size:16px">◍</span><span>Perfil</span></div>
+            </div>
+          </sc-if>
+
+          <div style="position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:132px;height:4px;border-radius:3px;background:rgba(27,23,20,.28);z-index:9"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="width:100%;max-width:430px;display:flex;gap:10px;align-items:flex-start">
+      <div style="font:600 9.5px/1.6 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#A2958A;flex:none;padding-top:1px">NOTA</div>
+      <div style="font:400 12.5px/1.6 'Familjen Grotesk',sans-serif;color:#6F655D;text-wrap:pretty">{{ screenNote }}</div>
+    </div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;iniciarEm&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;onb&quot;,&quot;consent&quot;,&quot;login&quot;,&quot;home&quot;,&quot;homeEmpty&quot;,&quot;clients&quot;,&quot;clientsEmpty&quot;,&quot;clientNew&quot;,&quot;client&quot;,&quot;capture&quot;,&quot;captureErr&quot;,&quot;params&quot;,&quot;processing&quot;,&quot;result&quot;,&quot;aiErr&quot;,&quot;compare&quot;,&quot;service&quot;,&quot;success&quot;,&quot;agenda&quot;,&quot;agendaNew&quot;,&quot;profile&quot;,&quot;privacy&quot;],&quot;default&quot;:&quot;onb&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Protótipo&quot;}}">
+const SCREENS = [
+  {g:'Entrada', id:'onb', label:'Boas-vindas', note:'Onboarding em uma tela: promessa do app e os três passos do fluxo (simular → registrar → agendar), para o profissional entender o produto antes de criar conta.'},
+  {g:'Entrada', id:'consent', label:'Consentimento (T0)', note:'Ponto concreto de captura do consentimento exigido pelo RNF05. O aceite é bloqueante: o botão só ativa com a caixa marcada, e a tela explica finalidade, guarda criptografada e exclusão sob demanda em linguagem de balcão.'},
+  {g:'Entrada', id:'login', label:'Login (T1)', note:'RF01. Campos mínimos, recuperação de senha e nada mais — o login não é o lugar de explicar arquitetura.'},
+  {g:'Início', id:'home', label:'Dashboard (T2)', note:'T2 reorganizado por urgência, não por métrica: o próximo atendimento ocupa o card escuro, os números viram apoio e a ação primária (nova simulação) fica a um toque. Cobre RF03 e RF06 na leitura do dia.'},
+  {g:'Início', id:'homeEmpty', label:'Primeiro uso (vazio)', note:'Estado vazio do dashboard. Em vez de zeros, uma única ação de saída — cadastrar o primeiro cliente — e o aviso de que gestão e IA são desacopladas (seção 5.5 do pré-projeto).'},
+  {g:'Clientes', id:'clients', label:'Lista (T3)', note:'RF02/T3. Busca fixa no topo, lista densa com inicial colorida, último atendimento e selo com o número de simulações salvas — a informação que faz o profissional lembrar quem é o cliente.'},
+  {g:'Clientes', id:'clientsEmpty', label:'Lista vazia', note:'Estado vazio que explica a regra do modelo de dados: simulação existe vinculada a um cliente.'},
+  {g:'Clientes', id:'clientNew', label:'Novo cliente', note:'CRUD de clientes (RF02): nome, telefone, foto e observações — exatamente os atributos da entidade clientes na seção 5.6.'},
+  {g:'Clientes', id:'client', label:'Perfil (T4)', note:'T4 é o centro de gravidade do app: cabeçalho escuro com observações sempre visíveis, galeria de simulações, histórico de atendimentos com o vínculo opcional à simulação (RF03/RF05) e as duas ações que iniciam trabalho.'},
+  {g:'Simulador', id:'capture', label:'Captura (T5)', note:'T5. Guia de enquadramento, dicas de luz e o selo de consentimento já registrado. O objetivo é reduzir a chance de foto ruim antes da inferência (critérios da seção 4.2).'},
+  {g:'Simulador', id:'captureErr', label:'Foto recusada (erro)', note:'Validação local antes de gastar chamada de IA: a recusa lista o motivo em linguagem acionável, e não um código de erro.'},
+  {g:'Simulador', id:'params', label:'Parâmetros (T6)', note:'T6. Estilo em grid de miniaturas, cor em paleta nomeada e campo livre de observações — os três campos que vão para parametros_json.'},
+  {g:'Simulador', id:'processing', label:'Processando', note:'A latência do serviço externo (RNF02) é encarada de frente: etapas nomeadas, tempo de referência e aviso de que dá para sair da tela. Avança sozinho para o resultado.'},
+  {g:'Simulador', id:'result', label:'Resultado (T7)', note:'T7. Antes/depois lado a lado, parâmetros usados como chips e o aviso de aproximação visual com peso gráfico real — é requisito ético (seção 5.11), não rodapé.'},
+  {g:'Simulador', id:'aiErr', label:'IA indisponível (erro)', note:'Degradação graciosa da seção 5.12: nova tentativa sem perder parâmetros e a garantia explícita de que clientes, histórico e agenda seguem funcionando.'},
+  {g:'Simulador', id:'compare', label:'Comparar (RF07)', note:'RF07. Duas simulações do mesmo cliente lado a lado com seus parâmetros embaixo, e a escolha de uma preferida que o histórico registra.'},
+  {g:'Simulador', id:'service', label:'Registrar atendimento', note:'RF03. Formulário curto com o vínculo opcional à simulação — a ponte entre o módulo de IA e a gestão, que é a contribuição original do TCC.'},
+  {g:'Simulador', id:'success', label:'Salvo (sucesso)', note:'Confirmação que mostra o que ficou registrado e oferece o próximo passo natural: agendar a execução.'},
+  {g:'Agenda', id:'agenda', label:'Agenda (T8)', note:'T8/RF06. Mês compacto com marcadores, dia selecionado em lista e status pendente/confirmado/concluído nas cores da entidade agendamentos.'},
+  {g:'Agenda', id:'agendaNew', label:'Novo agendamento', note:'Criação de agendamento com cliente, data, serviço, status e notificação local — inclusive a partir de uma simulação aprovada.'},
+  {g:'Conta', id:'profile', label:'Perfil e ajustes', note:'Conta do profissional, ajustes e a porta de entrada para privacidade. Inclui um item que explica os limites da simulação, reforçando a dimensão de confiança da seção 4.4.'},
+  {g:'Conta', id:'privacy', label:'Privacidade e LGPD', note:'Art. 18 da LGPD como interface: estado do consentimento, revogação, retenção e duas exclusões destrutivas com escopo claro.'}
+];
+
+const CLIENTES = [
+  {nome:'Aline Barros', iniciais:'AB', ultimo:'Último atendimento · 04 mar', sims:'3 SIM', temSim:true, cor:'#B96A52'},
+  {nome:'Bruno Tavares', iniciais:'BT', ultimo:'Último atendimento · 28 fev', sims:'', temSim:false, cor:'#2E7A5E'},
+  {nome:'Carla Menezes', iniciais:'CM', ultimo:'Último atendimento · 21 fev', sims:'1 SIM', temSim:true, cor:'#8A6A22'},
+  {nome:'Júlia Stein', iniciais:'JS', ultimo:'Agendada para hoje · 18:15', sims:'2 SIM', temSim:true, cor:'#5A6E8C'},
+  {nome:'Marina Alves', iniciais:'MA', ultimo:'Agendada para hoje · 14:30', sims:'3 SIM', temSim:true, cor:'#B96A52'},
+  {nome:'Rafael Prado', iniciais:'RP', ultimo:'Agendada para hoje · 16:00', sims:'', temSim:false, cor:'#2E7A5E'},
+  {nome:'Sofia Ramires', iniciais:'SR', ultimo:'Último atendimento · 11 jan', sims:'1 SIM', temSim:true, cor:'#8A6A22'}
+];
+
+const TABS = {home:'home', clients:'clients', agenda:'agenda', profile:'profile'};
+
+class Component extends DCLogic {
+  state = {screen:null, aceite:false, estilo:'Médio em camadas', cor:'Castanho acobreado', prog:0};
+
+  componentDidMount() {
+    const start = this.props.iniciarEm;
+    this.setState({screen: SCREENS.some(s => s.id === start) ? start : 'onb'});
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  go = (id) => {
+    clearInterval(this._t);
+    this.setState({screen:id, prog: id === 'processing' ? 0 : this.state.prog});
+    if (id === 'processing') {
+      this._t = setInterval(() => {
+        const p = this.state.prog + 7;
+        if (p >= 100) { clearInterval(this._t); this.setState({prog:100}); this._g = setTimeout(() => this.go('result'), 420); }
+        else this.setState({prog:p});
+      }, 170);
+    }
+  };
+
+  railStyle(active) {
+    return 'display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer;color:' +
+      (active ? '#FAF7F4' : '#B6AAA0') + ';background:' + (active ? 'rgba(185,106,82,.32)' : 'transparent');
+  }
+  tabStyle(active) {
+    return 'flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font:600 9.5px "Familjen Grotesk",sans-serif;color:' +
+      (active ? '#1B1714' : '#A2958A');
+  }
+
+  renderVals() {
+    const screen = this.state.screen;
+    const nav = {}; const is = {};
+    SCREENS.forEach(s => { nav[s.id] = () => this.go(s.id); is[s.id] = screen === s.id; });
+
+    const groups = [];
+    SCREENS.forEach((s, i) => {
+      let g = groups.find(x => x.name === s.g);
+      if (!g) { g = {name:s.g, items:[]}; groups.push(g); }
+      g.items.push({n: String(i + 1).padStart(2, '0'), label:s.label, go:nav[s.id], style:this.railStyle(screen === s.id)});
+    });
+
+    const idx = SCREENS.findIndex(s => s.id === screen);
+    const cur = SCREENS[idx] || SCREENS[0];
+    const tab = {};
+    Object.keys(TABS).forEach(k => { tab[k] = this.tabStyle(screen === k || (k === 'home' && screen === 'homeEmpty') || (k === 'clients' && screen === 'clientsEmpty')); });
+
+    const sel = {}; const selEstilo = {};
+    ['Castanho acobreado','Loiro mel','Castanho escuro','Preto azulado','Ruivo intenso','Platinado'].forEach(c => sel[c.split(' ')[0].toLowerCase() + (c.split(' ')[1] ? c.split(' ')[1].toLowerCase() : '')] = this.state.cor === c);
+    ['Curto texturizado','Médio em camadas','Longo liso','Franja cortina','Bob curto','Cacheado definido'].forEach(e => selEstilo[e.replace(/[^a-zA-Z]/g, '').toLowerCase()] = this.state.estilo === e);
+
+    const mid = 8 + Math.round((this.state.prog / 100) * 12);
+
+    const marcados = [3, 5, 9, 12, 16, 19, 23, 26, 30];
+    const dias = [];
+    for (let i = 0; i < 35; i++) {
+      const n = i - 1;
+      const valido = n >= 1 && n <= 31;
+      const hoje = n === 12;
+      const dot = valido && marcados.indexOf(n) > -1;
+      dias.push({
+        n: valido ? String(n) : '',
+        dot,
+        dotStyle: 'width:4px;height:4px;border-radius:50%;margin-top:2px;background:' + (hoje ? '#1B1714' : '#B96A52'),
+        style: 'height:36px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:' +
+          (valido ? 'pointer' : 'default') + ';font:' + (hoje ? '600' : '500') + ' 12.5px "Familjen Grotesk",sans-serif;color:' +
+          (!valido ? 'transparent' : hoje ? '#1B1714' : '#4A423B') + ';background:' + (hoje ? '#EBDCCF' : 'transparent')
+      });
+    }
+
+    return {
+      groups, nav, is, tab, dias,
+      statusStyle: 'height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font:600 12.5px "Familjen Grotesk",sans-serif;position:relative;z-index:5;color:' +
+        (['onb','capture','captureErr','processing','client','profile'].indexOf(screen) > -1 ? '#F3EDE7' : '#1B1714'),
+      screenNum: 'TELA ' + String(idx < 0 ? 1 : idx + 1).padStart(2, '0') + ' / 22',
+      screenTitle: cur.label,
+      screenNote: cur.note,
+      showTabs: ['home','homeEmpty','clients','clientsEmpty','client','agenda','profile'].indexOf(screen) > -1,
+      clientes: CLIENTES.map(c => Object.assign({}, c, {
+        go: nav.client,
+        avatar: 'width:38px;height:38px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 12.5px "Familjen Grotesk",sans-serif;color:#FAF7F4;background:' + c.cor
+      })),
+      aceite: this.state.aceite,
+      toggleAceite: () => this.setState({aceite: !this.state.aceite}),
+      boxAceite: 'width:22px;height:22px;flex:none;border-radius:7px;display:flex;align-items:center;justify-content:center;border:1.5px solid ' +
+        (this.state.aceite ? '#2E7A5E' : '#CFC3B8') + ';background:' + (this.state.aceite ? '#2E7A5E' : '#fff'),
+      btnConsent: 'border-radius:15px;height:54px;display:flex;align-items:center;justify-content:center;font:600 15.5px "Familjen Grotesk",sans-serif;cursor:' +
+        (this.state.aceite ? 'pointer' : 'not-allowed') + ';background:' + (this.state.aceite ? '#1B1714' : '#E2D9D0') + ';color:' + (this.state.aceite ? '#F3EDE7' : '#A79B90'),
+      aceitarConsent: () => { if (this.state.aceite) this.go('login'); },
+      estilo: this.state.estilo, cor: this.state.cor,
+      setEstilo: {}, sel, selEstilo,
+      prog: this.state.prog,
+      progLabel: this.state.prog + '%',
+      progBar: 'height:100%;border-radius:99px;background:#B96A52;transition:width .16s linear;width:' + this.state.prog + '%',
+      etapa1: 'font:500 13px "Familjen Grotesk",sans-serif;color:' + (this.state.prog > 5 ? '#EFE9E3' : '#7C6F64'),
+      etapa2: 'font:500 13px "Familjen Grotesk",sans-serif;color:' + (this.state.prog > 30 ? '#EFE9E3' : '#7C6F64'),
+      etapa3: 'font:500 13px "Familjen Grotesk",sans-serif;color:' + (this.state.prog > 60 ? '#EFE9E3' : '#7C6F64'),
+      segundos: mid + 's',
+      pickCor: {
+        castanhoacobreado: () => this.setState({cor:'Castanho acobreado'}),
+        loiromel: () => this.setState({cor:'Loiro mel'}),
+        castanhoescuro: () => this.setState({cor:'Castanho escuro'}),
+        pretoazulado: () => this.setState({cor:'Preto azulado'}),
+        ruivointenso: () => this.setState({cor:'Ruivo intenso'}),
+        platinado: () => this.setState({cor:'Platinado'})
+      },
+      pickEstilo: {
+        curtotexturizado: () => this.setState({estilo:'Curto texturizado'}),
+        mdioemcamadas: () => this.setState({estilo:'Médio em camadas'}),
+        longoliso: () => this.setState({estilo:'Longo liso'}),
+        franjacortina: () => this.setState({estilo:'Franja cortina'}),
+        bobcurto: () => this.setState({estilo:'Bob curto'}),
+        cacheadodefinido: () => this.setState({estilo:'Cacheado definido'})
+      }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

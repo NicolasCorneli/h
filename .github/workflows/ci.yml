@@ -1,0 +1,141 @@
+# Integração contínua: verifica cada push e pull request. Não publica nada.
+#
+# - backend: testes com PostgreSQL de verdade, migrations x modelos e auditoria de
+#   vulnerabilidades das dependências de execução;
+# - aplicativo: tipos, lint, testes de unidade, build web de produção e auditoria;
+# - aplicação: `docker compose build` e subida do docker-compose.yml inteiro (banco, API e
+#   site no Caddy) até tudo ficar pronto, testando pelo HTTPS local do Caddy, com segredos
+#   gerados na hora (descartados ao fim).
+#
+# As baterias de navegador (./qa.sh --interface) não rodam aqui: precisam de Chromium,
+# do Expo e de ~30 minutos. Rode-as antes de uma implantação (ver DEPLOY.md).
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: espelho
+          POSTGRES_PASSWORD: espelho
+          POSTGRES_DB: espelho_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U espelho -d espelho_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://espelho:espelho@localhost:5432/espelho_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - name: Dependências
+        run: pip install -r requirements-dev.txt
+      - name: Testes (com cobertura)
+        run: python -m pytest --cov=app --cov-report=term-missing:skip-covered
+      - name: Modelos e migrations coincidem
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+          JWT_SECRET: segredo-so-para-conferir-as-migrations-0000
+        run: python -m alembic check
+      - name: Vulnerabilidades conhecidas (dependências de execução)
+        run: python -m pip_audit -r requirements.txt --progress-spinner off
+
+  aplicativo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: espelho
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: espelho/package-lock.json
+      - name: Dependências
+        run: npm ci
+      - name: Tipos
+        run: npx tsc --noEmit --noUnusedLocals
+      - name: Lint
+        run: npx eslint .
+      - name: Testes de unidade
+        run: |
+          node --experimental-strip-types --no-warnings testes/duracao.mjs
+          TZ=America/Sao_Paulo node --experimental-strip-types --no-warnings testes/inicio-agendamento.mjs
+          TZ=America/Sao_Paulo node --experimental-strip-types --no-warnings testes/painel.mjs
+          node --experimental-strip-types --no-warnings testes/busca.mjs
+          node --experimental-strip-types --no-warnings testes/comparacao.mjs
+          node --experimental-strip-types --no-warnings --import ./testes/carregar-ts.mjs testes/pedido.mjs
+          for fuso in America/Sao_Paulo Asia/Tokyo; do
+            TZ=$fuso node --experimental-strip-types --no-warnings --import ./testes/carregar-ts.mjs testes/datas.mjs
+          done
+      - name: Textos sem travessões
+        working-directory: .
+        run: python3 scripts/verificar_travessoes.py .
+      - name: Build web de produção
+        env:
+          EXPO_PUBLIC_API_URL: https://api.exemplo.invalid
+        run: npm run build:web
+      - name: Vulnerabilidades críticas (pacote do aplicativo)
+        # Os avisos altos conhecidos estão nas ferramentas de build do Expo e só se
+        # resolvem com a troca de SDK (ver RELATORIO_REVISAO_E_DEPLOY.md). Crítico bloqueia.
+        run: npm audit --omit=dev --audit-level=critical
+
+  aplicacao:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configuração de teste (segredos descartáveis)
+        run: |
+          {
+            echo "DOMINIO=localhost"
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)"
+            echo "JWT_SECRET=$(openssl rand -hex 32)"
+            echo "VERSAO=ci"
+          } > ci.env
+      - name: Build das imagens (API e site)
+        run: docker compose --env-file ci.env build
+      - name: Subida até todos os serviços ficarem prontos
+        run: docker compose --env-file ci.env up -d --wait --wait-timeout 240
+      - name: Site, API e cabeçalhos pelo HTTPS do Caddy
+        run: |
+          docker compose --env-file ci.env exec -T web cat /data/caddy/pki/authorities/local/root.crt > caddy-ca.crt
+          C="curl --fail --silent --show-error --cacert caddy-ca.crt"
+          $C https://localhost/ > /dev/null
+          $C https://localhost/agenda > /dev/null                      # rota interna do site
+          $C https://localhost/api/v1/saude
+          $C https://localhost/api/v1/termos/cliente > /dev/null       # termos das migrations
+          $C -o /dev/null -D - https://localhost/api/v1/catalogo | grep -i strict-transport-security
+          ! $C -o /dev/null -D - https://localhost/ | grep -i '^server:'
+      - name: Logs em caso de falha
+        if: failure()
+        run: docker compose --env-file ci.env logs --no-color | tail -300
+      - name: Limpeza
+        if: always()
+        run: docker compose --env-file ci.env down -v || true

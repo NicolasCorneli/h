@@ -1,0 +1,18 @@
+# O contexto de build leva só o que a imagem usa. Sem este arquivo, o `.env` (segredos),
+# o ambiente virtual e as imagens de clientes em `dados/` iam para o daemon do Docker a
+# cada build.
+.env
+.env.*
+!.env.example
+.venv/
+dados/
+tests/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+requirements-dev.txt
+docker-compose*.yml
+README.md
