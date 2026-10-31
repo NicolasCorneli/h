@@ -145,10 +145,12 @@ services:
     restart: unless-stopped
     environment:
       DOMINIO: ${DOMINIO:?defina DOMINIO no .env}
+      # Só muda quando o site fica numa porta HTTPS diferente da 443 (ver .env.example).
+      PORTA_HTTPS_INTERNA: ${PORTA_HTTPS_INTERNA:-443}
     ports:
       - "${PORTA_HTTP:-80}:80"
-      - "${PORTA_HTTPS:-443}:443"
-      - "${PORTA_HTTPS:-443}:443/udp"
+      - "${PORTA_HTTPS:-443}:${PORTA_HTTPS_INTERNA:-443}"
+      - "${PORTA_HTTPS:-443}:${PORTA_HTTPS_INTERNA:-443}/udp"
     volumes:
       # Certificados e chaves do HTTPS: perder este volume obriga a pedir tudo de novo.
       - caddy_dados:/data

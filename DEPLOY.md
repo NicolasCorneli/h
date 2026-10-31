@@ -226,6 +226,29 @@ avisa que foi gerado sem o endereço do servidor.
 
 ## 11. Variações
 
+- **Porta 443 ocupada por outro sistema (site numa porta alternativa, ex.: 9443):** a porta
+  80 precisa estar livre (o certificado é validado por ela). No `.env`:
+
+  ```
+  PORTA_HTTP=80
+  PORTA_HTTPS=9443
+  PORTA_HTTPS_INTERNA=9443
+  URL_PUBLICA=https://SEU-DOMINIO:9443
+  CORS_ORIGENS=https://SEU-DOMINIO:9443
+  ```
+
+  O site fica em `https://SEU-DOMINIO:9443`, e o acesso precisa ser sempre por esse endereço
+  completo: quem digita o domínio sem a porta cai na 443, que é o outro sistema (o
+  redirecionamento de `http://` também vai sem a porta). No app de celular,
+  `EXPO_PUBLIC_API_URL=https://SEU-DOMINIO:9443`.
+- **Portas 80 e 443 usadas por um servidor web que já existe (Nginx, Apache...):** ele cuida
+  do HTTPS e encaminha para o projeto. No `.env`: `DOMINIO=http://SEU-DOMINIO` (o `http://`
+  faz o Caddy do projeto não pedir certificado), `URL_PUBLICA` e `CORS_ORIGENS` com
+  `https://SEU-DOMINIO`, `PORTA_HTTP=127.0.0.1:8080` e `PORTA_HTTPS=127.0.0.1:8443`; no
+  servidor web, encaminhe o domínio para `http://127.0.0.1:8080` com
+  `client_max_body_size 12m` e 180 s de tempo limite. Limite conhecido: o freio de login
+  passa a ver todos os usuários pelo endereço do servidor web.
+
 - **API e site em domínios diferentes:** defina `URL_PUBLICA` e `CORS_ORIGENS` no `.env`
   e gere o site com `EXPO_PUBLIC_API_URL` apontando para a API.
 - **PostgreSQL gerenciado** (RDS, Cloud SQL, Supabase): numa cópia do `docker-compose.yml`,

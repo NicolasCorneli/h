@@ -4,6 +4,17 @@
 # apontado para o servidor, o Caddy obtém e renova o certificado do Let's Encrypt sozinho.
 # Com DOMINIO=localhost, usa um certificado local (o navegador avisa; serve para testar).
 
+{
+	# Porta HTTPS dentro do contêiner. Quando o site é publicado numa porta diferente
+	# da 443 (PORTA_HTTPS=9443, por exemplo), ela precisa ser a mesma da publicada
+	# (PORTA_HTTPS_INTERNA=9443): é a porta que o Caddy anuncia para o HTTP/3. Com 443
+	# fixo, ele anunciava a 443 do servidor, que pode ser outro site.
+	# Limite conhecido: o redirecionamento de http:// continua sem a porta (o Caddy não a
+	# acrescenta quando ela é a própria https_port). Numa porta alternativa, acesse sempre
+	# pelo endereço completo, com a porta.
+	https_port {$PORTA_HTTPS_INTERNA:443}
+}
+
 {$DOMINIO} {
 	encode zstd gzip
 
