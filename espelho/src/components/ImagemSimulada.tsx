@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Image, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { cores } from '@/theme/tokens';
+
 import { Hachura } from './Hachura';
 
 type Props = {
@@ -75,6 +77,6 @@ export function ImagemSimulada({
 const styles = StyleSheet.create({
   moldura: {
     overflow: 'hidden',
-    backgroundColor: '#E7DDD3',
+    backgroundColor: cores.superficieAfundada,
   },
 });

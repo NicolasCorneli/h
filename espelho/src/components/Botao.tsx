@@ -15,8 +15,8 @@ import { Icone, type NomeIcone } from './Icone';
 
 /**
  * Variantes:
- * - `primaria`   ação principal da tela (tinta sólida)
- * - `acao`       ação ligada à simulação (terracota)
+ * - `primaria`   ação principal da tela (ameixa sólida)
+ * - `acao`       mesmo desenho da primária; mantida para as telas que já a usam
  * - `secundaria` ação alternativa de mesmo peso (branca com borda)
  * - `perigo`     ação destrutiva confirmada
  * - `texto`      ação terciária, sem caixa
@@ -45,12 +45,17 @@ type Props = {
 
 const ALTURAS: Record<Tamanho, number> = { grande: 52, medio: 46, pequeno: ALVO_TOQUE };
 
-const PALETAS: Record<Variante, { fundo: string; texto: string; borda?: string }> = {
-  primaria: { fundo: cores.tinta, texto: cores.escuroTexto },
-  acao: { fundo: cores.acao, texto: '#FFFFFF' },
-  secundaria: { fundo: cores.superficie, texto: cores.texto, borda: cores.bordaForte },
-  perigo: { fundo: cores.superficie, texto: cores.erroTexto, borda: cores.erroBorda },
-  texto: { fundo: 'transparent', texto: cores.acaoTexto },
+const PALETAS: Record<Variante, { fundo: string; pressionado: string; texto: string; borda?: string }> = {
+  primaria: { fundo: cores.acao, pressionado: cores.acaoPressionada, texto: '#FFFFFF' },
+  acao: { fundo: cores.acao, pressionado: cores.acaoPressionada, texto: '#FFFFFF' },
+  secundaria: {
+    fundo: cores.superficie,
+    pressionado: cores.superficieSuave,
+    texto: cores.texto,
+    borda: cores.bordaForte,
+  },
+  perigo: { fundo: cores.superficie, pressionado: cores.erroFundo, texto: cores.erroTexto, borda: cores.erroBorda },
+  texto: { fundo: 'transparent', pressionado: 'transparent', texto: cores.acaoTexto },
 };
 
 export function Botao({
@@ -111,11 +116,10 @@ export function Botao({
         {
           height: ALTURAS[tamanho],
           alignSelf: larguraTotal ? 'stretch' : 'flex-start',
-          backgroundColor: inativo ? cores.superficieAfundada : paleta.fundo,
+          backgroundColor: inativo ? cores.superficieAfundada : pressed ? paleta.pressionado : paleta.fundo,
           borderWidth: paleta.borda ? 1 : 0,
           borderColor: inativo ? cores.borda : paleta.borda,
         },
-        pressed && !inativo && styles.pressionado,
         estilo,
       ]}>
       {conteudo}

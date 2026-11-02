@@ -2,14 +2,14 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Aviso, Tela } from '@/components/Basicos';
+import { Aviso, BotaoIcone, Faixa, Tela, useTelaDividida } from '@/components/Basicos';
 import { BotaoGoogle, useGoogleDisponivel } from '@/components/BotaoGoogle';
 import { Botao } from '@/components/Botao';
-import { Cabecalho } from '@/components/Cabecalho';
 import { Campo } from '@/components/Campo';
+import { Marca } from '@/components/Marca';
 import { useStore } from '@/data/store';
 import { ErroApi } from '@/services/api';
-import { textos } from '@/theme/textos';
+import { textos, textosEscuros } from '@/theme/textos';
 import { cores, espaco } from '@/theme/tokens';
 
 const MIN_SENHA = 8;
@@ -29,7 +29,9 @@ export default function Cadastro() {
   const [erros, setErros] = useState<{ campo: string; mensagem: string }[]>([]);
   const [erroGeral, setErroGeral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [entrandoGoogle, setEntrandoGoogle] = useState(false);
   const googleDisponivel = useGoogleDisponivel();
+  const dividida = useTelaDividida();
 
   const erroDe = (campo: string) => erros.find((e) => e.campo === campo)?.mensagem ?? null;
 
@@ -68,26 +70,38 @@ export default function Cadastro() {
   }
 
   return (
-    <Tela bordas={['top', 'bottom']}>
-      <Cabecalho titulo="Criar conta" aoVoltar={() => router.back()} />
+    <Tela bordas={['top', 'bottom']} dividida>
+      <Faixa estilo={styles.topo}>
+        <View style={styles.linhaTopo}>
+          <BotaoIcone icone="voltar" rotuloAcessivel="Voltar" aoPressionar={() => router.back()} />
+          <Marca />
+        </View>
+        <Text style={[textosEscuros.display, styles.titulo]} accessibilityRole="header">
+          Criar conta
+        </Text>
+        <Text style={[textosEscuros.corpo, styles.subtitulo]}>
+          A conta é sua e os dados dos seus clientes ficam visíveis só para você.
+        </Text>
+      </Faixa>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}>
         <ScrollView
-          contentContainerStyle={styles.conteudo}
+          contentContainerStyle={[styles.conteudo, dividida && styles.conteudoCentrado]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
-          <Text style={[textos.corpo, styles.subtitulo]}>
-            A conta é sua e os dados dos seus clientes ficam visíveis só para você.
-          </Text>
-
-          {erroGeral ? <Aviso tom="erro" titulo="Não deu certo" texto={erroGeral} /> : null}
+          {erroGeral ? (
+            <View style={styles.erroGeral}>
+              <Aviso tom="erro" titulo="Não deu certo" texto={erroGeral} />
+            </View>
+          ) : null}
 
           {googleDisponivel ? (
             <>
               <BotaoGoogle
-                rotulo="Criar conta com Google"
+                rotulo="Continuar com Google"
                 desabilitado={enviando}
+                aoMudarOcupado={setEntrandoGoogle}
                 aoReceberToken={async (idToken, nonce) => {
                   setErroGeral(null);
                   await acoes.entrarComGoogle(idToken, nonce);
@@ -97,7 +111,7 @@ export default function Cadastro() {
               />
               <View style={styles.divisor}>
                 <View style={styles.linha} />
-                <Text style={textos.meta}>ou com e-mail e senha</Text>
+                <Text style={textos.meta}>ou com e-mail</Text>
                 <View style={styles.linha} />
               </View>
             </>
@@ -138,6 +152,7 @@ export default function Cadastro() {
           <Botao
             titulo={enviando ? 'Criando…' : 'Criar conta'}
             carregando={enviando}
+            desabilitado={entrandoGoogle}
             aoPressionar={criar}
             estilo={styles.botao}
           />
@@ -153,9 +168,19 @@ export default function Cadastro() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  conteudo: { paddingHorizontal: espaco.xl, paddingTop: espaco.md, paddingBottom: espaco.xxxl },
-  subtitulo: { marginBottom: espaco.lg },
-  campos: { gap: espaco.md, marginTop: espaco.md },
+  topo: { paddingHorizontal: espaco.xxl, paddingTop: espaco.md, paddingBottom: espaco.xxl },
+  linhaTopo: { flexDirection: 'row', alignItems: 'center', gap: espaco.md },
+  titulo: { marginTop: espaco.xl },
+  subtitulo: { marginTop: espaco.sm },
+  conteudo: {
+    flexGrow: 1,
+    paddingHorizontal: espaco.xxl,
+    paddingTop: espaco.xxl,
+    paddingBottom: espaco.xxxl,
+  },
+  conteudoCentrado: { justifyContent: 'center' },
+  erroGeral: { marginBottom: espaco.lg },
+  campos: { gap: espaco.md },
   botao: { marginTop: espaco.xl },
   nota: { marginTop: espaco.md, textAlign: 'center' },
   divisor: { flexDirection: 'row', alignItems: 'center', gap: espaco.md, marginVertical: espaco.lg },

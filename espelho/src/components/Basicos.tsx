@@ -4,7 +4,7 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { useSuperficie, SuperficieContext } from '@/theme/superficie';
 import { textos } from '@/theme/textos';
-import { ALVO_TOQUE, cores, elevacao, espaco, LARGURA_MAXIMA, raios } from '@/theme/tokens';
+import { ALVO_TOQUE, cores, elevacao, espaco, LARGURA_DIVIDIDA, LARGURA_MAXIMA, LARGURA_TABLET, raios } from '@/theme/tokens';
 import { iniciais } from '@/utils/datas';
 
 import { Icone, type NomeIcone } from './Icone';
@@ -14,6 +14,17 @@ import { Icone, type NomeIcone } from './Icone';
 const DRIVER_NATIVO = Platform.OS !== 'web';
 
 /**
+ * true quando uma `Tela dividida` fica lado a lado com a marca (computador). As telas
+ * públicas usam para centralizar o conteúdo na vertical; no celular ele começa no topo,
+ * logo abaixo da faixa. É uma regra de largura, e não um contexto, porque a tela que
+ * pergunta é a mesma que monta a `Tela`.
+ */
+export function useTelaDividida(): boolean {
+  const { width } = useWindowDimensions();
+  return width >= LARGURA_DIVIDIDA;
+}
+
+/**
  * Moldura de tela: área segura, base escura e coluna de largura máxima.
  *
  * Os `Cabecalho` que abrem a tela ficam sobre a faixa escura; o resto do conteúdo vai
@@ -21,13 +32,18 @@ const DRIVER_NATIVO = Platform.OS !== 'web';
  * cada uma repita a estrutura. Telas com topo próprio (as abas, o perfil do cliente)
  * passam `folha={false}` e montam as folhas por conta própria.
  *
- * Em tablet o conteúdo é centralizado em vez de esticar as linhas de texto.
+ * Em tablet o conteúdo é centralizado em vez de esticar as linhas de texto, e a folha
+ * termina num cartão de cantos arredondados em vez de encostar na borda da janela.
+ *
+ * `dividida` (telas públicas): no computador, a faixa vira um painel da marca à esquerda e
+ * o conteúdo fica à direita, lado a lado. No celular nada muda.
  */
 export function Tela({
   children,
   bordas = ['top'],
   fundo = cores.base,
   folha = true,
+  dividida = false,
   estilo,
 }: {
   children: React.ReactNode;
@@ -35,8 +51,11 @@ export function Tela({
   fundo?: string;
   /** Coloca o conteúdo (tudo depois dos cabeçalhos) numa folha clara. */
   folha?: boolean;
+  dividida?: boolean;
   estilo?: StyleProp<ViewStyle>;
 }) {
+  const lado = useTelaDividida();
+  const larga = useTelaLarga();
   const itens = Children.toArray(children);
   const primeiroConteudo = itens.findIndex(
     (item) => !(isValidElement(item) && (item.type as { naFaixaEscura?: boolean }).naFaixaEscura)
@@ -45,6 +64,25 @@ export function Tela({
   const faixa = folha ? itens.slice(0, corte) : [];
   const conteudo = folha ? itens.slice(corte) : itens;
 
+  if (dividida && folha && lado) {
+    return (
+      <SafeAreaView style={[styles.tela, { backgroundColor: fundo }, estilo]} edges={bordas}>
+        <View style={styles.dividida}>
+          <View style={styles.ladoMarca}>
+            <View style={styles.ladoMarcaColuna}>
+              <SuperficieContext.Provider value="escura">{faixa}</SuperficieContext.Provider>
+            </View>
+          </View>
+          <View style={styles.ladoConteudo}>
+            <View style={styles.ladoConteudoColuna}>
+              {conteudo}
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.tela, { backgroundColor: fundo }, estilo]} edges={bordas}>
       <View style={styles.colunaLimite}>
@@ -52,7 +90,14 @@ export function Tela({
           <SuperficieContext.Provider value="escura">{faixa}</SuperficieContext.Provider>
         ) : null}
         {folha ? (
-          <View style={[styles.folha, faixa.length === 0 && styles.folhaSemFaixa]}>{conteudo}</View>
+          <View
+            style={[
+              styles.folha,
+              faixa.length === 0 && styles.folhaSemFaixa,
+              larga && styles.folhaCartao,
+            ]}>
+            {conteudo}
+          </View>
         ) : (
           conteudo
         )}
@@ -72,13 +117,14 @@ Faixa.naFaixaEscura = true;
 
 /** Folha clara de conteúdo, para telas que montam o próprio topo sobre a base escura. */
 export function Folha({ children, estilo }: { children: React.ReactNode; estilo?: StyleProp<ViewStyle> }) {
-  return <View style={[styles.folha, estilo]}>{children}</View>;
+  const larga = useTelaLarga();
+  return <View style={[styles.folha, larga && styles.folhaCartao, estilo]}>{children}</View>;
 }
 
 /** true quando há espaço para duas colunas (tablet em paisagem ou retrato largo). */
 export function useTelaLarga(): boolean {
   const { width } = useWindowDimensions();
-  return width >= 700;
+  return width >= LARGURA_TABLET;
 }
 
 export function Cartao({
@@ -188,8 +234,11 @@ export function Avatar({
   );
 }
 
-/** Cores de avatar escolhidas para manter contraste com o texto branco das iniciais. */
-const PALETA_AVATAR = ['#A85C46', '#2E7A5E', '#7A5A17', '#4A5F7E'];
+/**
+ * Cores de avatar: tons fechados da paleta, todos com 6:1 ou mais contra o branco das
+ * iniciais. Nenhum é o vermelho de erro, para um avatar não parecer um alerta.
+ */
+const PALETA_AVATAR = ['#6B2D5C', '#2E6B57', '#7A5A17', '#3E5A7E', '#574A8C'];
 
 export function corDoNome(nome: string): string {
   let soma = 0;
@@ -277,7 +326,9 @@ export function Alternador({
       accessibilityState={{ checked: ligado }}
       accessibilityLabel={rotuloAcessivel}
       hitSlop={12}
-      style={[styles.trilho, { backgroundColor: ligado ? cores.sucesso : '#C9BEB4' }]}>
+      // Desligado, o trilho usa o tom de ícone (3.7:1 sobre o branco): antes era tão claro
+      // que o controle sumia contra o cartão.
+      style={[styles.trilho, { backgroundColor: ligado ? cores.sucesso : cores.icone }]}>
       <View style={[styles.pino, ligado ? styles.pinoLigado : styles.pinoDesligado]} />
     </Pressable>
   );
@@ -287,6 +338,7 @@ const TONS_AVISO = {
   sucesso: { fundo: cores.sucessoFundo, borda: cores.sucessoBorda, texto: cores.sucessoTexto, icone: 'okCirculo' },
   alerta: { fundo: cores.alertaFundo, borda: cores.alertaBorda, texto: cores.alertaTexto, icone: 'alerta' },
   erro: { fundo: cores.erroFundo, borda: cores.erroBorda, texto: cores.erroTexto, icone: 'alerta' },
+  info: { fundo: cores.infoFundo, borda: cores.infoBorda, texto: cores.infoTexto, icone: 'info' },
   neutro: { fundo: cores.superficieSuave, borda: cores.bordaSuave, texto: cores.textoTerciario, icone: 'info' },
 } as const;
 
@@ -393,6 +445,18 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   folhaSemFaixa: { marginTop: espaco.sm },
+  /** Tela larga: a folha termina antes da borda, como um cartão. */
+  folhaCartao: { borderRadius: raios.bloco, marginBottom: espaco.xl },
+  dividida: { flex: 1, flexDirection: 'row' },
+  ladoMarca: { flex: 1, justifyContent: 'center', alignItems: 'flex-end', paddingVertical: espaco.xxxl },
+  ladoMarcaColuna: { width: '100%', maxWidth: 520, paddingRight: espaco.xxxl },
+  ladoConteudo: {
+    flex: 1,
+    backgroundColor: cores.fundo,
+    borderTopLeftRadius: raios.bloco * 1.5,
+    borderBottomLeftRadius: raios.bloco * 1.5,
+  },
+  ladoConteudoColuna: { flex: 1, width: '100%', maxWidth: 480, alignSelf: 'center' },
   cartao: {
     backgroundColor: cores.superficie,
     borderWidth: 1,
@@ -444,7 +508,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: espaco.lg,
     minHeight: ALVO_TOQUE,
   },
-  chipAtivo: { backgroundColor: cores.tinta },
+  chipAtivo: { backgroundColor: cores.acao },
   chipInativo: {
     backgroundColor: cores.superficie,
     borderWidth: 1,

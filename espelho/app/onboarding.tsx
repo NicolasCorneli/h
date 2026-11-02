@@ -1,14 +1,19 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { Faixa, Tela } from '@/components/Basicos';
+import { Faixa, Tela, useTelaDividida } from '@/components/Basicos';
 import { Botao } from '@/components/Botao';
 import { Icone, type NomeIcone } from '@/components/Icone';
 import { Marca } from '@/components/Marca';
 import { textos, textosEscuros } from '@/theme/textos';
 import { cores, espaco, raios } from '@/theme/tokens';
 
-/** O que o aplicativo faz hoje. Cada item corresponde a uma tela que existe. */
+/**
+ * O que o aplicativo faz hoje. Cada item corresponde a uma tela que existe.
+ *
+ * "Atendimentos" saiu desta apresentação: o registro do atendimento continua no
+ * aplicativo (é o que alimenta o Histórico), só não é mais apresentado como um item à parte.
+ */
 const ATIVIDADES: { icone: NomeIcone; titulo: string; texto: string }[] = [
   {
     icone: 'clientes',
@@ -19,11 +24,6 @@ const ATIVIDADES: { icone: NomeIcone; titulo: string; texto: string }[] = [
     icone: 'agenda',
     titulo: 'Agenda',
     texto: 'Marque, confirme, remarque e cancele horários. O aplicativo avisa quando dois horários se chocam.',
-  },
-  {
-    icone: 'okCirculo',
-    titulo: 'Atendimentos',
-    texto: 'Ao concluir um horário, o serviço feito entra no histórico do cliente.',
   },
   {
     icone: 'registrar',
@@ -39,12 +39,15 @@ const ATIVIDADES: { icone: NomeIcone; titulo: string; texto: string }[] = [
 
 const PASSOS = ['Crie sua conta', 'Cadastre seus clientes', 'Marque o primeiro horário na agenda'];
 
+/** Abaixo desta largura de conteúdo, os itens ficam um embaixo do outro. */
+const LARGURA_DUAS_COLUNAS = 420;
+
 /** Tela pública de abertura: o que é o aplicativo, para quem é e como começar. */
 export default function Onboarding() {
   const router = useRouter();
 
   return (
-    <Tela bordas={['top', 'bottom']}>
+    <Tela bordas={['top', 'bottom']} dividida>
       <Faixa estilo={styles.topo}>
         <Marca />
         <Text style={[textosEscuros.display, styles.titulo]} accessibilityRole="header">
@@ -55,21 +58,9 @@ export default function Onboarding() {
         </Text>
       </Faixa>
 
-      <ScrollView contentContainerStyle={styles.conteudo} showsVerticalScrollIndicator={false}>
+      <Conteudo>
         <Text style={[textos.secao, styles.secao]}>O que você faz aqui</Text>
-        <View style={styles.lista}>
-          {ATIVIDADES.map((a) => (
-            <View key={a.titulo} style={styles.item}>
-              <View style={styles.icone}>
-                <Icone nome={a.icone} tamanho={18} cor={cores.acaoTexto} />
-              </View>
-              <View style={styles.flex}>
-                <Text style={textos.corpoForte}>{a.titulo}</Text>
-                <Text style={textos.apoio}>{a.texto}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
+        <Atividades />
 
         <Text style={[textos.secao, styles.secao]}>Como começar</Text>
         <View style={styles.passos}>
@@ -85,8 +76,46 @@ export default function Onboarding() {
 
         <Botao titulo="Criar conta" aoPressionar={() => router.push('/cadastro')} estilo={styles.botao} />
         <Botao titulo="Já tenho conta" variante="secundaria" aoPressionar={() => router.push('/login')} />
-      </ScrollView>
+      </Conteudo>
     </Tela>
+  );
+}
+
+function Conteudo({ children }: { children: React.ReactNode }) {
+  const dividida = useTelaDividida();
+  return (
+    <ScrollView
+      contentContainerStyle={[styles.conteudo, dividida && styles.conteudoCentrado]}
+      showsVerticalScrollIndicator={false}>
+      {children}
+    </ScrollView>
+  );
+}
+
+/**
+ * Quatro itens: no celular, um por linha; com espaço, uma grade 2 x 2 de cartões, que
+ * mantém o bloco equilibrado (com cinco itens a grade sobrava um sozinho na última linha).
+ */
+function Atividades() {
+  const { width } = useWindowDimensions();
+  const dividida = useTelaDividida();
+  // No computador o conteúdo tem no máximo 480px; no celular, a largura da tela.
+  const largura = dividida ? 480 : Math.min(width, 560);
+  const grade = largura - espaco.xxl * 2 >= LARGURA_DUAS_COLUNAS;
+  return (
+    <View style={[styles.lista, grade && styles.grade]}>
+      {ATIVIDADES.map((a) => (
+        <View key={a.titulo} style={[styles.item, grade && styles.itemGrade]}>
+          <View style={styles.icone}>
+            <Icone nome={a.icone} tamanho={18} cor={cores.acaoTexto} />
+          </View>
+          <View style={grade ? undefined : styles.flex}>
+            <Text style={textos.corpoForte}>{a.titulo}</Text>
+            <Text style={textos.apoio}>{a.texto}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -95,9 +124,22 @@ const styles = StyleSheet.create({
   topo: { paddingHorizontal: espaco.xxl, paddingTop: espaco.xl, paddingBottom: espaco.xxl, gap: espaco.md },
   titulo: { marginTop: espaco.lg },
   conteudo: { paddingHorizontal: espaco.xxl, paddingTop: espaco.xxl, paddingBottom: espaco.xxxl },
+  conteudoCentrado: { flexGrow: 1, justifyContent: 'center' },
   secao: { marginBottom: espaco.md },
-  lista: { gap: espaco.lg, marginBottom: espaco.xxl },
-  item: { flexDirection: 'row', gap: espaco.md, alignItems: 'flex-start' },
+  lista: { gap: espaco.md, marginBottom: espaco.xxl },
+  grade: { flexDirection: 'row', flexWrap: 'wrap' },
+  item: {
+    flexDirection: 'row',
+    gap: espaco.md,
+    alignItems: 'flex-start',
+    backgroundColor: cores.superficie,
+    borderWidth: 1,
+    borderColor: cores.bordaSuave,
+    borderRadius: raios.cartao,
+    padding: espaco.lg,
+  },
+  /** Duas por linha: a base de 45% com crescimento divide a sobra, já descontado o espaço. */
+  itemGrade: { flexDirection: 'column', flexGrow: 1, flexBasis: '45%' },
   icone: {
     width: 36,
     height: 36,
@@ -112,10 +154,12 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: cores.tinta,
+    backgroundColor: cores.acaoSuave,
+    borderWidth: 1,
+    borderColor: cores.acaoBorda,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  numeroTexto: { fontFamily: 'FamiljenGrotesk_700Bold', fontSize: 13, color: cores.escuroTexto },
+  numeroTexto: { fontFamily: 'FamiljenGrotesk_700Bold', fontSize: 13, color: cores.acaoTexto },
   botao: { marginBottom: espaco.sm },
 });

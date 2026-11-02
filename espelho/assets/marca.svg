@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#6B2D5C"/>
+  <defs><clipPath id="s1100c"><rect x="204" y="252.4" width="616" height="572" rx="114.4"/></clipPath></defs>
+    <rect x="204" y="252.4" width="616" height="572" rx="114.4" fill="#FBF7F2"/>
+    <rect x="204" y="252.4" width="616" height="149.60000000000002" fill="#D9B77E" clip-path="url(#s1100c)"/>
+    <rect x="320.59999999999997" y="182" width="57.2" height="145.20000000000002" rx="28.6" fill="#FBF7F2" stroke="#6B2D5C" stroke-width="22"/><rect x="646.1999999999999" y="182" width="57.2" height="145.20000000000002" rx="28.6" fill="#FBF7F2" stroke="#6B2D5C" stroke-width="22"/>
+    <polyline points="362.4,633 450.4,721 608.8,562.6" fill="none" stroke="#6B2D5C" stroke-width="74.80000000000001" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 683.6 446 Q 683.6 507.6 745.2 507.6 Q 683.6 507.6 683.6 569.2 Q 683.6 507.6 622 507.6 Q 683.6 507.6 683.6 446 Z" fill="#6B2D5C"/>
+  
+</svg>

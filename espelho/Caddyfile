@@ -3,6 +3,9 @@
 # DOMINIO vem do docker-compose.yml (ex.: salao.exemplo.com.br). Com um domínio público
 # apontado para o servidor, o Caddy obtém e renova o certificado do Let's Encrypt sozinho.
 # Com DOMINIO=localhost, usa um certificado local (o navegador avisa; serve para testar).
+#
+# Atrás do proxy de outro sistema (docker-compose.proxy.yml), DOMINIO chega como ":80": o
+# HTTPS é do proxy, e este Caddy só entrega o site e a API em HTTP, dentro da rede Docker.
 
 {
 	# Porta HTTPS dentro do contêiner. Quando o site é publicado numa porta diferente
@@ -13,6 +16,15 @@
 	# acrescenta quando ela é a própria https_port). Numa porta alternativa, acesse sempre
 	# pelo endereço completo, com a porta.
 	https_port {$PORTA_HTTPS_INTERNA:443}
+
+	# De quem aceitar X-Forwarded-For/Proto. Sem confiança, o Caddy troca esses cabeçalhos
+	# pelo endereço de quem conectou nele. Publicado direto na internet é isso que se quer
+	# (127.0.0.1 = ninguém de fora). Atrás de outro proxy, sem confiar nele, a API veria o
+	# endereço do proxy em todas as requisições, e o freio de tentativas de login passaria
+	# a valer para todos os usuários juntos. O docker-compose.proxy.yml usa private_ranges.
+	servers {
+		trusted_proxies static {$PROXIES_CONFIAVEIS:127.0.0.1/32}
+	}
 }
 
 {$DOMINIO} {

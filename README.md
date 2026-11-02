@@ -110,7 +110,7 @@ backup e rollback: [`DEPLOY.md`](DEPLOY.md).
 | Serviço | Para quê | Sem ele |
 | --- | --- | --- |
 | Replicate (`AI_PROVIDER=replicate`, `AI_API_KEY`) | gerar a simulação | o provedor `fake` gera uma imagem recolorida com o aviso "simulação local, sem IA" |
-| Google OAuth (`GOOGLE_CLIENT_IDS`, `EXPO_PUBLIC_GOOGLE_*`) | "Entrar com Google" | o botão não aparece; e-mail e senha seguem funcionando |
+| Google OAuth (`GOOGLE_CLIENT_IDS`, `EXPO_PUBLIC_GOOGLE_*`) | "Continuar com Google" | o botão não aparece; e-mail e senha seguem funcionando |
 | S3/MinIO/Supabase (`STORAGE_DRIVER=s3`) | guardar as imagens fora do servidor | as imagens ficam no volume local |
 
 Guias: [`docs/GUIA_LOGIN_GOOGLE.md`](docs/GUIA_LOGIN_GOOGLE.md) e a seção "Para usar o
@@ -142,7 +142,7 @@ provedor de IA de verdade" de [`backend/README.md`](backend/README.md).
 | [`docs/DECISOES_TECNICAS.md`](docs/DECISOES_TECNICAS.md) | Decisões que o código precisa manter |
 | [`docs/DOCUMENTACAO-BACKEND.md`](docs/DOCUMENTACAO-BACKEND.md) | Arquitetura do servidor, modelo de dados e LGPD |
 | [`docs/DOCUMENTACAO.md`](docs/DOCUMENTACAO.md) | Telas, decisões de design e acessibilidade do aplicativo |
-| [`docs/GUIA_LOGIN_GOOGLE.md`](docs/GUIA_LOGIN_GOOGLE.md) | Credenciais do "Entrar com Google" |
+| [`docs/GUIA_LOGIN_GOOGLE.md`](docs/GUIA_LOGIN_GOOGLE.md) | Credenciais do "Continuar com Google" e configuração em produção |
 | [`espelho/e2e/README.md`](espelho/e2e/README.md) | Baterias de navegador |
 | [`docs/historico/`](docs/historico) | Relatórios das etapas anteriores (registro histórico) |
 

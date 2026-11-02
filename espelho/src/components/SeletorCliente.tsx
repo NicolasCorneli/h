@@ -63,7 +63,7 @@ export function SeletorCliente({
 }
 
 const styles = StyleSheet.create({
-  fundo: { flex: 1, backgroundColor: 'rgba(12,10,9,0.55)', justifyContent: 'flex-end' },
+  fundo: { flex: 1, backgroundColor: cores.veu, justifyContent: 'flex-end' },
   caixa: {
     backgroundColor: cores.fundo,
     borderTopLeftRadius: raios.bloco,

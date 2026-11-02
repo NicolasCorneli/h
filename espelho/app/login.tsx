@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Faixa, Tela } from '@/components/Basicos';
+import { Faixa, Tela, useTelaDividida } from '@/components/Basicos';
 import { BotaoGoogle, useGoogleDisponivel } from '@/components/BotaoGoogle';
 import { Botao } from '@/components/Botao';
 import { Campo } from '@/components/Campo';
@@ -23,6 +23,8 @@ export default function Login() {
   const [erro, setErro] = useState<string | null>(null);
   const [erroGoogle, setErroGoogle] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [entrandoGoogle, setEntrandoGoogle] = useState(false);
+  const dividida = useTelaDividida();
 
   async function autenticar() {
     if (!email.trim() || !senha) {
@@ -45,7 +47,7 @@ export default function Login() {
   }
 
   return (
-    <Tela bordas={['top', 'bottom']}>
+    <Tela bordas={['top', 'bottom']} dividida>
       <Faixa estilo={styles.topo}>
         <Marca />
         <Text style={[textosEscuros.display, styles.titulo]} accessibilityRole="header">
@@ -59,9 +61,36 @@ export default function Login() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}>
         <ScrollView
-          contentContainerStyle={styles.conteudo}
+          contentContainerStyle={[styles.conteudo, dividida && styles.conteudoCentrado]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
+          {googleDisponivel ? (
+            <>
+              <BotaoGoogle
+                rotulo="Continuar com Google"
+                desabilitado={enviando}
+                aoMudarOcupado={setEntrandoGoogle}
+                aoReceberToken={async (idToken, nonce) => {
+                  setErro(null);
+                  setErroGoogle(null);
+                  await acoes.entrarComGoogle(idToken, nonce);
+                  router.replace('/');
+                }}
+                aoFalhar={setErroGoogle}
+              />
+              {erroGoogle ? (
+                <View style={styles.erroGoogle} accessibilityRole="alert">
+                  <Icone nome="alerta" tamanho={16} cor={cores.erroTexto} />
+                  <Text style={styles.erroGoogleTexto}>{erroGoogle}</Text>
+                </View>
+              ) : null}
+              <View style={styles.divisor}>
+                <View style={styles.linha} />
+                <Text style={textos.meta}>ou com e-mail</Text>
+                <View style={styles.linha} />
+              </View>
+            </>
+          ) : null}
 
           <View style={styles.campos}>
             <Campo
@@ -86,36 +115,10 @@ export default function Login() {
           <Botao
             titulo={enviando ? 'Entrando…' : 'Entrar'}
             carregando={enviando}
+            desabilitado={entrandoGoogle}
             aoPressionar={autenticar}
             estilo={styles.botao}
           />
-
-          {googleDisponivel ? (
-            <>
-              <View style={styles.divisor}>
-                <View style={styles.linha} />
-                <Text style={textos.meta}>ou</Text>
-                <View style={styles.linha} />
-              </View>
-              <BotaoGoogle
-                rotulo="Entrar com Google"
-                desabilitado={enviando}
-                aoReceberToken={async (idToken, nonce) => {
-                  setErro(null);
-                  setErroGoogle(null);
-                  await acoes.entrarComGoogle(idToken, nonce);
-                  router.replace('/');
-                }}
-                aoFalhar={setErroGoogle}
-              />
-              {erroGoogle ? (
-                <View style={styles.erroGoogle} accessibilityRole="alert">
-                  <Icone nome="alerta" tamanho={16} cor={cores.erroTexto} />
-                  <Text style={styles.erroGoogleTexto}>{erroGoogle}</Text>
-                </View>
-              ) : null}
-            </>
-          ) : null}
 
           {/* A recuperação de senha por e-mail não existe nesta versão; o botão que só
               avisava isso saiu, para não oferecer uma ação que não acontece. */}
@@ -145,6 +148,7 @@ const styles = StyleSheet.create({
     paddingTop: espaco.xxl,
     paddingBottom: espaco.xxxl,
   },
+  conteudoCentrado: { justifyContent: 'center' },
   campos: { gap: espaco.md },
   botao: { marginTop: espaco.xl },
   rodape: {

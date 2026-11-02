@@ -74,7 +74,7 @@ O `./qa.sh --interface` roda as onze (a do Google, a décima segunda, só com os
 | `visual-contraste.mjs` | 24 telas em celular e tablet: contraste WCAG AA e rolagem horizontal |
 | `auditoria.mjs` | regressões da auditoria de QA: guarda de rotas sem sessão, estado vazio do Início, cliente com data de nascimento, menor de idade, renovação sem rede, sessão recusada no meio do uso, correção e exclusão de atendimento, busca sem acento, painel contando horários, imagem indisponível |
 | `seguranca.mjs` | "Senha e sessões": validação do formulário, senha atual errada, troca de senha desconectando o outro aparelho e mantendo este, "sair de todos os aparelhos" |
-| `google.mjs` | "Entrar com Google" sem conta real (só com os IDs de cliente configurados) |
+| `google.mjs` | "Continuar com Google" sem conta real (só com os IDs de cliente configurados) |
 
 `auditoria.mjs` e `seguranca.mjs` criam contas próprias e não dependem da carga de
 demonstração. `seguranca.mjs` erra a senha de propósito, e o freio de login da API conta

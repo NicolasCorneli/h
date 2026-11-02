@@ -15,7 +15,7 @@ type Props = {
  * As faixas são Views rotacionadas porque React Native não tem gradiente repetido.
  */
 export function Hachura({ legenda, claro = false, estilo, children }: Props) {
-  const faixa = claro ? 'rgba(27,23,20,0.05)' : 'rgba(27,23,20,0.045)';
+  const faixa = claro ? 'rgba(31,26,34,0.05)' : 'rgba(31,26,34,0.045)';
   return (
     <View style={[styles.base, claro && styles.claro, estilo]}>
       <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
@@ -34,13 +34,13 @@ export function Hachura({ legenda, claro = false, estilo, children }: Props) {
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: '#EFE7DE',
+    backgroundColor: cores.superficieAfundada,
     overflow: 'hidden',
     justifyContent: 'flex-end',
     padding: espaco.sm,
   },
   claro: {
-    backgroundColor: '#E4D3C6',
+    backgroundColor: cores.bordaForte,
   },
   faixa: {
     position: 'absolute',

@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     borderRadius: 56,
     borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.12)',
-    borderTopColor: cores.acaoDecorativa,
+    borderTopColor: cores.destaque,
     marginBottom: espaco.xxl,
   },
   titulo: { textAlign: 'center' },
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     marginTop: espaco.xxl,
     overflow: 'hidden',
   },
-  barra: { height: '100%', borderRadius: raios.pilula, backgroundColor: cores.acaoDecorativa },
+  barra: { height: '100%', borderRadius: raios.pilula, backgroundColor: cores.destaque },
   percentual: {
     fontFamily: fontes.mono,
     fontSize: 13,

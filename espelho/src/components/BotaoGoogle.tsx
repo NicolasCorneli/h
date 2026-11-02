@@ -5,7 +5,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { autenticacao } from '@/services/api';
 import { googleConfiguradoNoAparelho, idsGoogle } from '@/services/google';
-import { cores, espaco, raios } from '@/theme/tokens';
+import { cores, espaco, fontes, raios } from '@/theme/tokens';
 
 /**
  * O botão só aparece quando as duas pontas estão prontas: o aplicativo tem o ID de cliente
@@ -34,17 +34,20 @@ type Props = {
   /** Recebe o ID token do Google; lança erro com mensagem legível quando o servidor recusa. */
   aoReceberToken: (idToken: string, nonce?: string) => Promise<void>;
   aoFalhar: (mensagem: string) => void;
+  /** Avisa quando o login começa e termina, para a tela travar o formulário de senha. */
+  aoMudarOcupado?: (ocupado: boolean) => void;
   desabilitado?: boolean;
 };
 
 /**
- * Botão "Entrar com Google", no padrão visual do Google (fundo claro, logotipo colorido).
+ * Botão "Continuar com Google", no padrão visual do Google (fundo branco, borda cinza,
+ * logotipo colorido sem alterações), com a altura e o raio dos demais botões do app.
  *
  * Abre a tela do próprio Google; a senha da conta Google nunca passa pelo aplicativo.
  * O que volta é o ID token, que segue para o servidor conferir. Só deve ser montado quando
  * `googleConfiguradoNoAparelho()` for verdadeiro: sem ID de cliente o hook não funciona.
  */
-export function BotaoGoogle({ rotulo, aoReceberToken, aoFalhar, desabilitado }: Props) {
+export function BotaoGoogle({ rotulo, aoReceberToken, aoFalhar, aoMudarOcupado, desabilitado }: Props) {
   const [pedido, resposta, abrir] = Google.useIdTokenAuthRequest({
     ...idsGoogle,
     selectAccount: true,
@@ -52,6 +55,10 @@ export function BotaoGoogle({ rotulo, aoReceberToken, aoFalhar, desabilitado }: 
   });
   const [ocupado, setOcupado] = useState(false);
   const tratado = useRef<unknown>(null);
+
+  useEffect(() => {
+    aoMudarOcupado?.(ocupado);
+  }, [ocupado, aoMudarOcupado]);
 
   useEffect(() => {
     if (!resposta || tratado.current === resposta) return;
@@ -82,6 +89,7 @@ export function BotaoGoogle({ rotulo, aoReceberToken, aoFalhar, desabilitado }: 
   return (
     <Pressable
       onPress={() => {
+        if (ocupado) return;
         setOcupado(true);
         void abrir().catch(() => {
           setOcupado(false);
@@ -139,7 +147,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: espaco.lg,
   },
   conteudo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: espaco.md },
-  texto: { fontFamily: 'FamiljenGrotesk_600SemiBold', fontSize: 16, color: '#1F1F1F' },
+  texto: { fontFamily: fontes.sansSemi, fontSize: 15, lineHeight: 20, color: '#1F1F1F' },
   inativo: { opacity: 0.6 },
   pressionado: { backgroundColor: '#F2F2F2' },
 });

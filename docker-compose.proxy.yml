@@ -1,0 +1,35 @@
+# Variação: o Salão em Dia atrás do proxy (Caddy, Traefik, Nginx...) de outro sistema que
+# já ocupa as portas 80 e 443 do servidor. Quem cuida do domínio e do HTTPS é esse proxy.
+#
+# Ligue com, no .env:
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.proxy.yml
+#   REDE_PROXY=<rede Docker em que o proxy está>
+#   DOMINIO=<subdomínio que o proxy encaminha para cá, sem https://>
+# e suba como sempre: docker compose up -d --build --wait. Ver DEPLOY.md, seção 11.
+#
+# O que muda em relação ao docker-compose.yml:
+# - o serviço `web` não publica porta nenhuma no servidor: só o proxy, pela rede Docker
+#   compartilhada, chega nele, pelo nome `salao-em-dia-web`, na porta 80;
+# - o Caddy do site serve HTTP (DOMINIO=":80" dentro do contêiner): o certificado é do
+#   proxy, e o site não tenta emitir o seu;
+# - o Caddy do site confia nos X-Forwarded-* vindos de endereços privados (o proxy), para
+#   a API continuar vendo o endereço real de quem acessa.
+#
+# URL_PUBLICA e CORS_ORIGENS continuam derivados do DOMINIO do .env (https://DOMINIO).
+
+services:
+  web:
+    ports: !reset []
+    environment:
+      DOMINIO: ":80"
+      PROXIES_CONFIAVEIS: private_ranges
+    networks:
+      default:
+      proxy:
+        aliases:
+          - salao-em-dia-web
+
+networks:
+  proxy:
+    name: ${REDE_PROXY:?defina REDE_PROXY no .env (a rede Docker do proxy)}
+    external: true

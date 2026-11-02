@@ -69,7 +69,7 @@ export function FolhaAcoes({ visivel, titulo, subtitulo, acoes, aoFechar }: Prop
 }
 
 const styles = StyleSheet.create({
-  fundo: { flex: 1, backgroundColor: 'rgba(27,23,20,0.5)', justifyContent: 'flex-end' },
+  fundo: { flex: 1, backgroundColor: cores.veu, justifyContent: 'flex-end' },
   caixa: {
     backgroundColor: cores.fundo,
     borderTopLeftRadius: raios.bloco,

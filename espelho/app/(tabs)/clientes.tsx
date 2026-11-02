@@ -64,7 +64,7 @@ export default function Clientes() {
               accessibilityRole="button"
               accessibilityLabel="Cadastrar cliente"
               style={({ pressed }) => [styles.botaoMais, pressed && styles.pressionado]}>
-              <Icone nome="mais" tamanho={20} cor="#FFFFFF" />
+              <Icone nome="mais" tamanho={20} cor={cores.tinta} />
             </Pressable>
           ) : null}
         </View>
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     width: ALVO_TOQUE,
     height: ALVO_TOQUE,
     borderRadius: raios.campo,
-    backgroundColor: cores.acao,
+    backgroundColor: cores.destaque,
     alignItems: 'center',
     justifyContent: 'center',
   },

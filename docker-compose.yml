@@ -147,6 +147,9 @@ services:
       DOMINIO: ${DOMINIO:?defina DOMINIO no .env}
       # Só muda quando o site fica numa porta HTTPS diferente da 443 (ver .env.example).
       PORTA_HTTPS_INTERNA: ${PORTA_HTTPS_INTERNA:-443}
+      # De quem o Caddy aceita X-Forwarded-For/Proto. Padrão: ninguém de fora. Só muda
+      # atrás de outro proxy (DEPLOY.md, seção 11).
+      PROXIES_CONFIAVEIS: ${PROXIES_CONFIAVEIS:-127.0.0.1/32}
     ports:
       - "${PORTA_HTTP:-80}:80"
       - "${PORTA_HTTPS:-443}:${PORTA_HTTPS_INTERNA:-443}"

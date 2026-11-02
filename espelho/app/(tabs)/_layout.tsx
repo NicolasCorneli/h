@@ -66,7 +66,7 @@ function BarraAbas({ state, navigation }: BottomTabBarProps) {
             accessibilityRole="button"
             accessibilityLabel="Nova simulação"
             style={({ pressed }) => [styles.botaoCentral, elevacao.flutuante, pressed && styles.pressionado]}>
-            <Icone nome="simulacao" tamanho={22} cor="#FFFFFF" />
+            <Icone nome="simulacao" tamanho={22} cor={cores.tinta} />
           </Pressable>
         </View>
         {ABAS.slice(2).map(aba)}
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: raios.cartao,
-    backgroundColor: cores.acao,
+    backgroundColor: cores.destaque,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -118,6 +118,6 @@ const styles = StyleSheet.create({
     color: cores.escuroTexto,
   },
   marcaAtiva: { width: 16, height: 2, borderRadius: 1, backgroundColor: 'transparent' },
-  marcaAtivaVisivel: { backgroundColor: cores.acaoDecorativa },
+  marcaAtivaVisivel: { backgroundColor: cores.destaque },
   pressionado: { opacity: 0.85 },
 });

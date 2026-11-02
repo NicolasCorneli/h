@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   carregando: {
     ...StyleSheet.absoluteFill,
     borderRadius: raios.cartao,
-    backgroundColor: 'rgba(27,23,20,0.45)',
+    backgroundColor: 'rgba(28,22,32,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -67,6 +67,12 @@ O resto já tem padrão; [`.env.example`](.env.example) explica cada variável. 
 A API também se recusa a subir com configuração insegura de produção (modo demonstração,
 banco de desenvolvimento, CORS aberto).
 
+**Login com Google (opcional):** preencha `GOOGLE_CLIENT_IDS` e
+`EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` com o mesmo ID de cliente web e cadastre o endereço do
+site no Google Cloud. O passo a passo, com os erros mais comuns, está em
+[`docs/GUIA_LOGIN_GOOGLE.md`](docs/GUIA_LOGIN_GOOGLE.md), seção 4. Sem as duas variáveis o
+botão não aparece e o login por e-mail e senha segue igual.
+
 Segredos ficam só nesse `.env` do servidor: não vão para o Git, para as imagens Docker nem
 para o aplicativo.
 
@@ -246,8 +252,43 @@ avisa que foi gerado sem o endereço do servidor.
   faz o Caddy do projeto não pedir certificado), `URL_PUBLICA` e `CORS_ORIGENS` com
   `https://SEU-DOMINIO`, `PORTA_HTTP=127.0.0.1:8080` e `PORTA_HTTPS=127.0.0.1:8443`; no
   servidor web, encaminhe o domínio para `http://127.0.0.1:8080` com
-  `client_max_body_size 12m` e 180 s de tempo limite. Limite conhecido: o freio de login
-  passa a ver todos os usuários pelo endereço do servidor web.
+  `client_max_body_size 12m` e 180 s de tempo limite. Acrescente também
+  `PROXIES_CONFIAVEIS=private_ranges`: sem ela, o freio de login veria todos os usuários
+  pelo endereço do servidor web (as portas em `127.0.0.1` garantem que só ele chega aqui).
+- **Proxy de outro sistema rodando em Docker (Caddy, Traefik...) com as portas 80 e 443:**
+  o proxy cuida do domínio e do HTTPS (inclusive com certificado por DNS-01) e alcança o
+  site pela rede Docker, sem porta publicada. Use o `docker-compose.proxy.yml`. No `.env`:
+
+  ```
+  COMPOSE_FILE=docker-compose.yml:docker-compose.proxy.yml
+  REDE_PROXY=nome-da-rede-docker-do-proxy
+  DOMINIO=salao.dominio-do-proxy.com.br
+  ```
+
+  Sem `URL_PUBLICA` nem `CORS_ORIGENS`: elas saem do `DOMINIO` (`https://DOMINIO`), sem
+  porta. Com o `COMPOSE_FILE`, os comandos continuam os mesmos (`docker compose up -d
+  --build --wait`). No proxy, o subdomínio encaminha para `salao-em-dia-web:80`, com corpo
+  de até 12 MB e 180 s de tempo limite. Exemplo para Caddy:
+
+  ```
+  salao.dominio-do-proxy.com.br {
+  	# tls: o mesmo usado nos outros sites do proxy (DNS-01, por exemplo)
+  	request_body {
+  		max_size 12MB
+  	}
+  	reverse_proxy salao-em-dia-web:80 {
+  		transport http {
+  			read_timeout 180s
+  			write_timeout 180s
+  		}
+  	}
+  }
+  ```
+
+  A rede precisa existir antes (`docker network create NOME`, ou a rede que o proxy já usa)
+  e o contêiner do proxy precisa estar nela. Nessa variação o site não publica porta, e o
+  Caddy do projeto confia nos `X-Forwarded-*` vindos da rede privada, para o freio de login
+  continuar vendo o endereço real de cada usuário.
 
 - **API e site em domínios diferentes:** defina `URL_PUBLICA` e `CORS_ORIGENS` no `.env`
   e gere o site com `EXPO_PUBLIC_API_URL` apontando para a API.

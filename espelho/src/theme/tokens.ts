@@ -3,13 +3,22 @@ import { Platform } from 'react-native';
 /**
  * Tokens do design system.
  *
- * A identidade parte do design original do projeto (arquivo "Espelho - App.dc.html"):
- * terracota como única cor de ação, serifada editorial nos títulos. Na revisão visual a
- * base passou a ser escura, com o conteúdo em folhas claras. Os valores foram
- * ajustados para que todo par texto/fundo alcance no mínimo 4.5:1 (WCAG 2.1 AA) e para
- * que espaçamentos, raios e elevações venham de uma escala fechada.
+ * Identidade "Ameixa": uma base escura levemente arroxeada, folhas claras de conteúdo,
+ * a ameixa como única cor de ação e o champanhe como destaque pontual sobre o escuro.
+ * Serifada editorial nos títulos.
  *
- * Razões de contraste medidas estão anotadas nas cores de texto.
+ * Por que a ameixa substituiu a terracota: a terracota e o vermelho de erro eram da mesma
+ * família (o fundo suave de uma era idêntico ao da outra), e um selo de destaque podia ser
+ * lido como erro. A ameixa fica longe dos quatro tons de status (verde, âmbar, vermelho e
+ * azul), é sóbria o bastante para barbearias e acolhedora o bastante para salões.
+ *
+ * Papéis:
+ * - `acao`: botões principais, links, seleção. Uma cor só para "faça isto".
+ * - `base`/`tinta`: estrutura (cabeçalhos, barra de abas, cartões de destaque).
+ * - `destaque`: champanhe, só sobre fundo escuro (botão central, aba ativa, marca).
+ *
+ * Todo par texto/fundo alcança no mínimo 4.5:1 (WCAG 2.1 AA); as razões medidas estão
+ * anotadas. Espaçamentos, raios e elevações vêm de uma escala fechada.
  */
 
 export const fontes = {
@@ -28,41 +37,46 @@ export const cores = {
    * Base escura do aplicativo: atrás das folhas de conteúdo, nos cabeçalhos e na barra
    * de abas. Texto sobre ela usa as cores `escuro*` (15:1 ou mais no texto principal).
    */
-  base: '#17130F',
+  base: '#1C1620',
   /** Borda e separadores sobre a base escura. */
-  baseBorda: '#2E2620',
+  baseBorda: '#342A37',
   /** Folha clara de conteúdo, onde ficam formulários, listas e cartões. */
-  fundo: '#FAF7F4',
+  fundo: '#F8F6F3',
   superficie: '#FFFFFF',
-  superficieSuave: '#F3EDE6',
-  superficieAfundada: '#F2EBE4',
-  tinta: '#1B1714',
-  tintaElevada: '#33291F',
-  camera: '#0C0A09',
+  superficieSuave: '#F3EFF1',
+  superficieAfundada: '#EEE9EC',
+  tinta: '#1F1A22',
+  tintaElevada: '#342A37',
+  camera: '#0C0A0D',
+  /** Véu atrás de diálogos e folhas de ações. */
+  veu: 'rgba(28,22,32,0.55)',
 
   // --- Texto sobre fundo claro ---
-  texto: '#1B1714', // 16.7:1
-  textoSecundario: '#4A423B', // 9.2:1
-  textoTerciario: '#5E554E', // 6.8:1
-  textoApoio: '#6F655D', // 5.3:1 — menor tom admitido para texto pequeno
-  placeholder: '#7A6F66', // 4.9:1 sobre branco
-  rotulo: '#6F655D', // etiquetas em caixa alta
+  texto: '#1F1A22', // 15.8:1
+  textoSecundario: '#463E4A', // 9.5:1
+  textoTerciario: '#574E5C', // 7.4:1
+  textoApoio: '#675E6C', // 5.7:1 (5.4:1 sobre superficieSuave): menor tom para texto pequeno
+  placeholder: '#736A78', // 5.2:1 sobre branco
+  rotulo: '#675E6C', // etiquetas em caixa alta
 
   // --- Texto sobre fundo escuro ---
-  escuroTexto: '#F3EDE7',
-  escuroTextoSecundario: '#DDD4CB',
-  escuroTextoApoio: '#B5A99E', // 7.8:1 sobre tinta
-  escuroTextoTenue: '#9A8F85', // 5.6:1 sobre tinta
+  escuroTexto: '#F5F1F4', // 15.8:1 sobre a base
+  escuroTextoSecundario: '#DDD5DC',
+  escuroTextoApoio: '#B5AAB6', // 7.9:1 sobre a base
+  escuroTextoTenue: '#9C909D', // 5.8:1 sobre a base
 
-  // --- Ação ---
-  /** Preenchimento de botões e cartões de ação, com texto branco (4.9:1). */
-  acao: '#A85C46',
-  acaoPressionada: '#8E4E3B',
-  /** Terracota do design, usada em superfícies decorativas e ícones (não em texto pequeno). */
-  acaoDecorativa: '#B96A52',
-  /** Terracota para texto e links (6.0:1 sobre o fundo claro). */
-  acaoTexto: '#8E4E3B',
-  acaoSuave: '#F7EAE4',
+  // --- Ação (ameixa) ---
+  /** Preenchimento de botões, seleção e cartões de ação, com texto branco (9.7:1). */
+  acao: '#6B2D5C',
+  acaoPressionada: '#57234A',
+  /** Ameixa para texto e links (9.0:1 sobre o fundo claro). */
+  acaoTexto: '#6B2D5C',
+  acaoSuave: '#F4E9F0',
+  acaoBorda: '#E4CFDD',
+
+  // --- Destaque (champanhe), só sobre fundo escuro ---
+  /** 9.3:1 sobre a base. Texto e ícones em cima dele usam `tinta`. */
+  destaque: '#D9B77E',
 
   // --- Status ---
   sucesso: '#2E7A5E',
@@ -73,24 +87,28 @@ export const cores = {
   alertaTexto: '#5E4A12', // 7.4:1 sobre alertaFundo
   alertaFundo: '#F6EEDC',
   alertaBorda: '#E8D9B8',
-  erro: '#BE4A3A',
-  erroTexto: '#9E3122', // 6.1:1 sobre erroFundo
-  erroFundo: '#F7EAE4',
-  erroBorda: '#E8CDC2',
-  erroPressionado: '#A63C2E',
-  /** Concluído: azul petróleo, distinto do verde de confirmado. */
+  erro: '#B3261E',
+  erroTexto: '#A12B21', // 6.3:1 sobre erroFundo
+  erroFundo: '#FCEBE8',
+  erroBorda: '#F0CCC6',
+  erroPressionado: '#93201A',
+  /** Informação e concluído: azul petróleo, distinto do verde de confirmado. */
+  info: '#2F5F7A',
+  infoTexto: '#1E4560', // 8.7:1 sobre infoFundo
+  infoFundo: '#E6EFF5',
+  infoBorda: '#C9DCE8',
   concluido: '#2F5F7A',
-  concluidoTexto: '#1E4560', // 8.6:1 sobre concluidoFundo
+  concluidoTexto: '#1E4560',
   concluidoFundo: '#E6EFF5',
   concluidoBorda: '#C9DCE8',
 
   // --- Linhas e ícones auxiliares ---
-  borda: '#E4DBD2',
-  bordaSuave: '#EDE5DD',
-  bordaForte: '#D8CCC1',
-  bordaTracejada: '#D3C7BB',
+  borda: '#E3DDE1',
+  bordaSuave: '#ECE7EA',
+  bordaForte: '#D3CBD1',
+  bordaTracejada: '#CFC6CD',
   /** Setas e ícones de apoio: 3.7:1, acima do mínimo de 3:1 para elementos não textuais. */
-  icone: '#8A7E74',
+  icone: '#8B8190',
 } as const;
 
 /** Grade de 4px: todo espaçamento do app sai daqui. */
@@ -116,23 +134,23 @@ export const raios = {
 export const elevacao = {
   cartao: Platform.select({
     ios: {
-      shadowColor: '#2A1C14',
+      shadowColor: '#24182A',
       shadowOpacity: 0.06,
       shadowRadius: 12,
       shadowOffset: { width: 0, height: 4 },
     },
     android: { elevation: 2 },
-    default: { boxShadow: '0 4px 12px rgba(42,28,20,0.06)' },
+    default: { boxShadow: '0 4px 12px rgba(36,24,42,0.06)' },
   }),
   flutuante: Platform.select({
     ios: {
-      shadowColor: '#2A1C14',
+      shadowColor: '#24182A',
       shadowOpacity: 0.16,
       shadowRadius: 18,
       shadowOffset: { width: 0, height: 8 },
     },
     android: { elevation: 8 },
-    default: { boxShadow: '0 8px 18px rgba(42,28,20,0.16)' },
+    default: { boxShadow: '0 8px 18px rgba(36,24,42,0.16)' },
   }),
 } as const;
 
@@ -147,3 +165,6 @@ export const LARGURA_MAXIMA = 560;
 
 /** A partir desta largura o layout pode usar duas colunas. */
 export const LARGURA_TABLET = 700;
+
+/** A partir desta largura (computador) as telas públicas ficam lado a lado com a marca. */
+export const LARGURA_DIVIDIDA = 960;

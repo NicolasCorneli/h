@@ -1,4 +1,4 @@
-# Guia: ligar o "Entrar com Google"
+# Guia: ligar o "Continuar com Google"
 
 O código do login com Google está pronto no servidor e no aplicativo. Para ele funcionar
 com contas Google de verdade, falta um passo que só o dono do projeto pode fazer: criar as
@@ -17,7 +17,7 @@ que o projeto precisa.
 | Servidor: recusa de vínculo automático por e-mail igual | Implementado e testado |
 | Servidor: conectar e desconectar o Google no Perfil, exclusão de conta sem senha confirmada pelo Google | Implementado e testado |
 | Banco: tabela `identidades_externas`, com restrições únicas | Migration `e5a9c3f17b20`, aplicada e revertida em teste |
-| Aplicativo: botões no login, no cadastro, no Perfil e na exclusão de conta | Implementado; no navegador, o pedido ao Google e a recusa de token falso foram verificados (`espelho/e2e/google.mjs`) |
+| Aplicativo: "Continuar com Google" no login e no cadastro; conectar no Perfil; confirmação na exclusão de conta | Implementado; no navegador, verificados o pedido ao Google, a recusa de token falso, o cancelamento (janela fechada) e o bloqueio do formulário de senha durante o login (`espelho/e2e/google.mjs`, 16 verificações) |
 | Login com uma conta Google real | **Depende das credenciais abaixo.** Não foi testado com conta real |
 | Login no Android e no iOS | **Depende das credenciais e de um build de desenvolvimento.** Não funciona no Expo Go e não foi testado em aparelho |
 
@@ -37,9 +37,11 @@ aplicativo funciona como antes (e-mail e senha).
    - **Data access** (escopos): os escopos `openid`, `email` e `profile` bastam. Eles não
      exigem verificação do Google.
 3. Em **Clients**, crie um cliente do tipo **Web application**:
-   - **Authorized JavaScript origins**: `http://localhost:8081`
-   - **Authorized redirect URIs**: `http://localhost:8081`
-   - Se publicar a versão web em outro endereço, acrescente esse endereço nos dois campos.
+   - **Authorized JavaScript origins**: `http://localhost:8081` e o endereço de produção
+     (seção 4), por exemplo `https://salao.seudominio.com.br`
+   - **Authorized redirect URIs**: os mesmos endereços, **exatamente** iguais à origem: com
+     `https://`, com a porta quando não for a 443, e **sem barra no final**
+     (`https://salao.seudominio.com.br`, não `https://salao.seudominio.com.br/`)
    - Copie o **Client ID** (termina em `.apps.googleusercontent.com`). Não é preciso
      copiar nem guardar o "client secret": o projeto não usa.
 4. (Opcional, só para celular com build próprio) crie também:
@@ -72,9 +74,58 @@ Reinicie a API e o Expo (`npx expo start --web --clear`): variáveis `EXPO_PUBLI
 lidas na hora de montar o pacote.
 
 Para conferir: `GET http://localhost:8000/api/v1/auth/provedores` deve responder
-`{"google": true}`, e a tela de login passa a mostrar **Entrar com Google**.
+`{"google": true}`, e a tela de login passa a mostrar **Continuar com Google**.
 
-## 4. Como o login funciona
+## 4. Produção (servidor com domínio)
+
+O site de produção é montado dentro do Docker (ver `DEPLOY.md`). O ID de cliente web entra
+no pacote do site **na hora do build**, então mudar a variável exige reconstruir a imagem.
+
+1. **Endereço público com HTTPS.** O Google só aceita origens `https://` com um domínio
+   (endereço IP não serve; `localhost` é a única exceção). Use o mesmo endereço que as
+   pessoas digitam no navegador:
+   - porta padrão: `https://salao.seudominio.com.br`;
+   - porta alternativa (`PORTA_HTTPS=9443`): `https://salao.seudominio.com.br:9443`.
+2. **No Google Cloud**, no cliente Web da seção 2, acrescente esse endereço em
+   **Authorized JavaScript origins** e em **Authorized redirect URIs**, sem barra no final.
+   A alteração pode levar alguns minutos para valer.
+3. **No servidor**, no `.env` da raiz do projeto (o mesmo do `docker compose`):
+
+   ```
+   GOOGLE_CLIENT_IDS=SEU_ID_WEB.apps.googleusercontent.com
+   EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=SEU_ID_WEB.apps.googleusercontent.com
+   ```
+
+   Os dois valores precisam ser iguais (com clientes Android e iOS, `GOOGLE_CLIENT_IDS`
+   lista todos, separados por vírgula). Nenhum "client secret" vai para o `.env`.
+4. **Reconstrua e suba**: `docker compose up -d --build --wait`. Sem o `--build`, o site
+   continua com o pacote antigo, sem o botão.
+5. **Confira**:
+   - `curl -fsS https://SEU-DOMINIO/api/v1/auth/provedores` responde `{"google":true}`;
+   - a tela de login mostra **Continuar com Google**;
+   - entre com uma conta Google cadastrada em **Test users**: a conta é criada, o painel
+     abre, e recarregar a página mantém a sessão; **Sair** volta para a abertura.
+6. **Abrir para todos.** Enquanto o app estiver em **Testing**, só os e-mails de **Test
+   users** entram. Para liberar a qualquer conta Google, em **Audience** clique em
+   **Publish app**. Com os escopos `openid`, `email` e `profile` não há verificação de
+   escopos; enviar um logotipo na tela de **Branding** faz o Google pedir a verificação da
+   marca antes de exibi-lo.
+
+Erros comuns:
+
+| O que aparece | Causa |
+|---|---|
+| `Erro 400: redirect_uri_mismatch` na janela do Google | O endereço do site não está em **Authorized redirect URIs** exatamente igual (porta, `https`, barra final) |
+| `Erro 401: invalid_client` | O ID em `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` não existe ou foi copiado com espaço |
+| `Erro 403: access_denied` | App em **Testing** e a conta não está em **Test users** |
+| "Não foi possível confirmar sua conta Google" no aplicativo | `GOOGLE_CLIENT_IDS` do servidor diferente do ID usado no site |
+| O botão não aparece | Imagem do site sem `--build`, ou uma das duas variáveis vazia |
+
+Cuidado ao mexer nos cabeçalhos do `Caddyfile`: o login abre uma janela do Google e lê o
+resultado quando ela volta ao site. Um cabeçalho `Cross-Origin-Opener-Policy: same-origin`
+cortaria essa ligação e o login nunca terminaria. Os cabeçalhos atuais não interferem.
+
+## 5. Como o login funciona
 
 1. O aplicativo abre a tela do próprio Google. A senha do Google nunca passa pelo
    aplicativo nem pelo servidor.
@@ -85,7 +136,7 @@ Para conferir: `GET http://localhost:8000/api/v1/auth/provedores` deve responder
    configurados e e-mail confirmado pelo Google. Também confere o `nonce` do pedido.
 5. A conta é encontrada pelo identificador estável do Google (`sub`), nunca pelo e-mail.
 
-## 5. Contas que já existem com o mesmo e-mail
+## 6. Contas que já existem com o mesmo e-mail
 
 O servidor **não liga contas automaticamente só porque o e-mail coincide**. O cadastro por
 e-mail e senha não confirma o e-mail; ligar pelo e-mail permitiria que alguém criasse uma
@@ -105,7 +156,7 @@ Uma conta criada pelo Google não tem senha. Por isso:
 - desconectar o Google é recusado (a conta ficaria sem forma de entrar);
 - a exclusão da conta é confirmada entrando de novo com a mesma conta Google.
 
-## 6. Limitações conhecidas
+## 7. Limitações conhecidas
 
 - **Expo Go**: não suporta este login, porque o Google precisa devolver a resposta para o
   identificador próprio do aplicativo, que o Expo Go não tem. No Expo Go o botão não

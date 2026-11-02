@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   fundo: {
     flex: 1,
-    backgroundColor: 'rgba(27,23,20,0.55)',
+    backgroundColor: cores.veu,
     alignItems: 'center',
     justifyContent: 'center',
     padding: espaco.xl,

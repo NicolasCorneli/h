@@ -5,11 +5,12 @@
  * `expo start --web` com `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` igual.
  *
  * O que se confere:
- * - o botão aparece no login, no cadastro e no Perfil;
+ * - o botão "Continuar com Google" aparece no login, no cadastro e no Perfil;
  * - o pedido aberto na janela do Google leva o ID de cliente, pede um ID token, manda um
  *   `nonce` e volta para o endereço do aplicativo;
  * - um token que não foi assinado pelo Google é recusado pelo servidor, e a tela mostra
- *   a mensagem, sem entrar.
+ *   a mensagem, sem entrar, e o botão volta a funcionar;
+ * - fechar a janela do Google sem escolher a conta não mostra erro nem trava o botão.
  *
  * A janela do Google é interceptada: nenhum acesso ao Google acontece. O login com uma
  * conta Google de verdade depende das credenciais do Google Cloud do autor (ver
@@ -49,9 +50,16 @@ const botao = (nome) => page.getByRole('button', { name: nome }).filter({ visibl
 // Qualquer janela que tente ir ao Google é respondida aqui, devolvendo ao aplicativo um
 // token forjado, como faria um atacante. O servidor precisa recusá-lo.
 let pedidoGoogle = null;
+// 'forjar': devolve o token forjado; 'parar': a janela fica na tela do Google, como quem
+// ainda não escolheu a conta (para o teste de cancelamento).
+let modo = 'forjar';
 await contexto.route('https://accounts.google.com/**', async (rota) => {
   const url = new URL(rota.request().url());
   pedidoGoogle = url;
+  if (modo === 'parar') {
+    await rota.fulfill({ status: 200, contentType: 'text/html', body: '<html><body>Google</body></html>' });
+    return;
+  }
   const volta = url.searchParams.get('redirect_uri');
   const estado = url.searchParams.get('state');
   const forjado = [
@@ -70,11 +78,11 @@ await contexto.route('https://accounts.google.com/**', async (rota) => {
 try {
   await page.goto(`${APP}/login`, { waitUntil: 'networkidle' });
   await espera(3000);
-  conferir(/Entrar com Google/.test(await corpo()), 'o login mostra "Entrar com Google"', 'botão ausente');
+  conferir(/Continuar com Google/.test(await corpo()), 'o login mostra "Continuar com Google"', 'botão ausente');
   conferir(!/Recuperar senha/.test(await corpo()), 'o botão "Recuperar senha", que não fazia nada, saiu', 'ainda presente');
   await page.screenshot({ path: `${TELAS}/01-login.png` });
 
-  const [janela] = await Promise.all([page.waitForEvent('popup', { timeout: 15000 }), botao('Entrar com Google').click()]);
+  const [janela] = await Promise.all([page.waitForEvent('popup', { timeout: 15000 }), botao('Continuar com Google').click()]);
   await janela.waitForLoadState().catch(() => undefined);
   await espera(4000);
 
@@ -94,10 +102,39 @@ try {
   conferir(/Não foi possível confirmar sua conta Google|Não foi possível falar com o Google/.test(depois), 'token forjado é recusado e a tela explica', depois.slice(0, 300));
   conferir(/Entrar/.test(depois) && !/Bom dia|Boa tarde|Boa noite/.test(depois), 'o token forjado não abre sessão', depois.slice(0, 200));
   await page.screenshot({ path: `${TELAS}/02-token-recusado.png` });
+  conferir(
+    (await botao('Continuar com Google').getAttribute('aria-disabled')) !== 'true',
+    'depois da recusa o botão do Google volta a funcionar',
+    'botão continua desabilitado'
+  );
+
+  // Cancelamento: a pessoa abre a janela do Google e a fecha sem escolher a conta.
+  modo = 'parar';
+  await page.reload({ waitUntil: 'networkidle' });
+  await espera(2500);
+  const [janela2] = await Promise.all([page.waitForEvent('popup', { timeout: 15000 }), botao('Continuar com Google').click()]);
+  await janela2.waitForLoadState().catch(() => undefined);
+  await espera(800);
+  conferir(
+    (await botao(/^Entrar$/).getAttribute('aria-disabled')) === 'true',
+    'enquanto a janela do Google está aberta, o login por senha fica travado',
+    'botão Entrar ativo'
+  );
+  await janela2.close();
+  await espera(2500);
+  const cancelado = await corpo();
+  conferir(!/Não foi possível|recusou/.test(cancelado), 'fechar a janela do Google não mostra erro', cancelado.slice(0, 200));
+  conferir(
+    (await botao('Continuar com Google').getAttribute('aria-disabled')) !== 'true' &&
+      (await botao(/^Entrar$/).getAttribute('aria-disabled')) !== 'true',
+    'depois do cancelamento os dois botões voltam a funcionar',
+    'algum botão continua desabilitado'
+  );
+  modo = 'forjar';
 
   await page.goto(`${APP}/cadastro`, { waitUntil: 'networkidle' });
   await espera(2500);
-  conferir(/Criar conta com Google/.test(await corpo()), 'o cadastro mostra "Criar conta com Google"', 'botão ausente');
+  conferir(/Continuar com Google/.test(await corpo()), 'o cadastro mostra "Continuar com Google"', 'botão ausente');
   await page.screenshot({ path: `${TELAS}/03-cadastro.png` });
 
   // Perfil de uma conta com senha: oferece conectar.

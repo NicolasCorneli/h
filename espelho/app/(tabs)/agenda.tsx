@@ -164,7 +164,7 @@ export default function Agenda() {
               accessibilityRole="button"
               accessibilityLabel="Novo agendamento"
               style={({ pressed }) => [styles.botaoMais, pressed && styles.pressionado]}>
-              <Icone nome="mais" tamanho={20} cor="#FFFFFF" />
+              <Icone nome="mais" tamanho={20} cor={cores.tinta} />
             </Pressable>
           </View>
         </View>
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     width: ALVO_TOQUE,
     height: ALVO_TOQUE,
     borderRadius: raios.campo,
-    backgroundColor: cores.acao,
+    backgroundColor: cores.destaque,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: espaco.xs,
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  celulaAtiva: { backgroundColor: cores.tinta },
+  celulaAtiva: { backgroundColor: cores.acao },
   numeroDia: {
     fontFamily: 'FamiljenGrotesk_500Medium',
     fontSize: 14,

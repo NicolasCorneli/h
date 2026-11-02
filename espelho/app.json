@@ -15,7 +15,7 @@
     "android": {
       "package": "com.nicolascorneli.espelho",
       "adaptiveIcon": {
-        "backgroundColor": "#1B1714",
+        "backgroundColor": "#6B2D5C",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -25,10 +25,24 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Salão em Dia",
+      "shortName": "Salão em Dia",
+      "lang": "pt-BR",
+      "description": "Clientes, agenda e histórico de atendimentos para profissionais da beleza.",
+      "themeColor": "#1C1620",
+      "backgroundColor": "#1C1620"
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "backgroundColor": "#1C1620"
+        }
+      ],
       [
         "expo-camera",
         {
