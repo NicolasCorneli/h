@@ -213,6 +213,28 @@ npx eas-cli build --platform android             # ou ios
 A URL precisa ser https: o Android recusa HTTP em builds de produção. Sem ela, o aplicativo
 avisa que foi gerado sem o endereço do servidor.
 
+### APK para instalar direto (sem loja)
+
+O `espelho/eas.json` tem o perfil `apk`, com o endereço do servidor e os IDs do Google já
+preenchidos (todos públicos; nenhum segredo vai no aplicativo). Gera um `.apk` que se
+instala baixando o arquivo no celular, sem conta na Google Play:
+
+```bash
+cd espelho
+npx eas-cli@25.2.0 login
+npx eas-cli@25.2.0 build --platform android --profile apk
+```
+
+Na primeira vez, o EAS pergunta se pode criar o projeto na sua conta e gerar a chave de
+assinatura do Android: responda que sim. Guarde a chave no EAS (o padrão): todas as
+versões seguintes precisam ser assinadas por ela para instalar por cima da anterior.
+
+O botão do Google no Android só aparece com `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`
+preenchido: crie o cliente Android (docs/GUIA_LOGIN_GOOGLE.md, seção 2, item 4) com a
+SHA-1 mostrada por `npx eas-cli@25.2.0 credentials --platform android`, acrescente
+`"EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "<ID>"` ao `env` do perfil no `eas.json` (o EAS
+recusa valor vazio, por isso a linha não existe antes), acrescente-o ao `GOOGLE_CLIENT_IDS` do servidor e gere o APK de novo.
+
 ## 10. Operação
 
 - **Sondas:** `GET /api/v1/saude/vivo` (o processo responde) e `GET /api/v1/saude`

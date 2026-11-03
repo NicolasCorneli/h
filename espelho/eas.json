@@ -1,0 +1,20 @@
+{
+  "cli": {
+    "version": ">= 25.2.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "apk": {
+      "distribution": "internal",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://salao.agenteiarotina.art:9443",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "367913837889-8s4mp11fqmsphia1qq4elau615cgfn35.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "367913837889-1oh4o743toon65dbgcv0ikalffdorric.apps.googleusercontent.com"
+      }
+    }
+  }
+}
