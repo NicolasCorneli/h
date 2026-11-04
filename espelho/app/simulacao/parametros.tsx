@@ -1,8 +1,6 @@
 import { useRouter } from 'expo-router';
 import {
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,6 +14,7 @@ import { Cabecalho } from '@/components/Cabecalho';
 import { Campo } from '@/components/Campo';
 import { Hachura } from '@/components/Hachura';
 import { Icone, type NomeIcone } from '@/components/Icone';
+import { EvitaTeclado } from '@/components/EvitaTeclado';
 import { EXEMPLOS_DE_COR, EXEMPLOS_DE_CORTE } from '@/data/catalogo';
 import { useRascunho } from '@/data/rascunho';
 import { useStore } from '@/data/store';
@@ -78,10 +77,7 @@ export default function Parametros() {
         }
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}
-        keyboardVerticalOffset={20}>
+      <EvitaTeclado>
         <ScrollView
           contentContainerStyle={styles.conteudo}
           keyboardShouldPersistTaps="handled"
@@ -189,7 +185,7 @@ export default function Parametros() {
             aoPressionar={() => router.push('/simulacao/revisao')}
           />
         </View>
-      </KeyboardAvoidingView>
+      </EvitaTeclado>
     </Tela>
   );
 }

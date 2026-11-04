@@ -52,7 +52,7 @@ export default function Perfil() {
   }
 
   return (
-    <Tela folha={false}>
+    <Tela folha={false} bordas={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.cabecalho}>
           <View style={styles.identidade}>

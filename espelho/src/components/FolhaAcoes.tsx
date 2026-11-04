@@ -1,4 +1,5 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { textos } from '@/theme/textos';
 import { ALVO_TOQUE, cores, espaco, LARGURA_MAXIMA, raios } from '@/theme/tokens';
@@ -23,10 +24,14 @@ type Props = {
 
 /** Folha inferior com as ações possíveis para um item — evita telas intermediárias. */
 export function FolhaAcoes({ visivel, titulo, subtitulo, acoes, aoFechar }: Props) {
+  // A folha encosta no pé da tela: a última ação fica acima dos botões do sistema.
+  const { bottom } = useSafeAreaInsets();
   return (
     <Modal visible={visivel} transparent animationType="slide" onRequestClose={aoFechar}>
       <Pressable style={styles.fundo} onPress={aoFechar} accessibilityLabel="Fechar ações">
-        <Pressable style={styles.caixa} onPress={() => undefined}>
+        <Pressable
+          style={[styles.caixa, { paddingBottom: Math.max(espaco.xxxl, bottom + espaco.lg) }]}
+          onPress={() => undefined}>
           <View style={styles.puxador} />
           <Text style={textos.secao} accessibilityRole="header">
             {titulo}

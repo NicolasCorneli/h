@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Aviso, Tela } from '@/components/Basicos';
 import { Botao } from '@/components/Botao';
 import { Cabecalho } from '@/components/Cabecalho';
 import { Campo } from '@/components/Campo';
 import { useFeedback } from '@/components/Feedback';
+import { EvitaTeclado } from '@/components/EvitaTeclado';
 import { useStore } from '@/data/store';
 import { ErroApi } from '@/services/api';
 import { textos } from '@/theme/textos';
@@ -92,9 +93,7 @@ export default function Seguranca() {
   return (
     <Tela>
       <Cabecalho titulo="Senha e sessões" aoVoltar={() => router.back()} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}>
+      <EvitaTeclado>
         <ScrollView
           contentContainerStyle={styles.conteudo}
           keyboardShouldPersistTaps="handled"
@@ -169,13 +168,12 @@ export default function Seguranca() {
             />
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </EvitaTeclado>
     </Tela>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   conteudo: {
     paddingHorizontal: espaco.xl,
     paddingTop: espaco.lg,

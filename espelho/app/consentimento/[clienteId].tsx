@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Aviso, Cartao, Etiqueta, Tela } from '@/components/Basicos';
 import { Cabecalho } from '@/components/Cabecalho';
@@ -9,6 +9,7 @@ import { useFeedback } from '@/components/Feedback';
 import { Icone } from '@/components/Icone';
 import { DocumentoTermo } from '@/components/DocumentoTermo';
 import { SeloConsentimento } from '@/components/SeloConsentimento';
+import { EvitaTeclado } from '@/components/EvitaTeclado';
 import { useCliente, useResumoConsentimento, useStore } from '@/data/store';
 import type { FormaObtencao } from '@/data/tipos';
 import { ErroApi } from '@/services/api';
@@ -109,10 +110,7 @@ export default function TermoDoCliente() {
         iconeVoltar="fechar"
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}
-        keyboardVerticalOffset={20}>
+      <EvitaTeclado>
         <ScrollView
           contentContainerStyle={styles.conteudo}
           keyboardShouldPersistTaps="handled"
@@ -265,7 +263,7 @@ export default function TermoDoCliente() {
             Recusar não afeta cadastro, histórico nem agenda deste cliente.
           </Text>
         </View>
-      </KeyboardAvoidingView>
+      </EvitaTeclado>
     </Tela>
   );
 }

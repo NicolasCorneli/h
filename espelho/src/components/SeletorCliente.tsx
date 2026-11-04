@@ -1,4 +1,5 @@
 import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useClientes } from '@/data/store';
 import { textos } from '@/theme/textos';
@@ -26,11 +27,13 @@ export function SeletorCliente({
   nota,
 }: Props) {
   const clientes = useClientes();
+  // A folha encosta no pé da tela: o fim da lista fica acima dos botões do sistema.
+  const { bottom } = useSafeAreaInsets();
 
   return (
     <Modal visible={visivel} animationType="slide" transparent onRequestClose={aoFechar}>
       <View style={styles.fundo}>
-        <View style={styles.caixa}>
+        <View style={[styles.caixa, { paddingBottom: Math.max(24, bottom + espaco.md) }]}>
           <View style={styles.topo}>
             <Text style={textos.secao}>{titulo}</Text>
             <BotaoIcone icone="fechar" aoPressionar={aoFechar} rotuloAcessivel="Fechar seleção de cliente" />

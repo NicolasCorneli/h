@@ -4,11 +4,12 @@ import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewS
 
 import { textos } from '@/theme/textos';
 import { cores, espaco, raios } from '@/theme/tokens';
-import { dataCurta, hora as formatarHora } from '@/utils/datas';
+import { dataCurta, diaLocalIso, hora as formatarHora, isoDeDataCurta, paraData } from '@/utils/datas';
 import { mascaraData, mascaraHora } from '@/utils/mascaras';
 
 import { Campo } from './Campo';
 import { Icone } from './Icone';
+import { SeletorData } from './SeletorData';
 
 type Props = {
   rotulo: string;
@@ -127,6 +128,77 @@ export function CampoData({ rotulo, valor, aoMudar, modo, erro, estilo, aoMudarV
   );
 }
 
+type PropsOpcional = {
+  rotulo: string;
+  /** Data em dd/mm/aaaa, ou vazio quando não informada. */
+  valor: string;
+  aoMudar: (texto: string) => void;
+  /** Dia em que o calendário abre quando o campo está vazio. */
+  inicial: Date;
+  minimo?: Date;
+  maximo?: Date;
+  ajuda?: string;
+  erro?: string | null;
+};
+
+/**
+ * Data que pode ficar em branco (nascimento). No celular, o calendário do sistema, com a
+ * opção de limpar; no navegador, o mesmo campo digitado dd/mm/aaaa de antes.
+ *
+ * O valor continua sendo o texto dd/mm/aaaa nos dois casos, então a tela valida e envia
+ * do mesmo jeito.
+ */
+export function CampoDataOpcional({ rotulo, valor, aoMudar, inicial, minimo, maximo, ajuda, erro }: PropsOpcional) {
+  if (Platform.OS === 'web') {
+    return (
+      <Campo
+        rotulo={rotulo}
+        valor={valor}
+        aoMudar={aoMudar}
+        placeholder="dd/mm/aaaa"
+        tipoTeclado="number-pad"
+        mascara={mascaraData}
+        ajuda={ajuda}
+        erro={erro}
+      />
+    );
+  }
+
+  const iso = isoDeDataCurta(valor);
+  return (
+    <View>
+      <SeletorData
+        valor={iso ? paraData(iso) : inicial}
+        aoEscolher={(data) => aoMudar(dataCurta(diaLocalIso(data)))}
+        minimo={minimo}
+        maximo={maximo}
+        rotuloAcessivel={`${rotulo}: ${valor || 'não informada'}. Toque para escolher no calendário`}
+        estilo={[styles.caixa, !!erro && styles.caixaErro]}>
+        <View style={styles.texto}>
+          <Text style={textos.etiqueta}>{rotulo}</Text>
+          <Text style={valor ? styles.valor : styles.vazio}>{valor || 'Toque para escolher'}</Text>
+        </View>
+        <Icone nome="calendario" tamanho={18} />
+      </SeletorData>
+      {erro ? (
+        <Text style={styles.erro}>{erro}</Text>
+      ) : ajuda ? (
+        <Text style={styles.ajuda}>{ajuda}</Text>
+      ) : null}
+      {valor ? (
+        <Pressable
+          onPress={() => aoMudar('')}
+          accessibilityRole="button"
+          accessibilityLabel={`Limpar ${rotulo.toLowerCase()}`}
+          hitSlop={8}
+          style={styles.limpar}>
+          <Text style={styles.limparTexto}>Limpar data</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
 function converter(texto: string, modo: 'data' | 'hora', base: Date): Date | null {
   if (modo === 'data') {
     const partes = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -161,6 +233,17 @@ const styles = StyleSheet.create({
   caixaErro: { borderColor: cores.erro },
   texto: { flex: 1, gap: espaco.xs },
   valor: { fontFamily: 'FamiljenGrotesk_500Medium', fontSize: 15, color: cores.texto },
+  vazio: { fontFamily: 'FamiljenGrotesk_400Regular', fontSize: 15, color: cores.placeholder },
+  ajuda: {
+    fontFamily: 'FamiljenGrotesk_400Regular',
+    fontSize: 12,
+    lineHeight: 17,
+    color: cores.textoApoio,
+    marginTop: espaco.sm,
+    marginLeft: espaco.xs,
+  },
+  limpar: { alignSelf: 'flex-start', marginTop: espaco.sm, marginLeft: espaco.xs },
+  limparTexto: { fontFamily: 'FamiljenGrotesk_600SemiBold', fontSize: 13, color: cores.acaoTexto },
   erro: {
     fontFamily: 'FamiljenGrotesk_500Medium',
     fontSize: 13,

@@ -37,10 +37,15 @@ export function useTelaDividida(): boolean {
  *
  * `dividida` (telas públicas): no computador, a faixa vira um painel da marca à esquerda e
  * o conteúdo fica à direita, lado a lado. No celular nada muda.
+ *
+ * Área segura de baixo: o Android desenha o aplicativo atrás dos botões do sistema
+ * (edge-to-edge), então toda tela reserva esse espaço, e o rodapé com o botão de salvar
+ * termina acima deles. Com folha, a reserva fica dentro dela, na cor da folha. As abas
+ * passam `bordas={['top']}`: a barra de abas já reserva o espaço.
  */
 export function Tela({
   children,
-  bordas = ['top'],
+  bordas = ['top', 'bottom'],
   fundo = cores.base,
   folha = true,
   dividida = false,
@@ -83,21 +88,25 @@ export function Tela({
     );
   }
 
+  const baixoNaFolha = folha && bordas.includes('bottom');
   return (
-    <SafeAreaView style={[styles.tela, { backgroundColor: fundo }, estilo]} edges={bordas}>
+    <SafeAreaView
+      style={[styles.tela, { backgroundColor: fundo }, estilo]}
+      edges={baixoNaFolha ? bordas.filter((borda) => borda !== 'bottom') : bordas}>
       <View style={styles.colunaLimite}>
         {faixa.length > 0 ? (
           <SuperficieContext.Provider value="escura">{faixa}</SuperficieContext.Provider>
         ) : null}
         {folha ? (
-          <View
+          <SafeAreaView
+            edges={baixoNaFolha ? ['bottom'] : []}
             style={[
               styles.folha,
               faixa.length === 0 && styles.folhaSemFaixa,
               larga && styles.folhaCartao,
             ]}>
             {conteudo}
-          </View>
+          </SafeAreaView>
         ) : (
           conteudo
         )}

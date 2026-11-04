@@ -1,13 +1,15 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Aviso, Tela } from '@/components/Basicos';
 import { Botao } from '@/components/Botao';
 import { Cabecalho } from '@/components/Cabecalho';
 import { Campo } from '@/components/Campo';
+import { CampoDataOpcional } from '@/components/CampoData';
 import { useFeedback } from '@/components/Feedback';
 import { SeletorFoto, type FotoEscolhida } from '@/components/SeletorFoto';
+import { EvitaTeclado } from '@/components/EvitaTeclado';
 import { useCliente, useStore } from '@/data/store';
 import type { Cliente } from '@/data/tipos';
 import { textos } from '@/theme/textos';
@@ -16,7 +18,12 @@ import { reduzirParaEnvio } from '@/services/imagemLocal';
 import { ErroApi } from '@/services/api';
 import { cores, espaco } from '@/theme/tokens';
 import { dataCurta, diaLocalIso, isoDeDataCurta } from '@/utils/datas';
-import { mascaraData, mascaraTelefone } from '@/utils/mascaras';
+import { mascaraTelefone } from '@/utils/mascaras';
+
+// Mesmos limites que a tela já valida ao salvar (nem futuro, nem antes de 1900).
+const NASCIMENTO_MINIMO = new Date(1900, 0, 1);
+// Vazio, o calendário abre trinta anos atrás: menos voltas até o ano de quem é adulto.
+const INICIO_CALENDARIO_NASCIMENTO = new Date(new Date().getFullYear() - 30, 0, 1);
 
 /** Cadastro e edição de cliente — RF02, com os atributos da entidade `clientes` (seção 5.6). */
 export default function EditarCliente() {
@@ -167,10 +174,7 @@ function FormularioCliente({ existente }: { existente: Cliente | undefined }) {
     <Tela>
       <Cabecalho titulo={existente ? 'Editar cliente' : 'Novo cliente'} aoVoltar={sair} />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}
-        keyboardVerticalOffset={20}>
+      <EvitaTeclado>
         <ScrollView
           contentContainerStyle={styles.conteudo}
           keyboardShouldPersistTaps="handled"
@@ -212,13 +216,16 @@ function FormularioCliente({ existente }: { existente: Cliente | undefined }) {
               mascara={mascaraTelefone}
               erro={erros.telefone}
             />
-            <Campo
+            <CampoDataOpcional
               rotulo="Data de nascimento"
               valor={nascimento}
-              aoMudar={setNascimento}
-              placeholder="dd/mm/aaaa"
-              tipoTeclado="number-pad"
-              mascara={mascaraData}
+              aoMudar={(texto) => {
+                setNascimento(texto);
+                if (erros.nascimento) setErros((atuais) => ({ ...atuais, nascimento: undefined }));
+              }}
+              inicial={INICIO_CALENDARIO_NASCIMENTO}
+              minimo={NASCIMENTO_MINIMO}
+              maximo={new Date()}
               ajuda="Opcional. Serve para o aplicativo saber quando exigir o consentimento de um responsável legal."
               erro={erros.nascimento}
             />
@@ -249,13 +256,12 @@ function FormularioCliente({ existente }: { existente: Cliente | undefined }) {
             aoPressionar={salvar}
           />
         </View>
-      </KeyboardAvoidingView>
+      </EvitaTeclado>
     </Tela>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   conteudo: { paddingHorizontal: espaco.xl, paddingTop: espaco.xl, paddingBottom: espaco.xl },
   foto: { marginBottom: espaco.xl },
   esperando: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: espaco.xl },

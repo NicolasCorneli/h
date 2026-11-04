@@ -2,8 +2,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +14,7 @@ import { Cabecalho } from '@/components/Cabecalho';
 import { Campo } from '@/components/Campo';
 import { useFeedback } from '@/components/Feedback';
 import { SeletorFoto, type FotoEscolhida } from '@/components/SeletorFoto';
+import { EvitaTeclado } from '@/components/EvitaTeclado';
 import { useStore } from '@/data/store';
 import type { Usuario } from '@/data/tipos';
 import { reduzirParaEnvio } from '@/services/imagemLocal';
@@ -114,7 +113,7 @@ function Formulario({ usuario }: { usuario: Usuario }) {
   const opcoes = ATUACOES.includes(atuacao) ? ATUACOES : [...ATUACOES, atuacao];
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
+    <EvitaTeclado>
       <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
         <View style={styles.foto}>
           <SeletorFoto
@@ -147,12 +146,11 @@ function Formulario({ usuario }: { usuario: Usuario }) {
           estilo={styles.botao}
         />
       </ScrollView>
-    </KeyboardAvoidingView>
+    </EvitaTeclado>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   carregando: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   conteudo: { paddingHorizontal: espaco.xl, paddingTop: espaco.lg, paddingBottom: espaco.xxxl },
   foto: { marginBottom: espaco.xl },

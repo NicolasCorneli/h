@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Aviso, BotaoIcone, Faixa, Tela, useTelaDividida } from '@/components/Basicos';
 import { BotaoGoogle, useGoogleDisponivel } from '@/components/BotaoGoogle';
 import { Botao } from '@/components/Botao';
 import { Campo } from '@/components/Campo';
 import { Marca } from '@/components/Marca';
+import { EvitaTeclado } from '@/components/EvitaTeclado';
 import { useStore } from '@/data/store';
 import { ErroApi } from '@/services/api';
 import { textos, textosEscuros } from '@/theme/textos';
@@ -83,9 +84,7 @@ export default function Cadastro() {
           A conta é sua e os dados dos seus clientes ficam visíveis só para você.
         </Text>
       </Faixa>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}>
+      <EvitaTeclado>
         <ScrollView
           contentContainerStyle={[styles.conteudo, dividida && styles.conteudoCentrado]}
           keyboardShouldPersistTaps="handled"
@@ -161,13 +160,12 @@ export default function Cadastro() {
             dos clientes.
           </Text>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </EvitaTeclado>
     </Tela>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   topo: { paddingHorizontal: espaco.xxl, paddingTop: espaco.md, paddingBottom: espaco.xxl },
   linhaTopo: { flexDirection: 'row', alignItems: 'center', gap: espaco.md },
   titulo: { marginTop: espaco.xl },

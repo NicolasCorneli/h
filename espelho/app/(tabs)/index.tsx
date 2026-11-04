@@ -59,7 +59,7 @@ export default function Dashboard() {
 
   if (carregando) {
     return (
-      <Tela>
+      <Tela bordas={['top']}>
         {cabecalho}
         <ScrollView contentContainerStyle={styles.conteudo} refreshControl={controle}>
           <Esqueleto altura={150} estilo={styles.esqueletoBloco} />
@@ -76,7 +76,7 @@ export default function Dashboard() {
 
   if (falhou && estado.clientes.length === 0) {
     return (
-      <Tela>
+      <Tela bordas={['top']}>
         {cabecalho}
         <ScrollView contentContainerStyle={styles.conteudo} refreshControl={controle}>
           <AvisoDeConexao />
@@ -87,7 +87,7 @@ export default function Dashboard() {
 
   if (primeiroUso) {
     return (
-      <Tela>
+      <Tela bordas={['top']}>
         {cabecalho}
         <ScrollView contentContainerStyle={styles.conteudo} showsVerticalScrollIndicator={false}>
           <EstadoVazio
@@ -107,7 +107,7 @@ export default function Dashboard() {
   }
 
   return (
-    <Tela>
+    <Tela bordas={['top']}>
       {cabecalho}
       <ScrollView contentContainerStyle={styles.conteudo} showsVerticalScrollIndicator={false}>
 

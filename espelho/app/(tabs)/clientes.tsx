@@ -52,7 +52,7 @@ export default function Clientes() {
   const vazio = clientes.length === 0 && !falhou;
 
   return (
-    <Tela>
+    <Tela bordas={['top']}>
       <Faixa estilo={styles.topo}>
         <View style={styles.tituloLinha}>
           <Text style={textosEscuros.titulo} accessibilityRole="header">

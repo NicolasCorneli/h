@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { textos } from '@/theme/textos';
 import { cores, espaco, raios } from '@/theme/tokens';
@@ -7,6 +7,7 @@ import { cores, espaco, raios } from '@/theme/tokens';
 import { Botao } from './Botao';
 import { Campo } from './Campo';
 import { Icone } from './Icone';
+import { EvitaTeclado } from './EvitaTeclado';
 
 type Props = {
   visivel: boolean;
@@ -49,7 +50,7 @@ export function DialogoCancelamento({ visivel, resumo, aoFechar, aoConfirmar }: 
 
   return (
     <Modal visible={visivel} transparent animationType="fade" onRequestClose={aoFechar}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
+      <EvitaTeclado>
         <Pressable style={styles.fundo} onPress={aoFechar} accessibilityLabel="Fechar">
           <Pressable style={styles.caixa} onPress={() => undefined}>
             <View style={styles.iconeCaixa}>
@@ -90,13 +91,12 @@ export function DialogoCancelamento({ visivel, resumo, aoFechar, aoConfirmar }: 
             />
           </Pressable>
         </Pressable>
-      </KeyboardAvoidingView>
+      </EvitaTeclado>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   fundo: {
     flex: 1,
     backgroundColor: cores.veu,

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Etiqueta } from '@/components/Basicos';
 import { Botao } from '@/components/Botao';
@@ -12,6 +12,7 @@ import { ImagemSimulada } from '@/components/ImagemSimulada';
 import { LinhaCliente } from '@/components/LinhaCliente';
 import { CaixaDeErro, estilosFormulario, Rodape } from '@/components/PartesFormulario';
 import { useProtecaoDeSaida } from '@/components/ProtecaoDeSaida';
+import { EvitaTeclado } from '@/components/EvitaTeclado';
 import { useSimulacoesDoCliente } from '@/data/store';
 import type { Agendamento, Cliente } from '@/data/tipos';
 import { textos } from '@/theme/textos';
@@ -143,10 +144,7 @@ export function FormularioAtendimento({
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={estilosFormulario.flex}
-      keyboardVerticalOffset={20}>
+    <EvitaTeclado>
       <ScrollView
         contentContainerStyle={estilosFormulario.conteudo}
         keyboardShouldPersistTaps="handled"
@@ -281,7 +279,7 @@ export function FormularioAtendimento({
           aoPressionar={salvar}
         />
       </Rodape>
-    </KeyboardAvoidingView>
+    </EvitaTeclado>
   );
 }
 

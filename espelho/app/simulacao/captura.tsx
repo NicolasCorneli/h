@@ -2,7 +2,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useIsFocused, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BotaoIcone } from '@/components/Basicos';
@@ -77,7 +77,15 @@ export default function Captura() {
       avisar('Acesso à galeria não liberado', 'erro');
       return;
     }
-    const resultado = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.85 });
+    const resultado = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+      // Recorte antes de seguir, para tirar do quadro o que não é o cliente. No Android o
+      // recorte é livre (sem `aspect`): retrato, rosto mais de perto, o que a foto pedir.
+      // No iOS o editor do sistema só recorta em quadrado, o que pode cortar o cabelo, e
+      // na web não há editor: nos dois a foto segue inteira, como antes.
+      allowsEditing: Platform.OS === 'android',
+    });
     if (resultado.canceled) return;
     const escolhida = resultado.assets[0];
     seguir({ uri: escolhida.uri, width: escolhida.width ?? 0, height: escolhida.height ?? 0 });

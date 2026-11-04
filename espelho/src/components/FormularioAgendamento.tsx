@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Etiqueta } from '@/components/Basicos';
 import { Botao } from '@/components/Botao';
@@ -12,6 +12,7 @@ import { LinhaCliente } from '@/components/LinhaCliente';
 import { CaixaDeErro, estilosFormulario, Rodape } from '@/components/PartesFormulario';
 import { useProtecaoDeSaida } from '@/components/ProtecaoDeSaida';
 import { SeletorCliente } from '@/components/SeletorCliente';
+import { EvitaTeclado } from '@/components/EvitaTeclado';
 import { STATUS_LABEL, useCliente } from '@/data/store';
 import type { StatusAgendamento } from '@/data/tipos';
 import { textos } from '@/theme/textos';
@@ -159,10 +160,7 @@ export function FormularioAgendamento({
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={estilosFormulario.flex}
-      keyboardVerticalOffset={20}>
+    <EvitaTeclado>
       <ScrollView
         contentContainerStyle={estilosFormulario.conteudo}
         keyboardShouldPersistTaps="handled"
@@ -299,7 +297,7 @@ export function FormularioAgendamento({
         }}
         aoFechar={() => setEscolhendo(false)}
       />
-    </KeyboardAvoidingView>
+    </EvitaTeclado>
   );
 }
 

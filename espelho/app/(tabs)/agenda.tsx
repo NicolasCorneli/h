@@ -9,6 +9,7 @@ import { FolhaAcoes, type AcaoFolha } from '@/components/FolhaAcoes';
 import { Icone } from '@/components/Icone';
 import { useAtualizar } from '@/components/Atualizar';
 import { DialogoCancelamento } from '@/components/DialogoCancelamento';
+import { SeletorData } from '@/components/SeletorData';
 import { STATUS_CURTO, STATUS_LABEL, useAgendamentosOrdenados, useStore } from '@/data/store';
 import type { Agendamento } from '@/data/tipos';
 import { ErroApi } from '@/services/api';
@@ -129,13 +130,22 @@ export default function Agenda() {
   };
 
   return (
-    <Tela>
+    <Tela bordas={['top']}>
       <Faixa estilo={styles.topo}>
         <View style={styles.tituloLinha}>
           <View style={styles.flex}>
-            <Text style={textosEscuros.titulo} accessibilityRole="header">
-              {nomeDoMes(selecionado.toISOString())} {selecionado.getFullYear()}
-            </Text>
+            {/* O título abre o calendário do sistema: pula para qualquer dia sem passar
+                mês a mês pelas setas. */}
+            <SeletorData
+              valor={selecionado}
+              aoEscolher={setSelecionado}
+              rotuloAcessivel={`${diaPorExtenso(selecionado.toISOString())}. Escolher outra data`}
+              estilo={styles.tituloData}>
+              <Text style={textosEscuros.titulo} accessibilityRole="header">
+                {nomeDoMes(selecionado.toISOString())} {selecionado.getFullYear()}
+              </Text>
+              <Icone nome="calendario" tamanho={18} cor={cores.escuroTextoSecundario} />
+            </SeletorData>
             <Text style={textosEscuros.meta}>
               {ativosDoMes.length} {ativosDoMes.length === 1 ? 'compromisso no mês' : 'compromissos no mês'}
             </Text>
@@ -314,6 +324,7 @@ const styles = StyleSheet.create({
     gap: espaco.sm,
   },
   flex: { flex: 1 },
+  tituloData: { flexDirection: 'row', alignItems: 'center', gap: espaco.sm, alignSelf: 'flex-start' },
   navegacaoMes: { flexDirection: 'row', alignItems: 'center', gap: espaco.xs },
   botaoMes: {
     width: ALVO_TOQUE,
