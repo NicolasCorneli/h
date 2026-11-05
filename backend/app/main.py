@@ -26,6 +26,8 @@ from app.core.protecoes import CabecalhosDeSeguranca, LimiteDeCorpo, LimiteDeTen
 from app.core.registro import configurar_logs, definir_id_requisicao, novo_id_requisicao
 from app.db.session import FabricaSessao, engine
 from app.db.versao import versoes
+from app.models import TipoTermo
+from app.repositories import consultas
 from app.services.simulacao import expirar_processando
 from app.services.storage import ErroDeArmazenamento
 
@@ -43,16 +45,20 @@ SONDAS = {"/api/v1/saude", "/api/v1/saude/vivo"}
 async def ciclo_de_vida(app: FastAPI) -> AsyncIterator[None]:
     config = obter_config()
     log.info(
-        "iniciando: ambiente=%s storage=%s provedor_ia=%s modo_demo=%s url_publica=%s",
+        "iniciando: ambiente=%s storage=%s provedor_ia=%s estrategia_ia=%s modelo_texto=%s "
+        "modo_demo=%s url_publica=%s",
         config.ambiente,
         config.storage_driver,
         config.ai_provider,
+        config.ai_estrategia,
+        config.ai_modelo_texto or "(desligado)",
         config.modo_demo,
         config.url_publica or "(da requisição)",
     )
     for aviso in config.avisos_de_producao():
         log.warning("produção: %s", aviso)
     _avisar_se_banco_desatualizado()
+    _avisar_se_termo_nao_descreve_o_modelo()
     # Simulações interrompidas por um reinício não podem ficar "processando" para sempre.
     with FabricaSessao() as sessao:
         expirar_processando(sessao)
@@ -74,6 +80,54 @@ def _avisar_se_banco_desatualizado() -> None:
             aplicada,
             mais_recente,
         )
+
+
+def divergencia_entre_termo_e_modelo(config, textos_do_termo: list[str]) -> str | None:
+    """O termo vigente do cliente diz para onde a foto vai; o caminho em uso tem de bater.
+
+    O termo 1.2 (Nano Banana) cita o Google; os anteriores, não. Ligar o Nano Banana sem
+    publicar o 1.2 (ou voltar ao Kontext com o 1.2 vigente) faria o cliente consentir com
+    um destino que não é o real. A troca é por variável de ambiente e a publicação é por
+    migration: este aviso é o que pega quando só uma das duas foi feita.
+    """
+    if config.ai_provider != "replicate":
+        return None
+    em_uso = [config.ai_modelo_texto] if config.ai_estrategia == "instrucao" else [
+        config.ai_modelo,
+        config.ai_modelo_texto,
+    ]
+    usa_google = any(modelo.startswith("google/") for modelo in em_uso if modelo)
+    cita_google = any("Google" in texto for texto in textos_do_termo)
+    if usa_google and not cita_google:
+        return (
+            "o modelo em uso é do Google, mas o termo vigente do cliente não diz que a foto "
+            "vai ao Google: rode 'alembic upgrade head' para publicar o termo 1.2"
+        )
+    if cita_google and not usa_google:
+        return (
+            "o termo vigente do cliente diz que a foto vai ao Google, mas o caminho em uso "
+            "não usa um modelo do Google: publique uma versão do termo que descreva o "
+            "caminho atual, ou volte a AI_ESTRATEGIA=instrucao"
+        )
+    return None
+
+
+def _avisar_se_termo_nao_descreve_o_modelo() -> None:
+    config = obter_config()
+    if config.ai_provider != "replicate":
+        return
+    try:
+        with FabricaSessao() as sessao:
+            termo = consultas.termo_vigente(sessao, TipoTermo.cliente)
+            textos = (
+                [f"{s.get('titulo', '')} {s.get('texto', '')}" for s in termo.secoes] if termo else []
+            )
+    except Exception:  # pragma: no cover - sem banco, o /saude já acusa
+        log.exception("não foi possível conferir o termo vigente")
+        return
+    divergencia = divergencia_entre_termo_e_modelo(config, textos)
+    if divergencia:
+        log.error("TERMO E MODELO NÃO BATEM: %s", divergencia)
 
 
 class IdentificaERegistra:
@@ -321,10 +375,22 @@ def saude(resposta: Response) -> dict[str, object]:
         # Booleano, nunca a chave: é o que permite conferir, antes de gastar uma
         # simulação, se a credencial do provedor externo chegou ao servidor.
         "credencialIa": bool(config.ai_api_key),
-        "modeloIa": config.ai_modelo if config.ai_provider == "replicate" else None,
-        # Os dois modelos da simulação (texto vazio = descrição livre desligada).
+        # O modelo que atende a maior parte dos pedidos: o principal no caminho
+        # especializado; o de texto no caminho `instrucao`, que manda tudo a ele.
+        "modeloIa": (
+            (config.ai_modelo_texto if config.ai_estrategia == "instrucao" else config.ai_modelo)
+            if config.ai_provider == "replicate"
+            else None
+        ),
+        # Os modelos da simulação e o caminho em vigor (texto vazio = descrição livre
+        # desligada; `principal` é null no caminho `instrucao`, que não o usa).
         "modelosIa": (
-            {"principal": config.ai_modelo, "texto": config.ai_modelo_texto or None}
+            {
+                "estrategia": config.ai_estrategia,
+                "principal": config.ai_modelo if config.ai_estrategia == "especializado" else None,
+                "texto": config.ai_modelo_texto or None,
+                "resolucao": config.ai_resolucao,
+            }
             if config.ai_provider == "replicate"
             else None
         ),

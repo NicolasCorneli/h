@@ -46,11 +46,14 @@ services:
       # O `.env` não entra na imagem: dentro do contêiner valem só as variáveis listadas
       # aqui.
       AI_BASE_URL: ${AI_BASE_URL:-https://api.replicate.com/v1}
-      AI_TIMEOUT_S: ${AI_TIMEOUT_S:-60}
+      AI_TIMEOUT_S: ${AI_TIMEOUT_S:-120}
       AI_INTERVALO_CONSULTA_S: ${AI_INTERVALO_CONSULTA_S:-1}
       SIMULACAO_MAX_POR_HORA: ${SIMULACAO_MAX_POR_HORA:-3}
       # Personalização (etapa "Estilo e cor"). AI_MODELO_TEXTO vazio desliga a descrição livre.
+      # AI_ESTRATEGIA=instrucao manda todos os pedidos ao AI_MODELO_TEXTO (Nano Banana).
+      AI_ESTRATEGIA: ${AI_ESTRATEGIA:-especializado}
       AI_MODELO_TEXTO: ${AI_MODELO_TEXTO-black-forest-labs/flux-kontext-pro}
+      AI_RESOLUCAO: ${AI_RESOLUCAO:-1K}
       AI_INSTRUCAO_IDIOMA: ${AI_INSTRUCAO_IDIOMA:-pt_com_termos}
       AI_LIMITE_DATA_URI_KB: ${AI_LIMITE_DATA_URI_KB:-1024}
       AI_LADO_MAXIMO_ENVIO: ${AI_LADO_MAXIMO_ENVIO:-1536}

@@ -84,12 +84,15 @@ def test_2_consentimento_revogado_nao_pode_gerar_simulacao(cliente_http: TestCli
 
 
 # 3 ------------------------------------------------------------------------
-def test_3_consentimento_antigo_exige_revalidacao(cliente_http: TestClient, conta):
+def test_3_consentimento_antigo_exige_revalidacao(cliente_http: TestClient, conta, versao_vigente):
     cabecalhos, _ = conta()
     cliente = novo_cliente(cliente_http, cabecalhos)
     cliente_http.post(
         f"/api/v1/clientes/{cliente['id']}/consentimentos", headers=cabecalhos, json=ACEITE
     )
+    # Restaurada no fim. Antes o teste devolvia a vigência à "1.0" fixa e, desde a 1.1,
+    # deixava os testes seguintes com o termo errado em vigor.
+    anterior = versao_vigente()
 
     # Publica uma versão nova do termo: o aceite anterior continua existindo, mas não vale.
     with engine.begin() as conexao:
@@ -120,7 +123,8 @@ def test_3_consentimento_antigo_exige_revalidacao(cliente_http: TestClient, cont
             conexao.execute(text("TRUNCATE consentimentos CASCADE"))
             conexao.execute(text("DELETE FROM termos WHERE versao = '2.0'"))
             conexao.execute(
-                text("UPDATE termos SET vigente = true WHERE tipo = 'cliente' AND versao = '1.0'")
+                text("UPDATE termos SET vigente = true WHERE tipo = 'cliente' AND versao = :anterior"),
+                {"anterior": anterior},
             )
 
 

@@ -154,10 +154,11 @@ try {
   else falha('termo do cliente', 'texto não apareceu');
 
   // Verifica a substância, não a redação: o termo tem de dizer que a foto vai para outra
-  // empresa e que ela pode usar a imagem para treinar os sistemas dela. Procurar uma
-  // frase exata quebraria a cada revisão de texto, que é algo que deve poder acontecer.
+  // empresa (desde o 1.2, a Replicate e o Google) e que ela pode usar a imagem para
+  // treinar os sistemas dela. Procurar uma frase exata quebraria a cada revisão de texto,
+  // que é algo que deve poder acontecer.
   const corpoTermo = await page.locator('body').innerText();
-  const dizQueVaiParaOutraEmpresa = /outra empresa|empresa terceira|serviço de intelig/i.test(corpoTermo);
+  const dizQueVaiParaOutraEmpresa = /outra empresa|empresa terceira|serviço de intelig|Replicate|Google/i.test(corpoTermo);
   const dizQuePodeTreinar = /treinar/i.test(corpoTermo);
   if (dizQueVaiParaOutraEmpresa && dizQuePodeTreinar) {
     ok('o termo informa o envio a outra empresa e o uso para treinar os modelos dela');

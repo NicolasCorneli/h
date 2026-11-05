@@ -559,6 +559,13 @@ Em vez de silenciar essa limitação, o aplicativo a comunica em três lugares:
 3. **Na tela de privacidade**, onde a afirmação original do design ("o serviço de IA não
    retém a foto para treino") foi substituída pelo texto correto.
 
+Com o caminho do Nano Banana (`AI_ESTRATEGIA=instrucao`, ver `docs/NANO_BANANA.md`), a foto
+passa por duas empresas: a Replicate, que a recebe, e o Google, dono do modelo. O termo do
+cliente foi para a versão 1.2, que nomeia as duas e diz o que cada uma declara fazer com a
+imagem. O contrato entre a Replicate e o Google não é público; o termo trata como possível
+o pior caso documentado (uso para melhorar e treinar os modelos do Google, com revisão
+humana), em vez de prometer o melhor.
+
 Do ponto de vista metodológico, essa é uma das diretrizes de design que o TCC se propõe a
 sistematizar (seção 5.1 do pré-projeto): ao integrar um serviço externo de IA generativa a
 um sistema que trata dados sensíveis, **a dependência de terceiros deve ser declarada ao

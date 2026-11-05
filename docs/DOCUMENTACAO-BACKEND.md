@@ -56,7 +56,7 @@ provedor de IA**.
     │           │
     │           ├────────────► Storage de objetos (disco em dev; S3/MinIO/Supabase)
     │           │              imagens por usuário/cliente/simulação · URL assinada
-    │           └────────────► Provedor de IA (Replicate · FLUX.1 Kontext)
+    │           └────────────► Provedor de IA (Replicate · FLUX.1 Kontext ou Nano Banana)
     │                          acionado só após consentimento e foto válidos
 ┌───▼──────────────────────────┐
 │  PostgreSQL 16               │  9 tabelas · enums nativos · gatilhos de imutabilidade
@@ -428,6 +428,15 @@ O protótipo citava "Replicate / SDXL img2img". A avaliação refez a pergunta:
 **Escolhido: Replicate com `flux-kontext-apps/change-haircut`.** É o único candidato
 especializado na tarefa, e preservar o rosto é requisito implícito do produto — uma
 simulação que troca a face não serve para mostrar ao cliente.
+
+**Atualização (2026-11-05): Nano Banana como segundo caminho.** O `google/nano-banana-2.1`
+(modelo do Google oferecido pela Replicate) pode atender todos os pedidos, por variável de
+ambiente (`AI_ESTRATEGIA=instrucao`), sem tirar o caminho acima: voltar a ele é trocar
+duas variáveis. Ele segue instruções longas, então o pedido vai como instrução detalhada
+(`instrucoes.prompt_detalhado`), com a descrição completa de cada exemplo do catálogo. A
+foto passa a ir também ao Google, o que exigiu o termo 1.2. Pesquisa (schema, preço,
+tempos, caminho dos dados, políticas), com fontes e datas, em `docs/NANO_BANANA.md`; a
+qualidade se compara com `scripts/comparar_simulacoes.py`.
 
 ### 7.2 Desacoplamento
 

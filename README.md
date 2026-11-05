@@ -24,7 +24,7 @@ O nome interno do aplicativo e de alguns identificadores (pasta `espelho/`, banc
 | Aplicativo (celular e navegador) | [`espelho/`](espelho) | React Native 0.86, Expo SDK 57, expo-router, TypeScript estrito |
 | API | [`backend/`](backend) | Python 3.11, FastAPI, SQLAlchemy 2, Alembic, PostgreSQL 16 |
 | Imagens | disco (volume) ou S3/MinIO/Supabase | servidas só por URL assinada de 10 minutos |
-| Simulação | `fake` (local, sem custo, sem IA) ou Replicate (`flux-kontext-apps/change-haircut`) | a chave fica só no servidor |
+| Simulação | `fake` (local, sem custo, sem IA) ou Replicate: `flux-kontext-apps/change-haircut` + `flux-kontext-pro`, ou `google/nano-banana-2.1` (`AI_ESTRATEGIA`, ver [docs/NANO_BANANA.md](docs/NANO_BANANA.md)) | a chave fica só no servidor |
 | Autenticação | JWT (acesso 30 min, renovação 30 dias) com revogação por conta; bcrypt; Google opcional | |
 | Infraestrutura | Docker, `docker-compose.yml` (aplicação inteira: banco, API e site com HTTPS), GitHub Actions (`.github/workflows/ci.yml`) | |
 

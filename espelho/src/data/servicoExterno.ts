@@ -21,26 +21,32 @@
 /** Nome que o profissional vê. Evita jargão: não é "provedor de IA" nem "endpoint". */
 export const SERVICO_EXTERNO = 'serviço de inteligência artificial';
 
+/**
+ * Os textos descrevem o caminho do Nano Banana (`AI_ESTRATEGIA=instrucao`): a foto vai à
+ * Replicate, que a envia ao Google. É o mesmo destino do termo 1.2 do cliente. Fontes e
+ * datas de cada afirmação em docs/NANO_BANANA.md; o que não pôde ser confirmado (o
+ * contrato entre a Replicate e o Google) está dito como possibilidade.
+ */
 export const USO_DE_DADOS = {
   /** Para que serve o envio. */
   finalidade:
-    'Gerar a imagem da simulação. O aplicativo não cria a prévia sozinho: quem desenha o cabelo novo sobre a foto é um serviço de inteligência artificial de outra empresa, contratado para isso.',
+    'Gerar a imagem da simulação. O aplicativo não cria a prévia sozinho: a foto vai para a Replicate, uma empresa de serviços de inteligência artificial, que a envia ao Google. Quem desenha o cabelo novo sobre a foto é um programa de inteligência artificial do Google.',
 
   /** O que sai do sistema — verificado por teste automatizado da suíte. */
   oQueSai:
-    'Sai a foto do cliente e as escolhas do atendimento: o corte, o gênero do corte (feminino, masculino ou não especificado) e a cor. Nada mais. Nome, telefone, data de nascimento e observações ficam guardados no aplicativo e nunca acompanham a imagem.',
+    'Sai a foto do cliente, sem os dados que o celular grava dentro do arquivo (data, aparelho, localização), e as escolhas do atendimento: o corte, o gênero do corte (feminino, masculino ou não especificado) e a cor. Nada mais. Nome, telefone, data de nascimento e observações ficam guardados no aplicativo e nunca acompanham a imagem.',
 
   /** Por que é necessário. */
   porQue:
     'Sem a foto, não há o que simular: a imagem gerada parte do rosto e do cabelo do cliente. Sem o corte e a cor, o serviço não sabe o que desenhar.',
 
-  /** O que a empresa pode fazer com a imagem, segundo os termos dela. */
-  oQueElaPodeFazer:
-    'Os termos de uso dessa empresa permitem que ela utilize as imagens recebidas e as geradas para operar e melhorar os serviços dela, inclusive para treinar os próprios modelos de inteligência artificial. Essa permissão é dada nos termos dela, não por este aplicativo.',
+  /** O que as empresas podem fazer com a imagem, segundo os termos delas. */
+  oQueElasPodemFazer:
+    'A Replicate declara que apaga a foto e a imagem gerada cerca de uma hora depois da geração. O Google guarda o que recebe por um período limitado, para verificar se houve uso proibido. Dependendo do contrato entre a Replicate e o Google, que não é público, o Google também pode usar as imagens recebidas e as geradas para melhorar e treinar os próprios modelos de inteligência artificial, inclusive com revisão por pessoas da equipe dele. A imagem gerada leva uma marca d’água invisível do Google (SynthID), que indica que ela foi feita por inteligência artificial. Essas permissões são dadas nos termos dessas empresas, não por este aplicativo.',
 
   /** O limite honesto do que o aplicativo pode prometer. */
   oQueNaoControlamos:
-    'Depois que a imagem sai daqui, o aplicativo não controla por quanto tempo ela fica guardada nem com quem é compartilhada. Quem define isso é a empresa que presta o serviço, nos termos dela, que podem mudar.',
+    'Depois que a imagem sai daqui, o aplicativo não controla por quanto tempo ela fica guardada, em que país é processada nem com quem é compartilhada. Quem define isso são as empresas que prestam o serviço, nos termos delas, que podem mudar.',
 
   /** O que depende da decisão do cliente, e é imposto pelo servidor. */
   consentimento:
@@ -53,4 +59,4 @@ export const USO_DE_DADOS = {
 
 /** Resumo curto, para avisos onde não cabe o texto inteiro. */
 export const RESUMO_ENVIO =
-  'Para gerar a prévia, a foto e as escolhas de corte, gênero e cor vão para um serviço de inteligência artificial de outra empresa. Nome, telefone e observações do cliente não são enviados.';
+  'Para gerar a prévia, a foto e as escolhas de corte, gênero e cor vão para a Replicate, que as envia ao Google para gerar a imagem. Nome, telefone e observações do cliente não são enviados.';

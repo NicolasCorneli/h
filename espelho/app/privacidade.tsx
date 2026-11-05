@@ -24,8 +24,8 @@ const GARANTIAS = [
     texto: `${USO_DE_DADOS.oQueSai} ${USO_DE_DADOS.consentimento}`,
   },
   {
-    titulo: 'O que a outra empresa pode fazer com a imagem',
-    texto: `${USO_DE_DADOS.oQueElaPodeFazer} ${USO_DE_DADOS.oQueNaoControlamos} É isso que o termo do cliente informa, com estas palavras, antes de ele decidir.`,
+    titulo: 'O que a Replicate e o Google podem fazer com a imagem',
+    texto: `${USO_DE_DADOS.oQueElasPodemFazer} ${USO_DE_DADOS.oQueNaoControlamos} É isso que o termo do cliente informa, com estas palavras, antes de ele decidir.`,
   },
   {
     titulo: 'Retenção',

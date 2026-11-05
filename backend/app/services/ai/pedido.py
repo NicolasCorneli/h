@@ -53,6 +53,9 @@ class Alteracao:
     #: Valores equivalentes nas opções fechadas do modelo principal, em ordem de
     #: preferência. Vazio quando não há equivalente (ex.: "Butterfly").
     opcoes_do_modelo: tuple[str, ...] = ()
+    #: Descrição completa em inglês, quando o texto é um nome do catálogo: é a que vai nas
+    #: instruções detalhadas (`instrucoes.prompt_detalhado`).
+    detalhe: str | None = None
 
     @property
     def do_catalogo(self) -> bool:
@@ -110,14 +113,14 @@ def alteracao_de_corte(texto: str) -> Alteracao:
     opcao = opcao_de_corte(texto)
     if opcao is None:
         return Alteracao(texto)
-    return Alteracao(opcao.rotulo, opcao.ingles, opcao.opcoes_do_modelo)
+    return Alteracao(opcao.rotulo, opcao.ingles, opcao.opcoes_do_modelo, opcao.detalhe or None)
 
 
 def alteracao_de_cor(texto: str) -> Alteracao:
     opcao = opcao_de_cor(texto)
     if opcao is None:
         return Alteracao(texto)
-    return Alteracao(opcao.rotulo, opcao.ingles, opcao.opcoes_do_modelo)
+    return Alteracao(opcao.rotulo, opcao.ingles, opcao.opcoes_do_modelo, opcao.detalhe or None)
 
 
 def validar_genero(genero: str | None) -> Genero:

@@ -1,4 +1,4 @@
-"""Provedor Replicate: simulação capilar (FLUX.1 Kontext).
+"""Provedor Replicate: simulação capilar (FLUX.1 Kontext ou Nano Banana, por configuração).
 
 Ciclo de cada geração, todo no servidor (a chave `AI_API_KEY` nunca vai ao aplicativo):
 
@@ -7,8 +7,9 @@ Ciclo de cada geração, todo no servidor (a chave `AI_API_KEY` nunca vai ao apl
    valores as opções fechadas aceitam;
 2. **plano**: `planos.planejar` escolhe o modelo para o pedido e `montar_entrada` confere
    cada campo contra o schema. Campo inexistente ou valor fora das opções para aqui,
-   antes de gastar;
-3. **arquivo**: a foto até `AI_LIMITE_DATA_URI_KB` vai como *data URI* no
+   antes de gastar. No caminho `instrucao` só o schema do modelo de texto é consultado;
+3. **arquivo**: a foto, reduzida e sem metadados (EXIF), até `AI_LIMITE_DATA_URI_KB` vai
+   como *data URI* no
    corpo; acima disso, pela API de arquivos (`POST /files`), e o arquivo é apagado da
    Replicate ao fim, com sucesso ou falha. Nenhum dos dois caminhos expõe a foto em URL
    pública;
@@ -37,7 +38,7 @@ from app.core.config import obter_config
 from app.services.ai.base import EntradaSimulacao, FalhaDoProvedor, ProvedorIA, SaidaSimulacao
 from app.services.ai.esquema import EsquemaModelo, ler_esquema
 from app.services.ai.pedido import PedidoCapilar
-from app.services.ai.planos import Plano, configuracao_de, montar_entrada, planejar
+from app.services.ai.planos import Configuracao, Plano, configuracao_de, montar_entrada, planejar
 
 log = logging.getLogger(__name__)
 
@@ -52,7 +53,12 @@ _DATA_URI = re.compile(r"data:[^\"'\s,]*;base64,[A-Za-z0-9+/=]*")
 #: resultado por um soluço de rede é pagar por nada. A criação da predição nunca é
 #: repetida, porque um erro na resposta não garante que ela não foi criada.
 TENTATIVAS_DE_LEITURA = 3
-_SINAIS_DE_BLOQUEIO = ("nsfw", "moderat", "safety", "flagged", "sensitive")
+#: Palavras que, no erro de uma predição que falhou, indicam recusa por filtro de
+#: segurança. As do Kontext ("nsfw", "flagged") vieram do uso; as do Nano Banana
+#: ("blocked", "prohibited") são defensivas: a Replicate não documenta o texto que repassa
+#: quando o Google recusa (docs/NANO_BANANA.md), e um texto não reconhecido cai em
+#: `falha_na_geracao`, que também é tratada na tela.
+_SINAIS_DE_BLOQUEIO = ("nsfw", "moderat", "safety", "flagged", "sensitive", "blocked", "prohibited")
 
 
 def limpar_cache_de_esquemas() -> None:
@@ -66,9 +72,15 @@ def _resumo_seguro(texto: str) -> str:
 
 
 def _reduzir(conteudo: bytes, lado_maximo: int) -> bytes:
-    """Reduz a imagem ao lado máximo de envio, regravando em JPEG. Menores seguem iguais."""
+    """Reduz a imagem ao lado máximo de envio, regravando em JPEG sem metadados.
+
+    A foto que chega aqui já foi regravada pela validação (`validacao_foto`), que descarta
+    o EXIF. A regravação aqui é a segunda garantia, no ponto em que a foto sai do sistema:
+    imagem com EXIF (data, aparelho, localização) nunca segue como está. Menor que o limite
+    e sem EXIF, segue igual.
+    """
     with Image.open(io.BytesIO(conteudo)) as imagem:
-        if max(imagem.size) <= lado_maximo:
+        if max(imagem.size) <= lado_maximo and not imagem.getexif():
             return conteudo
         copia = imagem.convert("RGB")
     copia.thumbnail((lado_maximo, lado_maximo))
@@ -80,7 +92,12 @@ def _reduzir(conteudo: bytes, lado_maximo: int) -> bytes:
 class ProvedorReplicate(ProvedorIA):
     nome = "replicate"
 
-    def __init__(self) -> None:
+    def __init__(self, configuracao: Configuracao | None = None) -> None:
+        """`configuracao` troca só a escolha dos modelos (caminho, modelos, resolução).
+
+        É o que permite ao `scripts/comparar_simulacoes.py` gerar pelos dois caminhos na
+        mesma execução, com o mesmo código da produção. Fora dele, vale a do servidor.
+        """
         config = obter_config()
         if not config.ai_api_key:
             raise FalhaDoProvedor(
@@ -88,8 +105,13 @@ class ProvedorReplicate(ProvedorIA):
                 codigo="credencial_ausente",
             )
         self.config = config
+        self.configuracao = configuracao or configuracao_de(config)
         self.token = config.ai_api_key
-        self.modelo = config.ai_modelo
+        self.modelo = (
+            self.configuracao.modelo_texto
+            if self.configuracao.caminho == "instrucao"
+            else self.configuracao.modelo_principal
+        )
         self.timeout_s = config.ai_timeout_s
         # Lido da configuração, e não de uma constante de módulo: é o que permite os
         # testes exercitarem este cliente contra um servidor local, sem rede nem custo.
@@ -159,7 +181,11 @@ class ProvedorReplicate(ProvedorIA):
         return esquema
 
     def _plano(self, cliente: httpx.Client, pedido: PedidoCapilar) -> tuple[Plano, EsquemaModelo | None]:
-        configuracao = configuracao_de(self.config)
+        configuracao = self.configuracao
+        if configuracao.caminho == "instrucao":
+            # O modelo principal não entra neste caminho: nem o schema dele é lido.
+            plano = planejar(pedido, configuracao)
+            return plano, self.esquema(cliente, plano.modelo)
         principal = self.esquema(cliente, configuracao.modelo_principal)
         plano = planejar(pedido, configuracao, principal)
         if plano.modelo == configuracao.modelo_principal:

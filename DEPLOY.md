@@ -319,3 +319,49 @@ recusa valor vazio, por isso a linha não existe antes), acrescente-o ao `GOOGLE
   `DATABASE_URL` do bloco `x-ambiente-da-api` pelo endereço do provedor (com
   `?sslmode=require` se ele exigir). O backup passa a ser o do provedor.
 - **Imagens no S3:** `STORAGE_DRIVER=s3` e as variáveis `STORAGE_*` (bucket **privado**).
+
+## 12. Trocar o modelo da simulação (Nano Banana)
+
+A simulação pode seguir dois caminhos, escolhidos só por variável de ambiente
+(`AI_ESTRATEGIA`). Pesquisa, preços e fontes em `docs/NANO_BANANA.md`.
+
+| Caminho | Variáveis | Modelos |
+|---|---|---|
+| **especializado** (original) | `AI_ESTRATEGIA=especializado`, `AI_MODELO_TEXTO=black-forest-labs/flux-kontext-pro` | `change-haircut` para os exemplos da tela, `flux-kontext-pro` para a descrição livre |
+| **instrucao** (Nano Banana) | `AI_ESTRATEGIA=instrucao`, `AI_MODELO_TEXTO=google/nano-banana-2.1`, `AI_RESOLUCAO=1K` | `google/nano-banana-2.1` para todos os pedidos |
+
+**O termo do cliente acompanha o modelo.** O termo 1.2 diz que a foto passa pela
+Replicate e pelo Google; ele é publicado pela migration `a9e4c2b7d158`, e o serviço
+`migrar` aplica as migrations a cada subida. Por isso a versão com o Nano Banana e as
+variáveis novas sobem **juntas**:
+
+```bash
+./scripts/backup_producao.sh /caminho/seguro/backups   # 1. backup
+git pull                                                # 2. código com o Nano Banana
+# 3. no .env:  AI_ESTRATEGIA=instrucao
+#              AI_MODELO_TEXTO=google/nano-banana-2.1
+#              AI_RESOLUCAO=1K
+docker compose up -d --build --wait                     # 4. publica o termo 1.2 e liga o modelo
+docker compose exec api python -m app.diagnostico_ia    # 5. confere o schema, sem custo
+docker compose logs api | grep "TERMO E MODELO"         # 6. não deve aparecer nada
+```
+
+O que muda para quem usa:
+
+- todo cliente que aceitou o termo 1.1 (ou anterior) aparece como "Aceito em versão
+  anterior" e precisa ler o 1.2 e decidir de novo antes da próxima foto;
+- todo profissional precisa reconhecer de novo as responsabilidades (o aviso também foi
+  para a 1.2);
+- o site mostra os textos novos de privacidade na hora; no Android, só com um APK novo.
+
+Se a API subir com o modelo de um lado e o termo do outro (o Nano Banana ligado sem o
+termo 1.2, ou o Kontext com o 1.2 vigente), ela registra no log uma linha
+`TERMO E MODELO NÃO BATEM` dizendo o que fazer.
+
+**Voltar ao caminho original** é trocar as duas variáveis de volta
+(`AI_ESTRATEGIA=especializado` e `AI_MODELO_TEXTO=black-forest-labs/flux-kontext-pro`) e
+rodar `docker compose up -d`. O termo 1.2, porém, continua dizendo que a foto vai ao
+Google: antes de voltar, publique uma versão nova do termo que descreva o caminho em uso,
+numa migration no mesmo padrão da `a9e4c2b7d158`. Não use `alembic downgrade` para isso:
+ele se recusa a remover um termo que algum cliente já aceitou, e os consentimentos dados
+sobre o 1.2 precisam continuar ligados ao texto que o cliente leu.

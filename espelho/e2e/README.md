@@ -18,7 +18,8 @@ limpeza do console.
 1. onboarding → cadastro de conta → ciência das responsabilidades;
 2. cadastro de cliente e selo de consentimento pendente vindo do servidor;
 3. tentativa de simular sem consentimento → o fluxo leva ao termo, não à câmera;
-4. termo do cliente carregado da tabela `termos`, com o aviso sobre a empresa terceira;
+4. termo do cliente carregado da tabela `termos`, com o aviso sobre as empresas que geram a
+   simulação (desde o termo 1.2, a Replicate e o Google);
 5. registro do aceite → câmera liberada;
 6. envio da foto, validação no servidor, geração e exibição do resultado por URL assinada;
 7. registro do atendimento vinculado à simulação e criação de agendamento;

@@ -4,13 +4,17 @@ Uso (na pasta `backend`, com o `.env` preenchido):
 
     python -m app.diagnostico_ia
 
-Para cada modelo configurado (`AI_MODELO` e `AI_MODELO_TEXTO`), lê o schema publicado na
+Para cada modelo que o caminho em vigor (`AI_ESTRATEGIA`) usa, lê o schema publicado na
 Replicate (`GET /models/...`, que não gera cobrança) e confere:
 
 - se o modelo existe e a credencial é aceita;
-- se os campos que o sistema envia existem no schema;
-- no modelo principal, se cada exemplo do catálogo tem equivalente nas opções publicadas
-  de `haircut` e `hair_color` (os que não tiverem vão pelo modelo de descrição livre).
+- se os campos que o sistema envia existem no schema (no Nano Banana: `prompt`,
+  `image_input`, a resolução e as buscas na web, que precisam poder ir desligadas);
+- no caminho especializado, se cada exemplo do catálogo tem equivalente nas opções
+  publicadas de `haircut` e `hair_color` do modelo principal (os que não tiverem vão pelo
+  modelo de descrição livre).
+
+No caminho `instrucao` só o `AI_MODELO_TEXTO` é conferido: o `AI_MODELO` não é usado.
 
 Nenhuma predição é criada, nenhuma imagem é enviada e a chave não é impressa.
 Sai com código 1 se encontrar algum problema.
@@ -25,6 +29,7 @@ import httpx
 from app.core.config import obter_config
 from app.services.ai.base import FalhaDoProvedor
 from app.services.ai.esquema import EsquemaModelo
+from app.services.ai.planos import perfil_de
 from app.services.catalogo import CORES, CORTES
 
 
@@ -53,14 +58,21 @@ def main() -> int:
         return 1
 
     problemas: list[str] = []
-    modelos = {
-        "principal (AI_MODELO)": config.ai_modelo,
-        "descrição livre (AI_MODELO_TEXTO)": config.ai_modelo_texto,
-    }
+    instrucao = config.ai_estrategia == "instrucao"
+    perfil = perfil_de(config.ai_modelo_texto, config.ai_resolucao)
+    print(f"caminho (AI_ESTRATEGIA): {config.ai_estrategia}")
+    if instrucao:
+        modelos = {"todos os pedidos (AI_MODELO_TEXTO)": config.ai_modelo_texto}
+    else:
+        modelos = {
+            "principal (AI_MODELO)": config.ai_modelo,
+            "descrição livre (AI_MODELO_TEXTO)": config.ai_modelo_texto,
+        }
     esperados = {
-        config.ai_modelo: {"input_image", "haircut", "hair_color"},
-        config.ai_modelo_texto: {"input_image", "prompt"},
+        config.ai_modelo_texto: {perfil.campo_imagem, "prompt"},
     }
+    if not instrucao:
+        esperados[config.ai_modelo] = {"input_image", "haircut", "hair_color"}
 
     with httpx.Client(timeout=30.0) as cliente:
         for papel, modelo in modelos.items():
@@ -89,7 +101,21 @@ def main() -> int:
                 problemas.append(f"{modelo}: faltam os campos {faltando}")
                 print(f"  PROBLEMA: o sistema envia campos que o schema não tem: {faltando}")
 
-            if modelo == config.ai_modelo:
+            if modelo == config.ai_modelo_texto:
+                for nome_campo, valor in perfil.acessorios.items():
+                    campo = esquema.campos.get(nome_campo)
+                    if campo is None:
+                        print(f"  {nome_campo}: fora do schema, não é enviado (vale o padrão do modelo).")
+                    elif not campo.aceita(valor):
+                        print(f"  {nome_campo}: '{valor}' fora das opções, não é enviado.")
+                    else:
+                        print(f"  {nome_campo}: enviado como {valor!r}.")
+                for busca in ("google_search", "image_search"):
+                    if busca in esquema.campos and perfil.acessorios.get(busca) is not False:
+                        problemas.append(f"{modelo}: o campo {busca} existe e não seria desligado")
+                        print(f"  PROBLEMA: {busca} existe no schema e o sistema não o desliga.")
+
+            if modelo == config.ai_modelo and not instrucao:
                 for nome_campo, opcoes in (("haircut", CORTES), ("hair_color", CORES)):
                     campo = esquema.campos.get(nome_campo)
                     if campo is None:

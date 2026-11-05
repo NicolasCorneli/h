@@ -19,7 +19,8 @@ import { dataCurta, hora } from '@/utils/datas';
  *
  * Não é o consentimento de imagem: aquele pertence ao cliente e é registrado no perfil
  * dele. Aqui o profissional reconhece que precisa informar o cliente antes de registrar
- * qualquer decisão, inclusive sobre o envio da foto a uma empresa terceira.
+ * qualquer decisão, inclusive sobre o envio da foto às empresas que geram a simulação
+ * (a Replicate e o Google, desde o termo 1.2).
  */
 export default function Responsabilidades() {
   const router = useRouter();
@@ -65,8 +66,8 @@ export default function Responsabilidades() {
               {ciente ? <Icone nome="ok" tamanho={14} cor="#FFFFFF" /> : null}
             </View>
             <Text style={[textos.apoio, styles.cienciaTexto]}>
-              Estou ciente de que devo apresentar o termo e explicar o envio da foto a uma empresa terceira
-              antes de registrar a decisão de cada cliente.
+              Estou ciente de que devo apresentar o termo e explicar o envio da foto à Replicate e ao
+              Google antes de registrar a decisão de cada cliente.
             </Text>
           </Pressable>
         ) : null}

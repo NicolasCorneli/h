@@ -89,14 +89,21 @@ def test_texto_do_termo_publicado_nao_muda():
     assert "publique uma nova versao" in str(erro.value)
 
 
-def test_marcacao_de_vigencia_pode_mudar():
-    """Publicar uma versão nova exige mexer na vigência — e só nela."""
+def test_marcacao_de_vigencia_pode_mudar(versao_vigente):
+    """Publicar uma versão nova exige mexer na vigência — e só nela.
+
+    Alterna a versão que está de fato vigente. Fixar "1.0" só funcionava enquanto ela era
+    a vigente (ou enquanto outro teste a deixava vigente por engano).
+    """
+    atual = versao_vigente()
     with engine.begin() as conexao:
         conexao.execute(
-            text("UPDATE termos SET vigente = false WHERE tipo = 'cliente' AND versao = '1.0'")
+            text("UPDATE termos SET vigente = false WHERE tipo = 'cliente' AND versao = :versao"),
+            {"versao": atual},
         )
         conexao.execute(
-            text("UPDATE termos SET vigente = true WHERE tipo = 'cliente' AND versao = '1.0'")
+            text("UPDATE termos SET vigente = true WHERE tipo = 'cliente' AND versao = :versao"),
+            {"versao": atual},
         )
 
 

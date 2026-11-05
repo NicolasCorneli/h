@@ -4,7 +4,13 @@
 aplicativo manda o pedido (texto e marcas de "manter"); o identificador do modelo nunca vem
 dele: sai da configuração do servidor.
 
-A regra de escolha, em ordem:
+Há dois caminhos, escolhidos por `AI_ESTRATEGIA` (em `Configuracao.caminho`):
+
+**`instrucao`**: todo pedido, inclusive os exemplos do catálogo, vai ao modelo de edição por
+instrução (`AI_MODELO_TEXTO`, o `google/nano-banana-2.1`), com a instrução detalhada de
+`instrucoes.py`. O `AI_MODELO` não é consultado.
+
+**`especializado`** (o caminho original). A regra de escolha, em ordem:
 
 1. **Corte e cor cabem nas opções do modelo principal** (`AI_MODELO`, o
    `change-haircut`) → ele mesmo, com os valores exatos das opções. É o caminho
@@ -18,6 +24,12 @@ O gênero do corte (`gender`) só existe no modelo principal e vai a ele nos cam
 com o valor escolhido na tela. No caminho 3 o modelo de texto não tem esse campo: o gênero
 escolhido vira uma frase da instrução (`instrucoes.py`).
 
+Cada modelo de edição por instrução recebe a foto e os parâmetros de um jeito (`Perfil`): o
+Kontext tem `input_image` (uma URL), o Nano Banana tem `image_input` (uma lista de URLs),
+`resolution` e as buscas na web (`google_search`, `image_search`), que vão sempre desligadas:
+a foto do cliente não pode servir de consulta a uma busca. O perfil sai do identificador do
+modelo, e o schema publicado confere os nomes antes do envio.
+
 Quando o schema ao vivo não está disponível (provedor local, ou a prévia no aplicativo),
 a escolha usa o que o catálogo sabe dos valores das opções. Na geração de verdade, o
 schema publicado pela Replicate é consultado e tem a palavra final.
@@ -28,12 +40,12 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from app.core.erros import ValidacaoFalhou
 from app.services.ai.base import FalhaDoProvedor
 from app.services.ai.esquema import EsquemaModelo
-from app.services.ai.instrucoes import Estrategia, descrever, prompt_edicao
+from app.services.ai.instrucoes import Estrategia, descrever, prompt_detalhado, prompt_edicao
 from app.services.ai.pedido import GENERO_PADRAO, Alteracao, PedidoCapilar
 
 log = logging.getLogger(__name__)
@@ -41,8 +53,12 @@ log = logging.getLogger(__name__)
 #: Valor do `change-haircut` para "não mexer" (é o padrão do próprio modelo).
 SEM_MUDANCA = "No change"
 
-#: Os dois modelos recebem a foto do cliente neste campo.
+#: Os modelos do caminho especializado (change-haircut e Kontext) recebem a foto do
+#: cliente neste campo.
 CAMPO_IMAGEM = "input_image"
+
+#: Caminho das simulações (`AI_ESTRATEGIA`).
+Caminho = Literal["especializado", "instrucao"]
 
 #: Gênero do corte no `change-haircut` ("none", "male" ou "female").
 CAMPO_GENERO = "gender"
@@ -53,11 +69,14 @@ class Modo(StrEnum):
     opcoes = "opcoes"
     #: Descrição livre (no modelo de edição por texto, ou no principal se ele aceitar).
     descricao = "descricao"
+    #: Caminho `instrucao`: todo pedido vira uma instrução escrita detalhada.
+    instrucao = "instrucao"
 
 
 DESCRICAO_DO_MODO = {
     Modo.opcoes: "Troca de corte e cor com as opções do modelo especializado",
     Modo.descricao: "Edição a partir da descrição escrita",
+    Modo.instrucao: "Edição a partir de uma instrução detalhada do corte e da cor",
 }
 
 
@@ -70,6 +89,9 @@ class Plano:
     #: Campos sem os quais o pedido perde o sentido: se o schema não os tiver, ou não
     #: aceitar o valor, a geração para antes de gastar.
     essenciais: frozenset[str] = field(default_factory=frozenset)
+    #: Em que campo vai a foto, e se dentro de uma lista (`image_input` do Nano Banana).
+    campo_imagem: str = CAMPO_IMAGEM
+    imagem_em_lista: bool = False
 
     @property
     def instrucao(self) -> str:
@@ -93,6 +115,9 @@ class Configuracao:
     modelo_principal: str
     modelo_texto: str
     estrategia: Estrategia = "pt_com_termos"
+    caminho: Caminho = "especializado"
+    #: Resolução para os modelos que têm o campo `resolution`.
+    resolucao: str = "1K"
 
 
 def configuracao_de(config) -> Configuracao:
@@ -100,10 +125,67 @@ def configuracao_de(config) -> Configuracao:
         modelo_principal=config.ai_modelo,
         modelo_texto=config.ai_modelo_texto,
         estrategia=config.ai_instrucao_idioma,
+        caminho=config.ai_estrategia,
+        resolucao=config.ai_resolucao,
     )
 
 
 COMUNS = {"aspect_ratio": "match_input_image", "output_format": "jpg"}
+
+
+@dataclass(frozen=True)
+class Perfil:
+    """Como um modelo de edição por instrução recebe a foto, os parâmetros e a instrução."""
+
+    campo_imagem: str
+    imagem_em_lista: bool
+    #: Parâmetros que acompanham a instrução. Os que o schema publicado não tiver saem do
+    #: envio (`montar_entrada`), e o modelo usa o padrão dele.
+    acessorios: dict[str, Any]
+    #: Instrução longa (`prompt_detalhado`) em vez da curta do Kontext.
+    instrucao_detalhada: bool
+
+
+#: FLUX Kontext (o `flux-kontext-pro` do caminho atual): foto em `input_image`.
+PERFIL_KONTEXT = Perfil(CAMPO_IMAGEM, False, COMUNS, False)
+
+
+def perfil_de(modelo: str, resolucao: str = "1K") -> Perfil:
+    """O perfil do modelo, pelo identificador. Modelo desconhecido segue o do Kontext.
+
+    Nano Banana (`google/nano-banana-2.1`, schema conferido em docs/NANO_BANANA.md): a foto
+    vai em `image_input`, uma lista; a proporção acompanha a foto; e as buscas na web ficam
+    explicitamente desligadas (o padrão publicado também é desligado, mas o envio não
+    depende disso).
+    """
+    if modelo.startswith("google/nano-banana"):
+        return Perfil(
+            campo_imagem="image_input",
+            imagem_em_lista=True,
+            acessorios={
+                "aspect_ratio": "match_input_image",
+                "resolution": resolucao,
+                "output_format": "jpg",
+                "google_search": False,
+                "image_search": False,
+            },
+            instrucao_detalhada=True,
+        )
+    return PERFIL_KONTEXT
+
+
+def _plano_de_instrucao(pedido: PedidoCapilar, config: Configuracao, modo: Modo) -> Plano:
+    """O pedido inteiro como instrução escrita ao modelo de texto, no formato do perfil dele."""
+    perfil = perfil_de(config.modelo_texto, config.resolucao)
+    construir = prompt_detalhado if perfil.instrucao_detalhada else prompt_edicao
+    return Plano(
+        modo=modo,
+        modelo=config.modelo_texto,
+        campos={"prompt": construir(pedido, config.estrategia), **perfil.acessorios},
+        essenciais=frozenset({"prompt", perfil.campo_imagem}),
+        campo_imagem=perfil.campo_imagem,
+        imagem_em_lista=perfil.imagem_em_lista,
+    )
 
 
 def _valor_nas_opcoes(alteracao: Alteracao, esquema: EsquemaModelo | None, campo: str) -> str | None:
@@ -162,6 +244,10 @@ def planejar(
     config: Configuracao,
     esquema_principal: EsquemaModelo | None = None,
 ) -> Plano:
+    if config.caminho == "instrucao":
+        # A configuração recusa este caminho sem modelo de texto (`config.py`).
+        return _plano_de_instrucao(pedido, config, Modo.instrucao)
+
     # 1. Opções fechadas do modelo principal.
     valores: dict[str, str] = {}
     cabe_nas_opcoes = True
@@ -216,12 +302,7 @@ def planejar(
             "Use exatamente um dos exemplos da tela, ou peça para ligar a descrição livre.",
             codigo="descricao_livre_indisponivel",
         )
-    return Plano(
-        modo=Modo.descricao,
-        modelo=config.modelo_texto,
-        campos={"prompt": prompt_edicao(pedido, config.estrategia), **COMUNS},
-        essenciais=frozenset({"prompt", CAMPO_IMAGEM}),
-    )
+    return _plano_de_instrucao(pedido, config, Modo.descricao)
 
 
 def montar_entrada(plano: Plano, imagem: str, esquema: EsquemaModelo | None) -> dict[str, Any]:
@@ -232,7 +313,10 @@ def montar_entrada(plano: Plano, imagem: str, esquema: EsquemaModelo | None) -> 
     Valor fora das opções: mesma regra (`parametro_fora_do_schema`). Sem schema (provedor
     local), segue como está.
     """
-    entrada: dict[str, Any] = {CAMPO_IMAGEM: imagem, **plano.campos}
+    entrada: dict[str, Any] = {
+        plano.campo_imagem: [imagem] if plano.imagem_em_lista else imagem,
+        **plano.campos,
+    }
     if esquema is None:
         return entrada
 

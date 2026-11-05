@@ -79,14 +79,30 @@ class Configuracao(BaseSettings):
 
     ai_provider: Literal["fake", "replicate"] = "fake"
     ai_api_key: str = ""
-    #: Modelo principal: troca de corte e cor com opções fechadas (`haircut`, `hair_color`).
+    #: Qual caminho as simulações seguem (ver `services/ai/planos.py`):
+    #: - `especializado`: o pedido que cabe nas opções fechadas vai ao `AI_MODELO`
+    #:   (`change-haircut`), e só a descrição livre vai ao `AI_MODELO_TEXTO`;
+    #: - `instrucao`: todo pedido, inclusive os exemplos do catálogo, vai ao
+    #:   `AI_MODELO_TEXTO` como instrução escrita (é o modo do `google/nano-banana-2.1`).
+    #: Voltar de um para o outro é só trocar esta variável (e o `AI_MODELO_TEXTO`).
+    ai_estrategia: Literal["especializado", "instrucao"] = "especializado"
+    #: Modelo principal do caminho especializado: troca de corte e cor com opções fechadas
+    #: (`haircut`, `hair_color`). Não é usado no caminho `instrucao`.
     ai_modelo: str = "flux-kontext-apps/change-haircut"
-    #: Edição por descrição livre (`prompt` + `input_image`), para o que não cabe nas
-    #: opções do principal. Vazio: só as sugestões da lista são aceitas.
+    #: Edição por instrução escrita (`prompt` + a foto). No caminho especializado, atende o
+    #: que não cabe nas opções do principal (vazio: só as sugestões da lista são aceitas);
+    #: no caminho `instrucao`, atende todos os pedidos e é obrigatório.
     ai_modelo_texto: str = "black-forest-labs/flux-kontext-pro"
     #: Como a descrição em português vai nos `prompt`s (ver `services/ai/instrucoes.py`).
     ai_instrucao_idioma: Literal["pt_com_termos", "pt"] = "pt_com_termos"
-    ai_timeout_s: float = 60.0
+    #: Resolução pedida aos modelos que têm o campo `resolution` (o Nano Banana). Cada
+    #: degrau custa mais e demora mais (preços em docs/NANO_BANANA.md). Os modelos sem esse
+    #: campo ignoram a variável.
+    ai_resolucao: Literal["1K", "2K", "4K"] = "1K"
+    #: Tempo limite de uma geração, do envio da foto ao download do resultado. O Nano
+    #: Banana 2.1 leva cerca de 10 s em 1K e 19 s em 2K nos exemplos publicados (o Kontext,
+    #: de 4 a 6 s); 120 s cobre a fila do provedor e um 4K com folga.
+    ai_timeout_s: float = 120.0
     #: Fotos até este tamanho vão como data URI no corpo; acima, pela API de arquivos
     #: da Replicate (e são apagados de lá ao fim). A documentação dela recomenda data URI
     #: só abaixo de 1 MB.
@@ -116,7 +132,24 @@ class Configuracao(BaseSettings):
     #: sem um teto, uma conta (ou um token roubado) esvazia o crédito.
     simulacao_max_por_hora: int = 3
 
+    #: Depois disso, uma simulação ainda em `processando` é dada como interrompida. Precisa
+    #: ficar acima de `AI_TIMEOUT_S` (o cliente do provedor desiste antes): 5 min contra
+    #: 120 s deixa folga para a fila de processamento e o download do resultado.
     simulacao_expira_min: int = 5
+
+    @model_validator(mode="after")
+    def _caminho_da_simulacao(self) -> "Configuracao":
+        """O caminho `instrucao` manda tudo ao modelo de texto: sem ele, nada seria gerado."""
+        if self.ai_estrategia == "instrucao" and not self.ai_modelo_texto:
+            raise ValueError(
+                "AI_ESTRATEGIA=instrucao exige AI_MODELO_TEXTO (ex.: google/nano-banana-2.1)"
+            )
+        if self.simulacao_expira_min * 60 <= self.ai_timeout_s:
+            raise ValueError(
+                "SIMULACAO_EXPIRA_MIN precisa passar de AI_TIMEOUT_S: senão uma geração "
+                "ainda em andamento seria dada como interrompida"
+            )
+        return self
 
     @field_validator("ai_modelo", "ai_modelo_texto")
     @classmethod

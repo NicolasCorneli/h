@@ -14,14 +14,15 @@ def criar_cliente(cliente_http: TestClient, cabecalhos, **extra):
     return cliente_http.post("/api/v1/clientes", headers=cabecalhos, json=corpo)
 
 
-def test_criar_e_listar(cliente_http: TestClient, conta):
+def test_criar_e_listar(cliente_http: TestClient, conta, versao_vigente):
     cabecalhos, usuario = conta()
     resposta = criar_cliente(cliente_http, cabecalhos)
     assert resposta.status_code == 201
     criado = resposta.json()
     assert criado["usuarioId"] == usuario["id"]
     assert criado["consentimento"]["status"] == "pendente"
-    assert criado["consentimento"]["versaoVigente"] == "1.0"
+    # Lida do banco: o "1.0" fixo só passava porque outro teste deixava a 1.0 vigente.
+    assert criado["consentimento"]["versaoVigente"] == versao_vigente()
     assert criado["fotoUri"] is None
 
     lista = cliente_http.get("/api/v1/clientes", headers=cabecalhos).json()

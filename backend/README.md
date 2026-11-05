@@ -101,10 +101,12 @@ Tudo por variável de ambiente; `.env.example` lista todas. As que importam:
 | `STORAGE_URL`, `STORAGE_BUCKET`, `STORAGE_KEY`, `STORAGE_SECRET`, `STORAGE_REGIAO` | driver S3 | — |
 | `AI_PROVIDER` | `fake` (local, sem custo) ou `replicate` | `fake` |
 | `AI_API_KEY` | credencial do provedor. **Nunca vai para o aplicativo** | — |
-| `AI_MODELO` | modelo principal: pedidos que batem com os exemplos da tela, com as opções fechadas `haircut` e `hair_color` | `flux-kontext-apps/change-haircut` |
-| `AI_MODELO_TEXTO` | descrição livre de corte e cor (`prompt` + `input_image`). Vazio: só os exemplos | `black-forest-labs/flux-kontext-pro` |
+| `AI_ESTRATEGIA` | `especializado` (exemplos no `AI_MODELO`, descrição livre no `AI_MODELO_TEXTO`) ou `instrucao` (todo pedido no `AI_MODELO_TEXTO`; é o modo do `google/nano-banana-2.1`, ver `docs/NANO_BANANA.md`) | `especializado` |
+| `AI_MODELO` | modelo principal do caminho especializado: pedidos que batem com os exemplos da tela, com as opções fechadas `haircut` e `hair_color` | `flux-kontext-apps/change-haircut` |
+| `AI_MODELO_TEXTO` | edição por instrução (`prompt` + a foto). No caminho especializado, a descrição livre (vazio: só os exemplos); no caminho `instrucao`, todos os pedidos (obrigatório) | `black-forest-labs/flux-kontext-pro` |
+| `AI_RESOLUCAO` | `1K`, `2K` ou `4K`, para os modelos com o campo `resolution` (Nano Banana) | `1K` |
 | `AI_INSTRUCAO_IDIOMA` | `pt_com_termos` (descrição em português mais os termos em inglês) ou `pt` | `pt_com_termos` |
-| `AI_TIMEOUT_S` | tempo limite da geração (recomendado 120 com o provedor real) | 60 s |
+| `AI_TIMEOUT_S` | tempo limite da geração, do envio ao download do resultado | 120 s |
 | `AI_LIMITE_DATA_URI_KB` | até este tamanho a foto vai como data URI; acima, pela API de arquivos (apagada depois) | 1024 |
 | `AI_LADO_MAXIMO_ENVIO` | lado maior das imagens enviadas ao modelo | 1536 px |
 | `AI_CACHE_ESQUEMA_MIN` | validade do schema lido de cada modelo | 60 min |

@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 
 import pytest
 from fastapi.testclient import TestClient
@@ -22,6 +24,39 @@ ACEITE = {
     "confirmadoPor": "Marina Alves",
     "observacao": "",
 }
+
+
+@contextmanager
+def aceites_sobre_o_termo_1_1() -> Iterator[None]:
+    """Deixa a 1.1 vigente enquanto o teste cria aceites e simulações, e depois a 1.2.
+
+    Os testes de volta das migrations descem abaixo da migration do termo 1.2, que se
+    recusa a remover uma versão já aceita por algum cliente: é a proteção do vínculo entre
+    a decisão e o texto lido (art. 37). Com os aceites do teste sobre a 1.1, a volta
+    exercita só as colunas, que é o que esses testes medem.
+    """
+    from sqlalchemy import text
+
+    from app.db.session import engine
+
+    def tornar_vigente(versao: str) -> None:
+        with engine.begin() as conexao:
+            existe = conexao.execute(
+                text("SELECT count(*) FROM termos WHERE tipo = 'cliente' AND versao = :versao"),
+                {"versao": versao},
+            ).scalar_one()
+            if existe:
+                conexao.execute(text("UPDATE termos SET vigente = false WHERE tipo = 'cliente'"))
+                conexao.execute(
+                    text("UPDATE termos SET vigente = true WHERE tipo = 'cliente' AND versao = :versao"),
+                    {"versao": versao},
+                )
+
+    tornar_vigente("1.1")
+    try:
+        yield
+    finally:
+        tornar_vigente("1.2")
 
 
 def cliente_com_aceite(cliente_http: TestClient, cabecalhos) -> dict:
@@ -193,17 +228,18 @@ def test_volta_da_migration_recusa_cortar_descricao(cliente_http: TestClient, co
     from tests.conftest import RAIZ
 
     cabecalhos, _ = conta()
-    cliente = cliente_com_aceite(cliente_http, cabecalhos)
-    longa = "Cabelo longo com franja cortininha e camadas ao redor do rosto, sem tirar comprimento"
-    criada = enviar(cliente_http, cabecalhos, cliente["id"], corte=longa)
-    assert criada.status_code == 202
-    configuracao = Config(str(RAIZ / "alembic.ini"))
-    configuracao.set_main_option("script_location", str(RAIZ / "migrations"))
-    with pytest.raises(RuntimeError, match="acima de 60 caracteres"):
-        command.downgrade(configuracao, "a3e7b5c90d14")
-    # Nada foi desfeito: a descrição continua inteira.
-    final = cliente_http.get(f"/api/v1/simulacoes/{criada.json()['id']}", headers=cabecalhos).json()
-    assert final["parametros"]["estilo"] == longa
+    with aceites_sobre_o_termo_1_1():
+        cliente = cliente_com_aceite(cliente_http, cabecalhos)
+        longa = "Cabelo longo com franja cortininha e camadas ao redor do rosto, sem tirar comprimento"
+        criada = enviar(cliente_http, cabecalhos, cliente["id"], corte=longa)
+        assert criada.status_code == 202
+        configuracao = Config(str(RAIZ / "alembic.ini"))
+        configuracao.set_main_option("script_location", str(RAIZ / "migrations"))
+        with pytest.raises(RuntimeError, match="acima de 60 caracteres"):
+            command.downgrade(configuracao, "a3e7b5c90d14")
+        # Nada foi desfeito: a descrição continua inteira.
+        final = cliente_http.get(f"/api/v1/simulacoes/{criada.json()['id']}", headers=cabecalhos).json()
+        assert final["parametros"]["estilo"] == longa
 
 
 def test_migration_vai_e_volta_sem_descricoes_longas():
@@ -236,9 +272,10 @@ def test_volta_da_remocao_da_referencia_recria_a_coluna_pelo_que_foi_gravado(cli
     from tests.conftest import RAIZ
 
     cabecalhos, _ = conta()
-    cliente = cliente_com_aceite(cliente_http, cabecalhos)
-    com_referencia = aguardar(cliente_http, cabecalhos, enviar(cliente_http, cabecalhos, cliente["id"]).json()["id"])
-    sem_referencia = aguardar(cliente_http, cabecalhos, enviar(cliente_http, cabecalhos, cliente["id"]).json()["id"])
+    with aceites_sobre_o_termo_1_1():
+        cliente = cliente_com_aceite(cliente_http, cabecalhos)
+        com_referencia = aguardar(cliente_http, cabecalhos, enviar(cliente_http, cabecalhos, cliente["id"]).json()["id"])
+        sem_referencia = aguardar(cliente_http, cabecalhos, enviar(cliente_http, cabecalhos, cliente["id"]).json()["id"])
     with engine.begin() as conexao:
         # Instrução como a que o modelo de duas imagens recebia antes da remoção.
         conexao.execute(

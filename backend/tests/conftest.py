@@ -34,6 +34,16 @@ if not (make_url(URL_TESTE).database or "").endswith("_test"):
 os.environ["DATABASE_URL"] = URL_TESTE
 os.environ["JWT_SECRET"] = "segredo-de-teste-com-mais-de-32-caracteres-ok"
 os.environ["AI_PROVIDER"] = "fake"
+# A escolha dos modelos e a credencial também vêm daqui, e não do `backend/.env` de quem
+# roda a suíte: com o Nano Banana ligado no `.env` local (AI_ESTRATEGIA=instrucao), os
+# testes do caminho especializado passavam a medir o outro caminho e falhavam, e uma
+# AI_API_KEY local fazia o /saude dizer que havia credencial. Os testes que precisam de
+# outro valor o definem com monkeypatch.
+os.environ["AI_API_KEY"] = ""
+os.environ["AI_ESTRATEGIA"] = "especializado"
+os.environ["AI_MODELO"] = "flux-kontext-apps/change-haircut"
+os.environ["AI_MODELO_TEXTO"] = "black-forest-labs/flux-kontext-pro"
+os.environ["AI_RESOLUCAO"] = "1K"
 os.environ["STORAGE_DRIVER"] = "local"
 os.environ["STORAGE_DIR"] = str(RAIZ / "dados" / "testes")
 os.environ["MODO_DEMO"] = "true"

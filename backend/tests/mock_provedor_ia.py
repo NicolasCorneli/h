@@ -43,6 +43,14 @@ Cenários (variável `cenario`):
     principal_texto_livre   o schema do principal aceita texto livre em haircut/hair_color
     principal_sem_haircut   o schema do principal não tem o campo haircut
     sem_schema              o modelo não publica schema de entrada
+    bloqueio_do_google      a predição falha com o motivo de recusa do Google (Nano Banana)
+    erro_do_google          a predição falha com um erro do Google repassado pela Replicate
+    nano_sem_image_input    o schema do Nano Banana não tem o campo image_input
+
+O schema do `google/nano-banana-2.1`, diferente dos outros, **não é hipótese**: é cópia do
+publicado pela Replicate (`GET /v1/models/google/nano-banana-2.1`, versão 1cd4e9c2…,
+consultado em 2026-11-05, ver docs/NANO_BANANA.md). Os textos de erro dos cenários do
+Google são suposições: a Replicate não documenta o que repassa.
 """
 
 from __future__ import annotations
@@ -165,6 +173,35 @@ def _schema_do_modelo(modelo: str) -> dict[str, Any] | None:
         if cenario == "principal_sem_haircut":
             del propriedades["haircut"]
         return _schema(propriedades, ["input_image"], componentes)
+    if modelo.startswith("google/nano-banana"):
+        propriedades = {
+            "prompt": {"type": "string", "title": "Prompt"},
+            "image_input": {
+                "type": "array",
+                "items": {"type": "string", "format": "uri"},
+                "default": [],
+            },
+            "aspect_ratio": _ref("aspect_ratio", "match_input_image"),
+            "resolution": _ref("resolution", "1K"),
+            "google_search": {"type": "boolean", "default": False},
+            "image_search": {"type": "boolean", "default": False},
+            "output_format": _ref("output_format", "jpg"),
+        }
+        if cenario == "nano_sem_image_input":
+            del propriedades["image_input"]
+        return _schema(
+            propriedades,
+            ["prompt"],
+            {
+                "aspect_ratio": _opcoes(
+                    "aspect_ratio",
+                    ["match_input_image", "1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1",
+                     "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9"],
+                ),
+                "resolution": _opcoes("resolution", ["1K", "2K", "4K"]),
+                "output_format": _opcoes("output_format", ["jpg", "png"]),
+            },
+        )
     if modelo.endswith("flux-kontext-pro"):
         return _schema(
             {
@@ -207,6 +244,14 @@ def _resumir_entrada(entrada: dict[str, Any]) -> dict[str, Any]:
     for chave, valor in entrada.items():
         if isinstance(valor, str) and valor.startswith("data:"):
             resumo[chave] = f"{valor[:40]}... ({len(valor)} caracteres)"
+        if isinstance(valor, list):
+            # `image_input` do Nano Banana: uma lista de imagens.
+            resumo[chave] = [
+                f"{item[:40]}... ({len(item)} caracteres)"
+                if isinstance(item, str) and item.startswith("data:")
+                else item
+                for item in valor
+            ]
     return resumo
 
 
@@ -268,6 +313,24 @@ async def _responder_predicao(request: Request, modelo: str, rota: str, corpo: d
         return JSONResponse(
             status_code=201,
             content={"id": identificador, "status": "failed", "error": "NSFW content detected"},
+        )
+    if cenario == "bloqueio_do_google":
+        return JSONResponse(
+            status_code=201,
+            content={
+                "id": identificador,
+                "status": "failed",
+                "error": "Image generation blocked: finish_reason=IMAGE_SAFETY",
+            },
+        )
+    if cenario == "erro_do_google":
+        return JSONResponse(
+            status_code=201,
+            content={
+                "id": identificador,
+                "status": "failed",
+                "error": "Google API error: 503 UNAVAILABLE. The model is overloaded.",
+            },
         )
     if cenario in ("processando", "nunca_termina", "consulta_instavel", "consulta_fora_do_ar"):
         _consultas_por_predicao[identificador] = 0

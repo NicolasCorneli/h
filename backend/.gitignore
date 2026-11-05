@@ -6,3 +6,6 @@ dados/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Saída do scripts/comparar_simulacoes.py: fotos de pessoas reais e as simulações delas.
+resultados/

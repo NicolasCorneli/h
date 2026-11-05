@@ -1,0 +1,41 @@
+[
+  {
+    "id": "catalogo-com-opcao",
+    "descricao": "Os dois do catálogo, com equivalente no change-haircut (no caminho atual vão por opções fechadas)",
+    "corte": "Chanel",
+    "cor": "Ruivo",
+    "genero": "female"
+  },
+  {
+    "id": "catalogo-em-alta",
+    "descricao": "Os dois do catálogo, sem equivalente nas opções (no caminho atual vão ao flux-kontext-pro)",
+    "corte": "Butterfly",
+    "cor": "Morena iluminada",
+    "genero": "female"
+  },
+  {
+    "id": "texto-livre",
+    "descricao": "Corte e cor em texto livre, como o profissional escreve",
+    "corte": "degradê baixo nas laterais com topete texturizado em cima",
+    "cor": "castanho-escuro com reflexos acobreados",
+    "genero": "male"
+  },
+  {
+    "id": "so-corte",
+    "descricao": "Só o corte muda; a cor é mantida",
+    "corte": "Long bob estruturado",
+    "manter_cor": true
+  },
+  {
+    "id": "so-cor",
+    "descricao": "Só a cor muda; o corte é mantido",
+    "cor": "Loiro manteiga",
+    "manter_corte": true
+  },
+  {
+    "id": "livre-so-cor",
+    "descricao": "Cor em texto livre com o corte mantido",
+    "cor": "ruivo acobreado intenso, mais claro nas pontas",
+    "manter_corte": true
+  }
+]
