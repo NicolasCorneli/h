@@ -68,11 +68,29 @@ const foto = async (nome) => {
   n += 1;
   await page.screenshot({ path: `${TELAS}/${String(n).padStart(2, '0')}-${nome}.png` });
 };
-const valorDe = (placeholder, i = 0) => page.locator(`input[placeholder="${placeholder}"]:visible`).nth(i).inputValue();
+// Data e horário são campos do navegador (input type="date" e "time"), que trabalham com
+// AAAA-MM-DD e HH:MM. Os passos continuam escritos como a pessoa lê (dd/mm/aaaa): estas
+// funções traduzem nos dois sentidos.
+const seletorDe = (placeholder) =>
+  placeholder === 'dd/mm/aaaa' ? 'input[type="date"]:visible' : placeholder === 'HH:MM' ? 'input[type="time"]:visible' : `input[placeholder="${placeholder}"]:visible`;
+const paraCampo = (placeholder, valor) => {
+  const partes = placeholder === 'dd/mm/aaaa' && valor.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return partes ? `${partes[3]}-${partes[2]}-${partes[1]}` : valor;
+};
+const doCampo = (placeholder, valor) => {
+  const partes = placeholder === 'dd/mm/aaaa' && valor.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return partes ? `${partes[3]}/${partes[2]}/${partes[1]}` : valor;
+};
+const valorDe = async (placeholder, i = 0) =>
+  doCampo(placeholder, await page.locator(seletorDe(placeholder)).nth(i).inputValue());
 async function preencher(placeholder, valor, i = 0) {
-  const campo = page.locator(`input[placeholder="${placeholder}"]:visible`).nth(i);
-  await campo.fill('');
-  await campo.type(valor);
+  const campo = page.locator(seletorDe(placeholder)).nth(i);
+  if (placeholder === 'dd/mm/aaaa' || placeholder === 'HH:MM') {
+    await campo.fill(paraCampo(placeholder, valor));
+  } else {
+    await campo.fill('');
+    await campo.type(valor);
+  }
   await espera(300);
 }
 async function sairDoCampo() {

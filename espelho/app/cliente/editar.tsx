@@ -100,7 +100,7 @@ function FormularioCliente({ existente }: { existente: Cliente | undefined }) {
     }
     const nascimentoIso = isoDeDataCurta(nascimento);
     if (nascimento.trim() && !nascimentoIso) {
-      novosErros.nascimento = 'Use o formato dd/mm/aaaa.';
+      novosErros.nascimento = 'Data de nascimento incompleta ou inválida.';
     } else if (nascimentoIso && nascimentoIso > diaLocalIso()) {
       // Mesma regra do servidor, avisada antes de enviar.
       novosErros.nascimento = 'A data de nascimento não pode estar no futuro.';

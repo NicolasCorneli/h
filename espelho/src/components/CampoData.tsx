@@ -5,9 +5,10 @@ import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewS
 import { textos } from '@/theme/textos';
 import { cores, espaco, raios } from '@/theme/tokens';
 import { dataCurta, diaLocalIso, hora as formatarHora, isoDeDataCurta, paraData } from '@/utils/datas';
-import { mascaraData, mascaraHora } from '@/utils/mascaras';
+import { mascaraHora } from '@/utils/mascaras';
 
 import { Campo } from './Campo';
+import { CampoDataHoraWeb } from './CampoDataHoraWeb';
 import { Icone } from './Icone';
 import { SeletorData } from './SeletorData';
 
@@ -33,62 +34,82 @@ function inicioDoDia(data: Date): Date {
 }
 
 /**
- * Data: seletor nativo no celular, campo com máscara no navegador — o seletor valida
- * mês e dia por conta própria, e no navegador ele não existe.
+ * Data: seletor nativo no celular; no navegador, o campo de data do próprio navegador
+ * (`CampoDataHoraWeb`), que se digita por segmentos e também abre o calendário.
  *
- * Hora: campo digitado em toda plataforma. O seletor nativo de hora (roda ou relógio)
- * exige vários gestos para uma informação que o profissional já sabe de cor; digitar
- * `14:30` é mais rápido e menos sujeito a engano. Em troca, a validação passa a ser
+ * Hora: no celular, campo digitado. O seletor nativo de hora (roda ou relógio) exige
+ * vários gestos para uma informação que o profissional já sabe de cor; digitar `14:30` é
+ * mais rápido e menos sujeito a engano. Em troca, a validação passa a ser
  * responsabilidade daqui: formato, faixa de horas e minutos, e recusa de valor
- * incompleto.
+ * incompleto. No navegador, o campo de horário do navegador, também digitado.
+ *
+ * O campo com máscara deixou de ser usado no navegador porque reparte os dígitos de novo
+ * a cada tecla: apagar um número no meio da data deslocava todos os seguintes.
  */
 export function CampoData({ rotulo, valor, aoMudar, modo, erro, estilo, aoMudarValidade, minimo }: Props) {
   const [aberto, setAberto] = useState(false);
-  const [texto, setTexto] = useState(modo === 'data' ? dataCurta(valor.toISOString()) : formatarHora(valor.toISOString()));
+  // Texto do horário digitado no celular (a data no celular é pelo seletor, e na web o navegador guarda o texto).
+  const [texto, setTexto] = useState(formatarHora(valor.toISOString()));
   const [erroInterno, setErroInterno] = useState<string | null>(null);
 
-  const digitado = modo === 'hora' || Platform.OS === 'web';
+  if (Platform.OS === 'web') {
+    return (
+      <CampoDataHoraWeb
+        rotulo={rotulo}
+        tipo={modo}
+        valor={modo === 'data' ? diaLocalIso(valor) : formatarHora(valor.toISOString())}
+        minimo={modo === 'data' && minimo ? diaLocalIso(minimo) : undefined}
+        aoMudar={(entrada) => {
+          const mensagem = (texto: string) => {
+            setErroInterno(texto);
+            aoMudarValidade?.(false);
+          };
+          if (entrada === null) {
+            return mensagem(
+              modo === 'data' ? 'Data incompleta: preencha dia, mês e ano.' : 'Horário incompleto: preencha hora e minuto.'
+            );
+          }
+          if (entrada === '') return mensagem(modo === 'data' ? 'Informe a data.' : 'Informe o horário.');
+          const convertido = deEntradaWeb(entrada, modo, valor);
+          if (!convertido) return mensagem('Confira o ano: use quatro dígitos, como 2026.');
+          if (modo === 'data' && minimo && inicioDoDia(convertido) < inicioDoDia(minimo)) {
+            return mensagem('Escolha uma data a partir de hoje.');
+          }
+          setErroInterno(null);
+          aoMudarValidade?.(true);
+          aoMudar(convertido);
+        }}
+        erro={erro ?? erroInterno}
+        estilo={estilo}
+      />
+    );
+  }
 
-  if (digitado) {
+  if (modo === 'hora') {
     return (
       <Campo
         rotulo={rotulo}
         valor={texto}
         aoMudar={(entrada) => {
-          const formatado = modo === 'data' ? mascaraData(entrada) : mascaraHora(entrada);
+          const formatado = mascaraHora(entrada);
           setTexto(formatado);
-          const convertido = converter(formatado, modo, valor);
-          if (convertido && modo === 'data' && minimo && inicioDoDia(convertido) < inicioDoDia(minimo)) {
-            // Dia anterior ao mínimo: a data é bem formada, mas não é aceita.
-            setErroInterno('Escolha uma data a partir de hoje.');
-            aoMudarValidade?.(false);
-            return;
-          }
+          const convertido = converterHora(formatado, valor);
           if (convertido) {
             setErroInterno(null);
             aoMudarValidade?.(true);
             aoMudar(convertido);
             return;
           }
-          // Enquanto o campo está pela metade não se acusa erro — seria reclamar antes
-          // de a pessoa terminar de digitar. Vazio e completo-porém-inválido, sim.
-          const completo = modo === 'data' ? formatado.length === 10 : formatado.length === 5;
           const mensagem = !formatado
-            ? modo === 'data'
-              ? 'Informe a data.'
-              : 'Informe o horário.'
-            : completo
-              ? modo === 'data'
-                ? 'Data inválida. Use dd/mm/aaaa.'
-                : 'Horário inválido. Use HH:MM, entre 00:00 e 23:59.'
-              : modo === 'data'
-                ? 'Data incompleta. Use dd/mm/aaaa.'
-                : 'Horário incompleto. Use HH:MM, por exemplo 09:30.';
+            ? 'Informe o horário.'
+            : formatado.length === 5
+              ? 'Horário inválido. Use HH:MM, entre 00:00 e 23:59.'
+              : 'Horário incompleto. Use HH:MM, por exemplo 09:30.';
           setErroInterno(mensagem);
           aoMudarValidade?.(false);
         }}
-        placeholder={modo === 'data' ? 'dd/mm/aaaa' : 'HH:MM'}
-        tipoTeclado={modo === 'hora' ? 'number-pad' : 'numbers-and-punctuation'}
+        placeholder="HH:MM"
+        tipoTeclado="number-pad"
         erro={erro ?? erroInterno}
         estilo={estilo}
       />
@@ -128,6 +149,9 @@ export function CampoData({ rotulo, valor, aoMudar, modo, erro, estilo, aoMudarV
   );
 }
 
+/** Valor de `CampoDataOpcional` quando a data foi digitada pela metade no navegador. */
+export const DATA_INCOMPLETA = '__/__/____';
+
 type PropsOpcional = {
   rotulo: string;
   /** Data em dd/mm/aaaa, ou vazio quando não informada. */
@@ -149,22 +173,32 @@ type PropsOpcional = {
  * do mesmo jeito.
  */
 export function CampoDataOpcional({ rotulo, valor, aoMudar, inicial, minimo, maximo, ajuda, erro }: PropsOpcional) {
+  const iso = isoDeDataCurta(valor);
+
   if (Platform.OS === 'web') {
     return (
-      <Campo
+      <CampoDataHoraWeb
         rotulo={rotulo}
-        valor={valor}
-        aoMudar={aoMudar}
-        placeholder="dd/mm/aaaa"
-        tipoTeclado="number-pad"
-        mascara={mascaraData}
+        tipo="data"
+        valor={iso ?? ''}
+        minimo={minimo ? diaLocalIso(minimo) : undefined}
+        maximo={maximo ? diaLocalIso(maximo) : undefined}
+        aoMudar={(entrada) => {
+          // Pela metade (ou com o ano ainda sendo digitado), vai como DATA_INCOMPLETA: a
+          // tela não consegue convertê-la e recusa salvar, em vez de gravar a data antiga
+          // ou nenhuma data sem avisar.
+          if (entrada === null) return aoMudar(DATA_INCOMPLETA);
+          if (entrada === '') return aoMudar('');
+          const ano = Number(entrada.slice(0, 4));
+          if (ano < 1900 || ano > 2100) return aoMudar(DATA_INCOMPLETA);
+          aoMudar(dataCurta(entrada));
+        }}
         ajuda={ajuda}
-        erro={erro}
+        erro={erro ?? (valor === DATA_INCOMPLETA ? 'Data incompleta: preencha dia, mês e ano.' : null)}
       />
     );
   }
 
-  const iso = isoDeDataCurta(valor);
   return (
     <View>
       <SeletorData
@@ -199,15 +233,25 @@ export function CampoDataOpcional({ rotulo, valor, aoMudar, inicial, minimo, max
   );
 }
 
-function converter(texto: string, modo: 'data' | 'hora', base: Date): Date | null {
-  if (modo === 'data') {
-    const partes = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (!partes) return null;
-    const [, dia, mes, ano] = partes;
-    const data = new Date(Number(ano), Number(mes) - 1, Number(dia), base.getHours(), base.getMinutes());
-    if (Number.isNaN(data.getTime()) || data.getDate() !== Number(dia)) return null;
+/**
+ * Valor do campo do navegador ("AAAA-MM-DD" ou "HH:MM") como data, mantendo da `base` a
+ * parte que não muda. Enquanto o ano está sendo digitado o navegador já informa datas
+ * como 0002-12-01: ano fora de 1900–2100 é tratado como incompleto, e não como uma data.
+ */
+function deEntradaWeb(entrada: string, modo: 'data' | 'hora', base: Date): Date | null {
+  if (modo === 'hora') {
+    const [h, min] = entrada.split(':').map(Number);
+    const data = new Date(base);
+    data.setHours(h, min, 0, 0);
     return data;
   }
+  const [ano, mes, dia] = entrada.split('-').map(Number);
+  if (ano < 1900 || ano > 2100) return null;
+  return new Date(ano, mes - 1, dia, base.getHours(), base.getMinutes());
+}
+
+/** "HH:MM" digitado no celular como data, mantendo o dia da `base`. */
+function converterHora(texto: string, base: Date): Date | null {
   const partes = texto.match(/^(\d{2}):(\d{2})$/);
   if (!partes) return null;
   const [, h, min] = partes;

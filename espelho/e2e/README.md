@@ -60,7 +60,7 @@ As capturas de tela de cada etapa ficam em `e2e/telas/` (fora do versionamento).
 
 ## Todas as baterias
 
-O `./qa.sh --interface` roda as onze (a do Google, a décima segunda, só com os IDs configurados), recriando a carga de demonstração antes das que dependem dela:
+O `./qa.sh --interface` roda as doze (a do Google, a décima terceira, só com os IDs configurados), recriando a carga de demonstração antes das que dependem dela:
 
 | Roteiro | O que verifica |
 | --- | --- |
@@ -68,6 +68,7 @@ O `./qa.sh --interface` roda as onze (a do Google, a décima segunda, só com os
 | `qa-interface.mjs` | larguras, teclado, alvos de toque, estados vazio e de erro, console |
 | `mudancas-interface.mjs` | mudanças de fluxo da etapa anterior (câmera, horário digitado, serviço "Outro") |
 | `agenda.mjs` | editar, confirmar, cancelar, concluir, datas passadas |
+| `datas.mjs` | calendário da agenda com 7 colunas de 320 a 1280 px; campos de data e hora da web (apagar um número não desloca a data, data pela metade é apontada) |
 | `atendimentos.mjs` | conclusão pela agenda e atendimento avulso |
 | `painel-e-comparacao.mjs` | painel inicial e comparação de simulações |
 | `fotos-e-camera.mjs` | foto do cliente e do profissional, câmera falsa com e sem rosto, câmera fora de vista sem conferir o enquadramento |

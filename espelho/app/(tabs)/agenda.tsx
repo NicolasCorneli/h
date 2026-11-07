@@ -69,6 +69,7 @@ export default function Agenda() {
     const numero = i - deslocamento + 1;
     return numero >= 1 && numero <= diasNoMes ? numero : null;
   });
+  const semanas = Array.from({ length: totalCelulas / 7 }, (_, s) => celulas.slice(s * 7, s * 7 + 7));
 
   const mudarMes = (passo: number) => {
     const nova = new Date(selecionado.getFullYear(), selecionado.getMonth() + passo, 1);
@@ -190,35 +191,42 @@ export default function Agenda() {
             ))}
           </View>
 
+          {/* Uma linha por semana, com 7 colunas de largura igual. Antes era uma grade só,
+              com `flexWrap` e cada dia em 100/7 %: no Android, o arredondamento para pixels
+              fazia os 7 somarem mais que a linha, e o sábado caía para a linha de baixo. */}
           <View style={styles.grade}>
-            {celulas.map((numero, i) => {
-              if (numero === null) return <View key={`v${i}`} style={styles.celula} />;
-              const data = new Date(selecionado.getFullYear(), selecionado.getMonth(), numero);
-              const ehHoje = mesmoDia(data.toISOString(), hojeData.toISOString());
-              const ativo = numero === selecionado.getDate();
-              const temCompromisso = diasComCompromisso.has(numero);
-              return (
-                <Pressable
-                  key={numero}
-                  onPress={() => setSelecionado(data)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: ativo }}
-                  accessibilityLabel={`Dia ${numero}${temCompromisso ? ', com atendimentos' : ''}`}
-                  style={styles.celula}>
-                  <View style={[styles.celulaInterna, ativo && styles.celulaAtiva]}>
-                    <Text
-                      style={[styles.numeroDia, ehHoje && styles.numeroHoje, ativo && styles.numeroAtivo]}>
-                      {numero}
-                    </Text>
-                    {temCompromisso ? (
-                      <View style={[styles.marcador, ativo && styles.marcadorAtivo]} />
-                    ) : (
-                      <View style={styles.marcadorVazio} />
-                    )}
-                  </View>
-                </Pressable>
-              );
-            })}
+            {semanas.map((semana, s) => (
+              <View key={s} style={styles.linhaSemana}>
+                {semana.map((numero, i) => {
+                  if (numero === null) return <View key={`v${s}-${i}`} style={styles.celula} />;
+                  const data = new Date(selecionado.getFullYear(), selecionado.getMonth(), numero);
+                  const ehHoje = mesmoDia(data.toISOString(), hojeData.toISOString());
+                  const ativo = numero === selecionado.getDate();
+                  const temCompromisso = diasComCompromisso.has(numero);
+                  return (
+                    <Pressable
+                      key={numero}
+                      onPress={() => setSelecionado(data)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: ativo }}
+                      accessibilityLabel={`Dia ${numero}${temCompromisso ? ', com atendimentos' : ''}`}
+                      style={styles.celula}>
+                      <View style={[styles.celulaInterna, ativo && styles.celulaAtiva]}>
+                        <Text
+                          style={[styles.numeroDia, ehHoje && styles.numeroHoje, ativo && styles.numeroAtivo]}>
+                          {numero}
+                        </Text>
+                        {temCompromisso ? (
+                          <View style={[styles.marcador, ativo && styles.marcadorAtivo]} />
+                        ) : (
+                          <View style={styles.marcadorVazio} />
+                        )}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
           </View>
         </View>
       </Faixa>
@@ -358,11 +366,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: cores.textoApoio,
   },
-  grade: { flexDirection: 'row', flexWrap: 'wrap' },
-  celula: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 2 },
+  grade: { gap: 2 },
+  linhaSemana: { flexDirection: 'row' },
+  // Mesma regra do cabeçalho dos dias (`flex: 1`): as colunas sempre se alinham.
+  celula: { flex: 1, alignItems: 'center', paddingVertical: 2 },
+  // Quadrado que acompanha a largura da coluna, até 44 px: cabe em telas estreitas e não
+  // vira um bloco enorme no tablet.
   celulaInterna: {
-    width: 40,
-    height: 40,
+    width: '100%',
+    maxWidth: 44,
+    aspectRatio: 1,
     borderRadius: raios.campo,
     alignItems: 'center',
     justifyContent: 'center',

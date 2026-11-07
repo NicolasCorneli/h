@@ -99,6 +99,12 @@ if [ "$INTERFACE" = "1" ]; then
   node e2e/agenda.mjs
 
   echo
+  echo "━━ Interface: calendário da agenda e campos de data e hora ━━"
+  (cd "$RAIZ/backend" && "$PY" -m app.seed --reset > /dev/null)
+  cd "$RAIZ/espelho"
+  node e2e/datas.mjs
+
+  echo
   echo "━━ Interface: agendamentos, conclusão e atendimento avulso ━━"
   (cd "$RAIZ/backend" && "$PY" -m app.seed --reset > /dev/null)
   cd "$RAIZ/espelho"

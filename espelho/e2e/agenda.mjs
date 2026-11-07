@@ -89,10 +89,27 @@ async function abrirCompromisso(nome) {
   await page.getByRole('button', { name: new RegExp(nome) }).filter({ visible: true }).first().click();
   await espera(800);
 }
+// Data e horário são campos do navegador (input type="date" e "time"), que trabalham com
+// AAAA-MM-DD e HH:MM. Os passos continuam escritos como a pessoa lê (dd/mm/aaaa): estas
+// funções traduzem nos dois sentidos.
+const seletorDe = (placeholder) =>
+  placeholder === 'dd/mm/aaaa' ? 'input[type="date"]:visible' : placeholder === 'HH:MM' ? 'input[type="time"]:visible' : `input[placeholder="${placeholder}"]:visible`;
+const paraCampo = (placeholder, valor) => {
+  const partes = placeholder === 'dd/mm/aaaa' && valor.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return partes ? `${partes[3]}-${partes[2]}-${partes[1]}` : valor;
+};
+const doCampo = (placeholder, valor) => {
+  const partes = placeholder === 'dd/mm/aaaa' && valor.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return partes ? `${partes[3]}/${partes[2]}/${partes[1]}` : valor;
+};
 async function preencher(placeholder, valor, indice = 0) {
-  const campo = page.locator(`input[placeholder="${placeholder}"]:visible`).nth(indice);
-  await campo.fill('');
-  await campo.type(valor);
+  const campo = page.locator(seletorDe(placeholder)).nth(indice);
+  if (placeholder === 'dd/mm/aaaa' || placeholder === 'HH:MM') {
+    await campo.fill(paraCampo(placeholder, valor));
+  } else {
+    await campo.fill('');
+    await campo.type(valor);
+  }
   await espera(400);
 }
 
@@ -149,7 +166,7 @@ try {
   {
     const tela = await corpo();
     conferir(/Sofia/.test(tela) && /Hidratação/.test(tela), 'a edição abre com cliente e serviço atuais', tela.slice(0, 200));
-    const hora = await page.locator('input[placeholder="HH:MM"]:visible').first().inputValue();
+    const hora = await page.locator(seletorDe('HH:MM')).first().inputValue();
     conferir(hora === '15:00', 'a edição abre com o horário atual', `veio ${hora}`);
   }
   await preencher('dd/mm/aaaa', await dataBr(-1));

@@ -221,27 +221,28 @@ try {
     if (/Outro/.test(formulario)) ok('"Outro" aparece entre os serviços previstos');
     else falha('serviço Outro', 'opção não encontrada');
 
-    const campoHora = page.locator('input[placeholder="HH:MM"]').first();
+    // Na web o horário é o campo do navegador (input type="time"): digita-se hora e
+    // minuto, e ele não aceita valor fora da faixa.
+    const campoHora = page.locator('input[type="time"]').first();
     const temCampo = await campoHora.isVisible().catch(() => false);
-    if (temCampo) ok('o horário é um campo digitável no formato HH:MM');
+    if (temCampo) ok('o horário é um campo digitável (campo de horário do navegador)');
     else falha('campo de hora', 'campo digitável não encontrado');
 
     if (temCampo) {
-      await campoHora.fill('');
-      await campoHora.type('2599');
-      await page.waitForTimeout(800);
-      const invalido = await corpo();
-      if (/Horário inválido/.test(invalido)) ok('horário fora da faixa é recusado com mensagem clara');
-      else falha('validação de hora', invalido.slice(0, 160).replace(/\n/g, ' '));
+      // A faixa (00:00 a 23:59) é garantida pelo próprio campo de horário: não há como
+      // digitar 25:99 nele. Basta conferir que é esse o campo.
+      const tipo = await campoHora.getAttribute('type');
+      if (tipo === 'time') ok('horário fora da faixa não é aceito pelo campo (campo de horário)');
+      else falha('validação de hora', `campo do tipo ${tipo}`);
 
-      await campoHora.fill('');
-      await campoHora.type('09');
+      await campoHora.fill('10:00');
+      await campoHora.click({ position: { x: 8, y: 10 } });
+      await page.keyboard.press('Backspace');
       await page.waitForTimeout(800);
       if (/Horário incompleto/.test(await corpo())) ok('horário incompleto é apontado como incompleto');
       else falha('validação de hora incompleta', 'mensagem não apareceu');
 
-      await campoHora.fill('');
-      await campoHora.type('0930');
+      await campoHora.fill('09:30');
       await page.waitForTimeout(800);
       const valido = await corpo();
       const valorAtual = await campoHora.inputValue();
