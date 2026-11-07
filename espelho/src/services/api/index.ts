@@ -11,6 +11,7 @@ import type {
   Catalogo,
   CienciaProfissional,
   Cliente,
+  Curvatura,
   ConfirmacaoIdentidade,
   DadosConclusao,
   Genero,
@@ -185,6 +186,8 @@ export type PedidoSimulacao = {
   manterCor: boolean;
   /** Gênero do corte: vai ao modelo como `gender` ("none", "male" ou "female"). */
   genero: Genero;
+  /** Padrão natural de curvatura, ou null ("Não sei informar"). Vira frase da instrução. */
+  curvatura: Curvatura | null;
 };
 
 export type ParametrosEnvio = PedidoSimulacao & {
@@ -207,6 +210,7 @@ export const simulacoes = {
     formulario.append('cor', dados.manterCor ? '' : dados.cor);
     formulario.append('manterCor', dados.manterCor ? 'true' : 'false');
     formulario.append('genero', dados.genero);
+    formulario.append('curvatura', dados.curvatura ?? '');
     formulario.append('observacoes', dados.observacoes);
     formulario.append('chaveEnvio', dados.chaveEnvio);
     if (dados.demoRecusarFoto) formulario.append('demoRecusarFoto', 'true');

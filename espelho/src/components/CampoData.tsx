@@ -4,8 +4,8 @@ import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewS
 
 import { textos } from '@/theme/textos';
 import { cores, espaco, raios } from '@/theme/tokens';
-import { dataCurta, diaLocalIso, hora as formatarHora, isoDeDataCurta, paraData } from '@/utils/datas';
-import { mascaraHora } from '@/utils/mascaras';
+import { dataCurta, diaLocalIso, hora as formatarHora, isoDeDataCurta, paraData, situacaoDataCurta } from '@/utils/datas';
+import { editarData, mascaraHora } from '@/utils/mascaras';
 
 import { Campo } from './Campo';
 import { CampoDataHoraWeb } from './CampoDataHoraWeb';
@@ -200,25 +200,74 @@ export function CampoDataOpcional({ rotulo, valor, aoMudar, inicial, minimo, max
   }
 
   return (
+    <CampoDataDigitada
+      rotulo={rotulo}
+      valor={valor}
+      aoMudar={aoMudar}
+      inicial={inicial}
+      minimo={minimo}
+      maximo={maximo}
+      ajuda={ajuda}
+      erro={erro}
+    />
+  );
+}
+
+/**
+ * Data de nascimento no celular: digitada (dd/mm/aaaa, teclado numérico), com o
+ * calendário do sistema num botão ao lado.
+ *
+ * Antes era só o calendário: quem nasceu em 2004 voltava ano a ano até chegar lá. A
+ * digitação usa casas fixas (`editarData`): apagar ou corrigir um número do meio não
+ * desloca os outros, e colar uma data a preenche inteira. O valor continua sendo o texto
+ * dd/mm/aaaa, convertido para AAAA-MM-DD pela tela na hora de salvar (`isoDeDataCurta`).
+ *
+ * Avisos: data impossível (31/04, 29/02 em ano comum, mês 13) assim que os oito números
+ * estão lá; incompleta só quando a pessoa sai do campo, para não reclamar enquanto ela
+ * digita.
+ */
+function CampoDataDigitada({ rotulo, valor, aoMudar, inicial, minimo, maximo, ajuda, erro }: PropsOpcional) {
+  const [saiu, setSaiu] = useState(false);
+  const iso = isoDeDataCurta(valor);
+  const situacao = situacaoDataCurta(valor);
+  const aviso =
+    situacao === 'invalida'
+      ? 'Essa data não existe. Confira o dia e o mês.'
+      : situacao === 'incompleta' && saiu
+        ? 'Data incompleta: use dd/mm/aaaa, por exemplo 11/04/2004.'
+        : iso && maximo && iso > diaLocalIso(maximo)
+          ? 'A data não pode estar no futuro.'
+          : iso && minimo && iso < diaLocalIso(minimo)
+            ? 'Confira o ano.'
+            : null;
+
+  return (
     <View>
-      <SeletorData
-        valor={iso ? paraData(iso) : inicial}
-        aoEscolher={(data) => aoMudar(dataCurta(diaLocalIso(data)))}
-        minimo={minimo}
-        maximo={maximo}
-        rotuloAcessivel={`${rotulo}: ${valor || 'não informada'}. Toque para escolher no calendário`}
-        estilo={[styles.caixa, !!erro && styles.caixaErro]}>
-        <View style={styles.texto}>
-          <Text style={textos.etiqueta}>{rotulo}</Text>
-          <Text style={valor ? styles.valor : styles.vazio}>{valor || 'Toque para escolher'}</Text>
-        </View>
-        <Icone nome="calendario" tamanho={18} />
-      </SeletorData>
-      {erro ? (
-        <Text style={styles.erro}>{erro}</Text>
-      ) : ajuda ? (
-        <Text style={styles.ajuda}>{ajuda}</Text>
-      ) : null}
+      <Campo
+        rotulo={rotulo}
+        valor={valor}
+        aoMudar={(texto) => {
+          aoMudar(texto);
+          if (!texto) setSaiu(false);
+        }}
+        editar={editarData}
+        placeholder="dd/mm/aaaa"
+        tipoTeclado="number-pad"
+        ajuda={ajuda}
+        erro={erro ?? aviso}
+        aoSair={() => setSaiu(true)}
+        acessorio={
+          <SeletorData
+            valor={iso ? paraData(iso) : inicial}
+            aoEscolher={(data) => aoMudar(dataCurta(diaLocalIso(data)))}
+            minimo={minimo}
+            maximo={maximo}
+            rotuloAcessivel={`Escolher ${rotulo.toLowerCase()} no calendário`}
+            estilo={styles.botaoCalendario}>
+            <Icone nome="calendario" tamanho={18} />
+          </SeletorData>
+        }
+      />
       {valor ? (
         <Pressable
           onPress={() => aoMudar('')}
@@ -287,6 +336,8 @@ const styles = StyleSheet.create({
     marginLeft: espaco.xs,
   },
   limpar: { alignSelf: 'flex-start', marginTop: espaco.sm, marginLeft: espaco.xs },
+  // Alvo de toque confortável para o ícone, sem aumentar a caixa do campo.
+  botaoCalendario: { padding: espaco.sm, margin: -espaco.sm, marginBottom: 0 },
   limparTexto: { fontFamily: 'FamiljenGrotesk_600SemiBold', fontSize: 13, color: cores.acaoTexto },
   erro: {
     fontFamily: 'FamiljenGrotesk_500Medium',

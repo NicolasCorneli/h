@@ -54,11 +54,28 @@ def status_de(decisao: DecisaoConsentimento | None) -> StatusConsentimento:
     return decisao.value if decisao is not None else "pendente"  # type: ignore[return-value]
 
 
+def conteudo_da_versao(versao: str | None) -> str | None:
+    """A parte da versão que identifica o conteúdo do termo: "maior.menor".
+
+    Uma versão com terceiro número (1.2.1) é revisão só de redação, que não muda o que o
+    termo informa nem o que o cliente autoriza (a primeira foi a troca de travessões por
+    pontuação comum; um teste compara os textos). Quem aceitou a 1.2 já leu esse conteúdo,
+    então a 1.2.1 não exige nova decisão. Uma versão "maior.menor" nova (1.3) exige.
+    """
+    if versao is None:
+        return None
+    return ".".join(versao.split(".")[:2])
+
+
+def mesmo_conteudo(versao_aceita: str | None, versao_vigente: str | None) -> bool:
+    return conteudo_da_versao(versao_aceita) == conteudo_da_versao(versao_vigente)
+
+
 def precisa_revalidar(
     decisao: DecisaoConsentimento | None, versao_aceita: str | None, versao_vigente: str
 ) -> bool:
-    """Aceite válido, mas dado sobre uma versão anterior do termo."""
-    return decisao is DecisaoConsentimento.aceito and versao_aceita != versao_vigente
+    """Aceite válido, mas dado sobre uma versão anterior do conteúdo do termo."""
+    return decisao is DecisaoConsentimento.aceito and not mesmo_conteudo(versao_aceita, versao_vigente)
 
 
 @dataclass(frozen=True)

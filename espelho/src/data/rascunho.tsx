@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
-import type { Genero } from '@/data/tipos';
+import type { Curvatura, Genero } from '@/data/tipos';
 import type { FotoCapturada, ProblemaFoto } from '@/services/simulacaoService';
 import { GENERO_PADRAO } from '@/utils/pedido';
 
@@ -28,6 +28,8 @@ export type Rascunho = {
   manterCor: boolean;
   /** Gênero do corte, com o valor que vai ao modelo ("none" é não especificar). */
   genero: Genero;
+  /** Padrão natural de curvatura (opcional). null é "Não sei informar". */
+  curvatura: Curvatura | null;
   /** Anotação para o histórico. Não vai para o serviço de IA. */
   observacoes: string;
   /** Preenchido quando o servidor aceita a simulação (resposta 202). */
@@ -60,6 +62,7 @@ const inicial: Rascunho = {
   cor: '',
   manterCor: false,
   genero: GENERO_PADRAO,
+  curvatura: null,
   observacoes: '',
   simulacaoId: null,
   chaveEnvio: null,
@@ -76,6 +79,7 @@ const CAMPOS_DO_PEDIDO: (keyof Rascunho)[] = [
   'cor',
   'manterCor',
   'genero',
+  'curvatura',
   'clienteId',
 ];
 

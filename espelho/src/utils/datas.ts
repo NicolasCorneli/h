@@ -148,3 +148,19 @@ export function duracao(min: number): string {
   return formatarDuracao(min);
 }
 
+
+/**
+ * Em que situação está uma data digitada (dd/mm/aaaa), para dizer à pessoa o que falta:
+ *
+ * - `vazia`: nada digitado (a data de nascimento é opcional);
+ * - `incompleta`: faltam números (ou há uma casa apagada, marcada com "_");
+ * - `invalida`: os oito números estão lá, mas o dia não existe (31/04, 29/02 em ano comum,
+ *   mês 13). A validação é a de `isoDeDataCurta`, a mesma que converte para o servidor;
+ * - `valida`: um dia do calendário.
+ */
+export function situacaoDataCurta(texto: string): 'vazia' | 'incompleta' | 'invalida' | 'valida' {
+  const limpo = texto.trim();
+  if (!limpo) return 'vazia';
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(limpo)) return 'incompleta';
+  return isoDeDataCurta(limpo) ? 'valida' : 'invalida';
+}

@@ -29,6 +29,8 @@ const MAPA = {
   avancar: 'arrow-right',
   fechar: 'x',
   mais: 'plus',
+  menos: 'minus',
+  ampliar: 'maximize-2',
   chevron: 'chevron-right',
   busca: 'search',
   editar: 'edit-2',

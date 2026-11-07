@@ -57,7 +57,14 @@ function BarraAbas({ state, navigation }: BottomTabBarProps) {
   };
 
   return (
-    <View style={[styles.barra, { paddingBottom: Math.max(insets.bottom, espaco.md) }]}>
+    // Com botões ou barra de gestos do sistema (inset > 0), a folga fica acima deles: antes
+    // o pé da barra encostava exatamente no limite da área do sistema, e as abas pareciam
+    // grudadas nos botões do Android. Sem nada embaixo (navegador), a margem de sempre.
+    <View
+      style={[
+        styles.barra,
+        { paddingBottom: insets.bottom > 0 ? insets.bottom + espaco.sm : espaco.md },
+      ]}>
       <View style={styles.conteudo}>
         {ABAS.slice(0, 2).map(aba)}
         <View style={styles.centro}>
@@ -74,6 +81,8 @@ function BarraAbas({ state, navigation }: BottomTabBarProps) {
     </View>
   );
 }
+
+const TAMANHO_BOTAO_CENTRAL = 54;
 
 const styles = StyleSheet.create({
   barra: {
@@ -99,10 +108,18 @@ const styles = StyleSheet.create({
     minHeight: ALVO_TOQUE,
     paddingTop: espaco.xs,
   },
-  centro: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  // Coluna própria, do tamanho do botão mais uma folga fixa de cada lado. Antes ela tinha a
+  // mesma largura das abas, e em telas de 360 px sobravam poucos pixels entre o botão e os
+  // ícones vizinhos. As abas dividem o resto da largura.
+  centro: {
+    width: TAMANHO_BOTAO_CENTRAL + espaco.lg * 2,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   botaoCentral: {
-    width: 54,
-    height: 54,
+    width: TAMANHO_BOTAO_CENTRAL,
+    height: TAMANHO_BOTAO_CENTRAL,
     borderRadius: raios.cartao,
     backgroundColor: cores.destaque,
     alignItems: 'center',

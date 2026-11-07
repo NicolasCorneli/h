@@ -29,7 +29,10 @@ const API = process.env.API_URL ?? 'http://localhost:8000/api/v1';
 const TELAS = path.join(AQUI, 'telas-fotos');
 fs.mkdirSync(TELAS, { recursive: true });
 const MIDIA = fs.mkdtempSync(path.join(os.tmpdir(), 'midia-e2e-'));
-execFileSync(path.join(AQUI, '..', '..', 'backend', '.venv', 'bin', 'python'), [path.join(AQUI, 'gerar_midia.py'), MIDIA]);
+// O Python do ambiente virtual do backend: `bin/python` no Linux e no macOS,
+// `Scripts/python.exe` no Windows (antes o roteiro só rodava fora do Windows).
+const PYTHON = process.platform === 'win32' ? ['Scripts', 'python.exe'] : ['bin', 'python'];
+execFileSync(path.join(AQUI, '..', '..', 'backend', '.venv', ...PYTHON), [path.join(AQUI, 'gerar_midia.py'), MIDIA]);
 const FOTO_GRANDE = path.join(MIDIA, 'foto-grande.jpg');
 const VIDEO_COM_ROSTO = path.join(MIDIA, 'camera-com-rosto.mjpeg');
 const RETRATO = path.join(AQUI, 'retrato-sintetico.jpg');

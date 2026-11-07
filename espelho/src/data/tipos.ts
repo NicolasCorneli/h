@@ -108,6 +108,14 @@ export type Cliente = {
  */
 export type Genero = 'none' | 'male' | 'female';
 
+/**
+ * Padrão natural de curvatura (opcional): a categoria ou o tipo detalhado de 1A a 4C. Os
+ * mesmos valores do servidor (`CURVATURAS` em `services/ai/pedido.py`).
+ */
+export type CategoriaCurvatura = 'liso' | 'ondulado' | 'cacheado' | 'crespo';
+export type TipoCurvatura = `${1 | 2 | 3 | 4}${'A' | 'B' | 'C'}`;
+export type Curvatura = CategoriaCurvatura | TipoCurvatura;
+
 export type ParametrosSimulacao = {
   /** Corte pedido: a descrição escrita ou "Corte atual". */
   estilo: string;
@@ -115,6 +123,8 @@ export type ParametrosSimulacao = {
   cor: string;
   /** Gênero do corte enviado ao modelo. */
   genero: Genero;
+  /** Padrão natural de curvatura informado, ou null ("Não sei informar"). */
+  curvatura: Curvatura | null;
   observacoes: string;
 };
 

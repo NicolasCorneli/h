@@ -65,6 +65,9 @@ for fuso in America/Sao_Paulo Asia/Tokyo; do
   (cd "$RAIZ/espelho" && TZ=$fuso node --experimental-strip-types --no-warnings \
     --import ./testes/carregar-ts.mjs testes/datas.mjs)
 done
+# Data de nascimento digitada: casas fixas, validação de calendário e colar.
+(cd "$RAIZ/espelho" && node --experimental-strip-types --no-warnings \
+  --import ./testes/carregar-ts.mjs testes/data-digitada.mjs)
 
 echo
 echo "━━ Textos: travessões e meias-riscas na interface ━━"
@@ -103,6 +106,12 @@ if [ "$INTERFACE" = "1" ]; then
   (cd "$RAIZ/backend" && "$PY" -m app.seed --reset > /dev/null)
   cd "$RAIZ/espelho"
   node e2e/datas.mjs
+
+  echo
+  echo "━━ Interface: imagens ampliadas e cabelo natural ━━"
+  (cd "$RAIZ/backend" && "$PY" -m app.seed --reset > /dev/null)
+  cd "$RAIZ/espelho"
+  node e2e/ampliacao-e-curvatura.mjs
 
   echo
   echo "━━ Interface: agendamentos, conclusão e atendimento avulso ━━"

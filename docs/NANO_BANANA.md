@@ -10,7 +10,8 @@ Sumário: [1. Schema](#1-schema-do-modelo) · [2. Envio da imagem](#2-envio-da-i
 [5. Políticas de uso](#5-políticas-de-uso-e-menores-de-18-anos) ·
 [6. O que muda nos textos](#6-o-que-muda-nos-textos) ·
 [7. Ativar e voltar](#7-ativar-e-voltar) ·
-[8. Testar a qualidade](#8-testar-a-qualidade-scriptscomparar_simulacoespy)
+[8. Testar a qualidade](#8-testar-a-qualidade-scriptscomparar_simulacoespy) ·
+[9. Preservação do cabelo natural](#9-preservação-do-cabelo-natural-2026-11-07)
 
 ---
 
@@ -254,3 +255,162 @@ Arquivo de pedidos (`scripts/pedidos_exemplo.json`): lista de objetos com `id`,
 `descricao` (opcional), `corte`, `cor`, `manter_corte`, `manter_cor` e `genero` (`female`,
 `male` ou `none`). Valem as mesmas regras da tela: corte vazio exige `manter_corte`, cor
 vazia exige `manter_cor`, e os dois "manter" juntos são recusados.
+
+## 9. Preservação do cabelo natural (2026-11-07)
+
+### O problema
+
+Numa rodada de testes, uma pessoa relatou: "Durante a simulação, a IA deixou meus cachos
+mais abertos. Além disso, aumentou o comprimento do meu cabelo." A primeira instrução
+(`prompt_detalhado_original`, guardada para comparação) pedia para mudar "só o cabelo" e
+listava o que preservar fora dele (rosto, roupa, fundo), mas nada dizia sobre o próprio
+cabelo: curvatura, tamanho do cacho, densidade, volume e comprimento ficavam a critério do
+modelo.
+
+### Pesquisa complementar
+
+Fontes consultadas em 2026-11-07, além das das seções 1 a 5:
+
+| Afirmação | Fonte |
+|---|---|
+| O schema na Replicate continua o mesmo (versão `1cd4e9c2…`): `prompt`, `image_input` (até 14), `aspect_ratio`, `resolution`, `google_search`, `image_search`, `output_format`. Nenhum campo de textura, máscara, semente ou "thinking". | `GET https://api.replicate.com/v1/models/google/nano-banana-2.1` |
+| "The `seed`, `topK`, `logprobs`, `temperature`, and `topP` parameters aren't supported for Nano Banana 2.1. Setting any of these parameters returns an API error." O "thinking" existe no Google, mas a Replicate não o expõe. | <https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/nano-banana-2-1> |
+| Edição localizada ("semantic masking"): "Using the provided image, change only the [specific element] to [new element/description]. Keep everything else in the image exactly the same, preserving the original style, lighting, and composition." A máscara é feita só pela instrução. | <https://ai.google.dev/gemini-api/docs/image-generation> (redireciona para aistudio.google.com/docs/image-generation) |
+| "Be specific: More details give you more control." / "Provide context and intent" / "Use step-by-step instructions: For complex scenes, split your request into steps." / "Describe what you want, not what you don't" | <https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/gemini-image-generation-best-practices> |
+| Várias imagens: os exemplos nomeiam cada uma pela posição e dizem o papel dela na frase ("Take the blue floral dress from the first image and let the woman from the second image wear it"). Para o 2.1: "Up to 4 images of characters to maintain character consistency". | aistudio.google.com/docs/image-generation |
+| Limitações declaradas: "Character consistency is not always perfect between input images and generated output image"; "Partial instruction following and ink persistence in masked/doodle based editing"; "rare instances of persistent subject pose". Nada específico sobre cabelo, textura ou detalhes finos. | <https://deepmind.google/models/model-cards/nano-banana-2-1/> (publicado em 6 de outubro de 2026) |
+
+**Conclusão.** Na Replicate não existe parâmetro que controle textura, curvatura ou
+comprimento: a única alavanca é a instrução (e, no máximo, imagens de referência). O que a
+documentação do Google recomenda e o projeto adotou: abrir com o padrão de máscara
+semântica, ser específico, dar o contexto (prévia de salão) e dizer o papel de cada imagem.
+A recomendação de preferir descrições positivas é seguida em parte: a instrução descreve o
+que manter e depois lista os desvios conhecidos ("do not loosen, open up… curls"), porque o
+desvio relatado é justamente um desses, e o próprio Google usa "Do not change" nos exemplos
+de edição.
+
+### O que mudou na instrução (`instrucoes.prompt_detalhado`)
+
+A instrução passou a ter quatro prioridades, nesta ordem:
+
+1. **a pessoa**: identidade, rosto, expressão, pele, posição da cabeça, roupa, fundo, luz,
+   enquadramento; sem retoque no rosto;
+2. **o cabelo natural**: a mesma curvatura, o mesmo tamanho e aperto de cada onda, cacho ou
+   mola, a mesma densidade, volume, frizz e definição; "não abrir, esticar, relaxar ou
+   alisar", "não deixar mais uniforme ou mais definido"; e o comprimento (abaixo);
+3. **a mudança pedida**: o corte (com a descrição completa do catálogo) e a cor, cada um
+   só quando foi pedido; o corte é "moldado com a textura da própria cliente"; a cor é
+   aplicada "sem mudar a curvatura nem a textura";
+4. **a naturalidade**: foto sem edição aparente, fios individuais, luz coerente, sem
+   aparência de peruca.
+
+Regras que dependem do pedido, para nenhuma frase contradizer outra:
+
+| Situação | O que a instrução diz |
+|---|---|
+| Sem corte pedido | mantém o corte e o comprimento exatamente ("não pode ficar mais longo nem mais curto") |
+| Com corte pedido | muda o comprimento só o que o corte exige; nunca deixa mais longo que na foto, a não ser que o corte peça explicitamente |
+| Sempre | comprimento lido como o cabelo cai na foto, com o encolhimento natural, não esticado; volume não vira comprimento |
+| Corte que pede outra textura (escova, permanente) | é a única exceção à preservação da curvatura |
+| Curvatura informada | entra como apoio à leitura da foto ("a foto continua sendo a referência principal") |
+| Curvatura não informada | a foto é a única referência |
+
+Também foram trocadas, nas descrições completas do catálogo, palavras que indicavam
+textura onde só se queria descrever o corte ("straight, blunt base" e "smooth, polished
+lines" viraram "blunt, even perimeter" e "defined lines"): num cabelo 3C elas podiam ser
+lidas como pedido de alisar.
+
+A instrução curta do Kontext (`prompt_edicao`) não mudou, nem o caminho especializado.
+
+### Curvatura informada
+
+A etapa "Estilo e cor" ganhou a pergunta opcional **"Cabelo natural"**: liso, ondulado,
+cacheado ou crespo e, se a pessoa souber, o tipo de 1A a 4C, com uma descrição de salão
+("3C, cachos fechados, da largura de um lápis"). Começa em "Não sei informar".
+
+Decisão de implementar, e seus limites:
+
+- **por quê**: é a única informação sobre a textura que cabe no que o modelo aceita (texto);
+  o tamanho do cacho, que o modelo tende a perder, é exatamente o que diferencia 3A de 3C;
+- **como**: vira uma frase da instrução, não um parâmetro (o schema não tem nenhum); a foto
+  continua sendo a referência principal, então uma escolha errada não se sobrepõe ao que a
+  foto mostra;
+- **o que não faz**: não infere nada sobre a pessoa, não fica no cadastro do cliente, e não
+  muda o caminho especializado (Kontext), que não tem onde usá-la;
+- **persistência**: coluna `simulacoes.curvatura` (opcional, conferida por restrição), pela
+  migration `b5c8e1d3a742`. Necessária porque a geração roda em segundo plano e remonta o
+  pedido a partir da simulação gravada, como o gênero do corte;
+- **eficácia**: não medida ainda. Fica para o experimento abaixo (estratégia
+  `nano-curvatura`).
+
+### Estratégias avaliadas e o experimento
+
+`scripts/comparar_simulacoes.py` ganhou estratégias que mudam uma coisa de cada vez:
+
+| Estratégia | O que muda | Situação |
+|---|---|---|
+| `atual` | Kontext (caminho especializado) | implementada, referência |
+| `nano-original` | instrução de 2026-11-05 | implementada, para comparar |
+| `nano` | instrução por prioridades (a da produção) | **implementada e em uso** |
+| `nano-curvatura` | a anterior com a curvatura informada | implementada; eficácia a medir |
+| `nano-textura` | `nano` com um close da textura natural como segunda imagem | só no experimento; hipótese |
+| `nano-referencia` | `nano` com a foto do corte desejado como segunda imagem | só no experimento; hipótese |
+| `nano-etapas` | corte numa chamada, cor sobre o resultado em outra | só no experimento; hipótese, custa o dobro |
+
+As referências (textura e corte) não chegaram ao aplicativo. A foto de referência do corte
+saiu do escopo numa decisão anterior (migration `c6a2f9d41b87`: escopo e custo) e exigiria
+tratar a imagem de uma terceira pessoa; a instrução já diz que a pessoa da referência "não
+é a cliente". Só vale trazê-las de volta se o experimento mostrar ganho claro.
+
+Critérios de avaliação na página gerada (`comparacao.html`), de 1 a 5: identidade,
+curvatura, textura, comprimento, volume, corte, cor e naturalidade.
+
+**Resultados experimentais: ainda não há.** As chamadas são pagas e precisam de fotos
+autorizadas de pessoas com cabelo liso, ondulado, cacheado e crespo, que o projeto ainda
+não tem. Nenhuma afirmação de melhora de qualidade é feita aqui: a instrução nova é uma
+hipótese fundamentada, a confirmar.
+
+Protocolo para reproduzir (na pasta `backend`):
+
+1. Reúna de 4 a 8 fotos de adultos que autorizaram o uso, de frente e com boa luz, cobrindo
+   liso, ondulado, cacheado e crespo, com comprimentos e volumes variados. Nomeie com a
+   curvatura (`maria.3C.jpg`) e, para `nano-textura`, junte um close do cabelo
+   (`maria.textura.jpg`).
+2. Ensaio, sem custo:
+
+   ```
+   .venv\Scripts\python scripts\comparar_simulacoes.py --fotos C:\fotos-cacheados --pedidos scripts\pedidos_cacheados.json --estrategias nano-original,nano,nano-curvatura
+   ```
+
+   Com 4 fotos e os 6 pedidos de `pedidos_cacheados.json`: 72 chamadas, cerca de US$ 2,42
+   em 1K. O teto padrão é 60 chamadas: use `--maximo 80`, ou menos fotos.
+3. Repita com `--confirmar-custo`, abra `comparacao.html`, dê as notas e exporte o CSV.
+4. Numa segunda rodada, inclua `nano-textura`, `nano-etapas` e `atual` nos pedidos em que a
+   primeira mostrar diferença.
+
+Parâmetros fixos para a comparação ser justa: as mesmas fotos (já validadas e sem EXIF), os
+mesmos pedidos, `--resolucao 1K`, o mesmo `AI_INSTRUCAO_IDIOMA` (`pt_com_termos`). O
+resultado não é determinístico (o modelo não aceita semente): repetir a mesma combinação
+duas vezes mostra a variação natural, e uma diferença só conta se aparecer nas duas.
+
+Idioma: a instrução continua em inglês, com a descrição livre do profissional em português
+ao lado dos termos técnicos em inglês (`AI_INSTRUCAO_IDIOMA=pt_com_termos`). O modelo é
+multilíngue, mas o ganho de trocar de idioma não foi medido; a variável continua disponível
+(`pt`) para um teste de comparação.
+
+### Resolução, tempo e custo
+
+A resolução continua em 1K (US$ 0,0336 por imagem). 2K custa 50% a mais, e a documentação
+não indica ganho de fidelidade de textura, só de nitidez: não há evidência que justifique
+subir. O tempo medido em 2026-11-05 (14 a 17 s em 1K, com foto) é a referência. A instrução
+nova é mais longa, mas o texto de entrada não muda o preço por imagem, e o tempo real fica
+registrado em `simulacoes.tempo_ms` e no CSV do experimento.
+
+### Limitações que continuam
+
+- nenhum parâmetro controla textura ou comprimento: tudo depende de o modelo seguir a
+  instrução, e o próprio Google declara "partial instruction following";
+- o resultado varia entre execuções (sem semente);
+- a curvatura informada pode contradizer a foto (uma pessoa com escova feita, por
+  exemplo); a instrução manda a foto prevalecer, mas o modelo pode não obedecer;
+- o filtro "Child" do Google pode recusar fotos de crianças (seção 5).

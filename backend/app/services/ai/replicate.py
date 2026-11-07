@@ -359,7 +359,12 @@ class ProvedorReplicate(ProvedorIA):
             with httpx.Client(timeout=self.timeout_s) as cliente:
                 plano, esquema = self._plano(cliente, entrada.pedido)
                 foto = self._como_entrada(cliente, _reduzir(entrada.imagem, lado), "image/jpeg", enviados)
-                corpo = montar_entrada(plano, foto, esquema)
+                # Referências (só no experimento): o mesmo caminho da foto, sem EXIF.
+                referencias = [
+                    self._como_entrada(cliente, _reduzir(imagem, lado), "image/jpeg", enviados)
+                    for imagem in entrada.referencias
+                ]
+                corpo = montar_entrada(plano, foto, esquema, referencias)
                 predicao = self._criar_predicao(cliente, plano.modelo, esquema, corpo)
                 url_saida = _url_da_saida(self._aguardar(cliente, predicao, self.timeout_s))
                 imagem = self._ler(cliente, url_saida, timeout=self.timeout_s)

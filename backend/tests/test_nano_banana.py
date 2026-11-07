@@ -28,7 +28,7 @@ from pydantic import ValidationError
 from app.core import config as modulo_config
 from app.services.ai.base import EntradaSimulacao, FalhaDoProvedor
 from app.services.ai.esquema import ler_esquema
-from app.services.ai.instrucoes import PRESERVAR_DETALHADO
+from app.services.ai.instrucoes import PESSOA
 from app.services.ai.pedido import interpretar
 from app.services.ai.planos import Configuracao, Modo, montar_entrada, planejar
 from app.services.ai.replicate import ProvedorReplicate, limpar_cache_de_esquemas
@@ -123,8 +123,8 @@ def test_genero_nao_aparece_quando_o_corte_e_mantido():
 
 def test_instrucao_manda_preservar_tudo_alem_do_cabelo():
     prompt = planejar(interpretar("Pixie", "Loiro"), CONFIG_NANO).campos["prompt"]
-    assert "Change only the hair" in prompt
-    assert PRESERVAR_DETALHADO in prompt
+    assert "change only the hair" in prompt
+    assert PESSOA in prompt
     for elemento in ("face", "identity", "expression", "skin tone", "clothing", "background", "lighting", "framing"):
         assert elemento in prompt, f"a instrução não manda preservar: {elemento}"
 
@@ -280,7 +280,7 @@ def test_sucesso_registra_o_modelo_e_a_instrucao(monkeypatch, nano_configurado):
     saida = gerar_no_nano()
 
     assert saida.modelo == NANO
-    assert saida.instrucao.startswith("Edit this photograph of a real person")
+    assert saida.instrucao.startswith("Using the provided photo of a real person")
     consultados = [r.url.path for r in replicate.requisicoes if r.method == "GET" and "/models/" in r.url.path]
     assert consultados == [f"/v1/models/{NANO}"], "no caminho instrucao, o AI_MODELO não é consultado"
 

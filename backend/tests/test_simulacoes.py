@@ -64,6 +64,8 @@ def test_fluxo_completo_da_simulacao(cliente_http: TestClient, conta):
         "cor": "Ruivo intenso",
         # Envio sem o campo: vale o padrão do modelo, como antes de a opção existir.
         "genero": "none",
+        # Curvatura não informada ("Não sei informar").
+        "curvatura": None,
         "observacoes": "",
     }
 

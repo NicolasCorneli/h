@@ -18,10 +18,17 @@ import { EvitaTeclado } from '@/components/EvitaTeclado';
 import { EXEMPLOS_DE_COR, EXEMPLOS_DE_CORTE } from '@/data/catalogo';
 import { useRascunho } from '@/data/rascunho';
 import { useStore } from '@/data/store';
-import type { Genero } from '@/data/tipos';
+import type { Curvatura, Genero } from '@/data/tipos';
 import { textos } from '@/theme/textos';
 import { ALVO_TOQUE, cores, espaco, fontes, raios } from '@/theme/tokens';
-import { MAX_DESCRICAO, OPCOES_DE_GENERO, pendencias, type CampoPedido } from '@/utils/pedido';
+import {
+  categoriaDaCurvatura,
+  MAX_DESCRICAO,
+  OPCOES_DE_CURVATURA,
+  OPCOES_DE_GENERO,
+  pendencias,
+  type CampoPedido,
+} from '@/utils/pedido';
 
 const COMO_PREENCHER = [
   'Corte: escolha o gênero e escreva o novo corte, ou marque "Manter o corte atual".',
@@ -97,6 +104,8 @@ export default function Parametros() {
               </View>
             ))}
           </View>
+
+          <EscolhaCurvatura valor={rascunho.curvatura} aoEscolher={(curvatura) => atualizar({ curvatura })} />
 
           <Passo
             numero={1}
@@ -253,6 +262,55 @@ function CaixaMarcar({
       </View>
       <Text style={styles.caixaTexto}>{rotulo}</Text>
     </Pressable>
+  );
+}
+
+/**
+ * Cabelo natural (opcional): a categoria (liso, ondulado, cacheado, crespo) e, se a pessoa
+ * souber, o tipo de 1A a 4C. Começa em "Não sei informar": a foto basta, e ninguém precisa
+ * conhecer a classificação. Serve para a simulação manter os cachos, o volume e o
+ * comprimento como são (nos testes, a IA abria cachos fechados).
+ */
+function EscolhaCurvatura({
+  valor,
+  aoEscolher,
+}: {
+  valor: Curvatura | null;
+  aoEscolher: (curvatura: Curvatura | null) => void;
+}) {
+  const categoria = categoriaDaCurvatura(valor);
+  const opcao = OPCOES_DE_CURVATURA.find((o) => o.valor === categoria);
+  return (
+    <View style={styles.genero}>
+      <Text style={textos.etiqueta}>Cabelo natural (opcional)</Text>
+      <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Como é o cabelo natural">
+        {OPCOES_DE_CURVATURA.map((o) => (
+          <Chip key={o.valor} texto={o.rotulo} ativo={categoria === o.valor} aoPressionar={() => aoEscolher(o.valor)} />
+        ))}
+        <Chip texto="Não sei informar" ativo={valor === null} aoPressionar={() => aoEscolher(null)} />
+      </View>
+      {opcao ? (
+        <>
+          <Text style={textos.apoio}>{opcao.descricao}. Se souber, escolha o tipo:</Text>
+          <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Tipo de curvatura">
+            {opcao.tipos.map((tipo) => (
+              <Chip
+                key={tipo.valor}
+                texto={`${tipo.valor} · ${tipo.descricao}`}
+                ativo={valor === tipo.valor}
+                aoPressionar={() => aoEscolher(tipo.valor)}
+              />
+            ))}
+            <Chip texto="Não sei o tipo" ativo={valor === opcao.valor} aoPressionar={() => aoEscolher(opcao.valor)} />
+          </View>
+        </>
+      ) : (
+        <Text style={textos.apoio}>
+          Ajuda a simulação a manter a curvatura, o volume e o comprimento como são. Se não souber, deixe assim: a
+          foto basta.
+        </Text>
+      )}
+    </View>
   );
 }
 

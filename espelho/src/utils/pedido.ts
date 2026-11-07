@@ -6,7 +6,7 @@
  * servidor, que recusa com 422 e o mesmo texto.
  */
 
-import type { Genero } from '@/data/tipos';
+import type { CategoriaCurvatura, Curvatura, Genero, TipoCurvatura } from '@/data/tipos';
 
 export const MAX_DESCRICAO = 300;
 
@@ -94,4 +94,76 @@ export function rotuloCorte(escolhas: EscolhasPedido): string {
 /** Como a cor aparece na revisão e no histórico. */
 export function rotuloCor(escolhas: EscolhasPedido): string {
   return !escolhas.manterCor && limparTexto(escolhas.cor) ? limparTexto(escolhas.cor) : COR_MANTIDA;
+}
+
+/**
+ * Padrão natural de curvatura (opcional), em duas etapas: primeiro a categoria, depois,
+ * se a pessoa souber, o tipo de 1A a 4C. As descrições são as de salão, sem jargão.
+ * Os valores são os do servidor (`CURVATURAS` em `services/ai/pedido.py`); viram uma frase
+ * da instrução ao modelo, para ajudar a manter os cachos e o volume como são. A foto
+ * continua sendo a referência principal.
+ */
+export const OPCOES_DE_CURVATURA: readonly {
+  valor: CategoriaCurvatura;
+  rotulo: string;
+  descricao: string;
+  tipos: readonly { valor: TipoCurvatura; descricao: string }[];
+}[] = [
+  {
+    valor: 'liso',
+    rotulo: 'Liso',
+    descricao: 'Fios retos, sem ondas',
+    tipos: [
+      { valor: '1A', descricao: 'fino e bem liso' },
+      { valor: '1B', descricao: 'liso, com um pouco de corpo' },
+      { valor: '1C', descricao: 'liso grosso, com leve ondulação' },
+    ],
+  },
+  {
+    valor: 'ondulado',
+    rotulo: 'Ondulado',
+    descricao: 'Ondas em forma de S',
+    tipos: [
+      { valor: '2A', descricao: 'ondas leves e soltas' },
+      { valor: '2B', descricao: 'ondas marcadas a partir do meio' },
+      { valor: '2C', descricao: 'ondas fortes desde a raiz' },
+    ],
+  },
+  {
+    valor: 'cacheado',
+    rotulo: 'Cacheado',
+    descricao: 'Cachos em espiral',
+    tipos: [
+      { valor: '3A', descricao: 'cachos largos e soltos' },
+      { valor: '3B', descricao: 'cachos médios, da largura de um dedo' },
+      { valor: '3C', descricao: 'cachos fechados, da largura de um lápis' },
+    ],
+  },
+  {
+    valor: 'crespo',
+    rotulo: 'Crespo',
+    descricao: 'Fios bem fechados, em molas ou zigue-zague',
+    tipos: [
+      { valor: '4A', descricao: 'molinhas fechadas e definidas' },
+      { valor: '4B', descricao: 'zigue-zague, pouca definição' },
+      { valor: '4C', descricao: 'muito fechado, encolhe bastante' },
+    ],
+  },
+];
+
+/** A categoria de uma curvatura (a própria, ou a do tipo 1A a 4C). */
+export function categoriaDaCurvatura(curvatura: Curvatura | null): CategoriaCurvatura | null {
+  if (curvatura === null) return null;
+  const opcao = OPCOES_DE_CURVATURA.find(
+    (o) => o.valor === curvatura || o.tipos.some((tipo) => tipo.valor === curvatura)
+  );
+  return opcao?.valor ?? null;
+}
+
+/** Como a curvatura aparece na revisão e no histórico. */
+export function rotuloCurvatura(curvatura: Curvatura | null): string {
+  const categoria = OPCOES_DE_CURVATURA.find((o) => o.valor === categoriaDaCurvatura(curvatura));
+  if (!categoria) return 'Não informado';
+  const tipo = categoria.tipos.find((t) => t.valor === curvatura);
+  return tipo ? `${categoria.rotulo} ${tipo.valor} (${tipo.descricao})` : categoria.rotulo;
 }

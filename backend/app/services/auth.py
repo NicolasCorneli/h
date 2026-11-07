@@ -21,6 +21,7 @@ from app.models import Ciencia, IdentidadeExterna, TipoTermo, Usuario
 from app.repositories import consultas
 from app.schemas.auth import CienciaOut, Registro, SessaoOut, TokensOut, UsuarioOut
 from app.services import google
+from app.services.regras_consentimento import mesmo_conteudo
 from app.services.storage import obter_armazenamento, prefixo_do_usuario
 
 log = logging.getLogger(__name__)
@@ -279,7 +280,9 @@ def ciencia_atual(sessao: Session, usuario: Usuario) -> CienciaOut:
     versao_vigente = vigente.versao if vigente else None
     # Uma ciência dada sobre um aviso anterior não vale como atual: o profissional
     # precisa reconhecer o texto em vigor.
-    aceita = registro is not None and registro.versao == versao_vigente
+    # Revisão só de redação (1.2 para 1.2.1) não pede nova ciência: a mesma regra do
+    # consentimento do cliente (`regras_consentimento.mesmo_conteudo`).
+    aceita = registro is not None and mesmo_conteudo(registro.versao, versao_vigente)
     return CienciaOut(
         aceita=aceita,
         versao=registro.versao if registro else None,

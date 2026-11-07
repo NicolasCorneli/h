@@ -21,6 +21,9 @@ class EntradaSimulacao:
     imagem: bytes
     mime: str
     pedido: "PedidoCapilar"
+    #: Imagens de referência, na ordem de `pedido.referencias`. O aplicativo não envia
+    #: nenhuma; existem para o experimento de `scripts/comparar_simulacoes.py`.
+    referencias: tuple[bytes, ...] = ()
 
 
 @dataclass(frozen=True)

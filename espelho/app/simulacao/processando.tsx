@@ -103,6 +103,7 @@ export default function Processando() {
           cor: rascunho.cor,
           manterCor: rascunho.manterCor,
           genero: rascunho.genero,
+          curvatura: rascunho.curvatura,
           observacoes: rascunho.observacoes,
           foto,
           chaveEnvio,

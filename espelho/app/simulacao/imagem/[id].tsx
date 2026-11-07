@@ -10,6 +10,7 @@ import { useCliente, useSimulacao, useSimulacoesDoCliente } from '@/data/store';
 import { textos } from '@/theme/textos';
 import { cores, espaco, raios } from '@/theme/tokens';
 import { dataCurta, hora } from '@/utils/datas';
+import { rotuloCurvatura } from '@/utils/pedido';
 
 type Vista = 'resultado' | 'original' | 'lado_a_lado';
 
@@ -108,6 +109,7 @@ export default function VerSimulacao() {
                   descricao={lado.texto}
                   legenda={lado.legenda}
                   estilo={[styles.imagem, { width: '100%', aspectRatio: 4 / 5 }]}
+                  ampliavel={lado.titulo === 'Antes' ? 'Foto original' : 'Simulação'}
                 />
               </View>
             ))}
@@ -130,6 +132,7 @@ export default function VerSimulacao() {
                   : 'simulação'
             }
             estilo={[styles.imagem, { width: larguraImagem, height: alturaImagem }]}
+            ampliavel={vista === 'original' ? 'Foto original' : 'Simulação'}
           />
         )}
         {vista === 'original' && !simulacao.imgEntradaUri ? (
@@ -150,6 +153,9 @@ export default function VerSimulacao() {
             valor={`${dataCurta(simulacao.criadoEm)} às ${hora(simulacao.criadoEm)}`}
           />
           <Linha rotulo="Situação" valor={SITUACAO[simulacao.status]} />
+          {simulacao.parametros.curvatura ? (
+            <Linha rotulo="Cabelo natural" valor={rotuloCurvatura(simulacao.parametros.curvatura)} />
+          ) : null}
           {simulacao.modeloIa ? <Linha rotulo="Modelo" valor={simulacao.modeloIa} /> : null}
           {simulacao.tempoMs ? (
             <Linha rotulo="Tempo de geração" valor={`${Math.round(simulacao.tempoMs / 1000)} segundos`} />

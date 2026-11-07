@@ -1,0 +1,41 @@
+[
+  {
+    "id": "so-cor",
+    "descricao": "Só a cor muda: curvatura, volume e comprimento têm de ficar idênticos (o caso mais fácil de medir)",
+    "cor": "Cobre canela",
+    "manter_corte": true
+  },
+  {
+    "id": "so-cor-clara",
+    "descricao": "Clarear muito é onde os modelos mais tendem a alisar ou abrir os cachos",
+    "cor": "Loiro mel",
+    "manter_corte": true
+  },
+  {
+    "id": "corte-mais-curto",
+    "descricao": "Corte que encurta: o comprimento só pode diminuir, e a curvatura fica",
+    "corte": "Chanel",
+    "manter_cor": true,
+    "genero": "female"
+  },
+  {
+    "id": "camadas-sem-encurtar",
+    "descricao": "Corte que não pede mudança de comprimento: o comprimento não pode crescer",
+    "corte": "camadas para dar forma aos cachos, sem tirar comprimento",
+    "manter_cor": true
+  },
+  {
+    "id": "corte-e-cor",
+    "descricao": "Os dois de uma vez (também é o caso da estratégia nano-etapas)",
+    "corte": "Butterfly",
+    "cor": "Chocolate quente",
+    "genero": "female"
+  },
+  {
+    "id": "masculino-curto",
+    "descricao": "Corte masculino curto em cabelo crespo ou cacheado",
+    "corte": "Degradê",
+    "manter_cor": true,
+    "genero": "male"
+  }
+]

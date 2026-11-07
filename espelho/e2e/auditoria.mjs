@@ -83,6 +83,12 @@ const consoleErros = [];
 page.on('pageerror', (e) => consoleErros.push(`pageerror: ${String(e).slice(0, 300)}`));
 const botao = (nome) => page.getByRole('button', { name: nome }).filter({ visible: true }).first();
 const caixa = (i) => page.getByRole('textbox').filter({ visible: true }).nth(i);
+// Na web a data de nascimento é o campo de data do navegador (AAAA-MM-DD). Os passos
+// continuam escritos como a pessoa lê (dd/mm/aaaa); aqui se traduz.
+const preencherNascimento = async (ddmmaaaa) => {
+  const [d, m, a] = ddmmaaaa.split('/');
+  await page.locator('input[type="date"]:visible').first().fill(`${a}-${m}-${d}`);
+};
 
 // 1. Sem sessão ---------------------------------------------------------------
 for (const rota of ['/agenda', '/cliente/00000000-0000-0000-0000-000000000000', '/meus-dados']) {
@@ -121,7 +127,7 @@ try {
 await page.waitForTimeout(1500);
 await caixa(0).fill('Helena Duarte');
 await caixa(1).fill('(55) 99777-3344');
-await caixa(2).fill('12/03/1990');
+await preencherNascimento('12/03/1990');
 await botao('Salvar cliente').click();
 await page.waitForTimeout(2500);
 const listaApi = await (await fetch(`${API}/clientes`, { headers: { Authorization: `Bearer ${sessao.tokens.accessToken}` } })).json();
@@ -137,7 +143,7 @@ await page.goto(`${APP}/cliente/editar`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(1500);
 await caixa(0).fill('Lia Duarte');
 await caixa(1).fill('(55) 99777-5566');
-await caixa(2).fill(nascimentoMenor);
+await preencherNascimento(nascimentoMenor);
 await botao('Salvar cliente').click();
 await page.waitForTimeout(2500);
 const corpoMenor = await page.locator('body').innerText();
@@ -148,7 +154,7 @@ await page.goto(`${APP}/cliente/editar`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(1500);
 await caixa(0).fill('Futuro Teste');
 await caixa(1).fill('(55) 99777-7788');
-await caixa(2).fill(`01/01/${hoje.getFullYear() + 1}`);
+await preencherNascimento(`01/01/${hoje.getFullYear() + 1}`);
 await botao('Salvar cliente').click();
 await page.waitForTimeout(1200);
 const corpoFuturo = await page.locator('body').innerText();

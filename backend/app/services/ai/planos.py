@@ -40,12 +40,19 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import StrEnum
+from collections.abc import Sequence
 from typing import Any, Literal
 
 from app.core.erros import ValidacaoFalhou
 from app.services.ai.base import FalhaDoProvedor
 from app.services.ai.esquema import EsquemaModelo
-from app.services.ai.instrucoes import Estrategia, descrever, prompt_detalhado, prompt_edicao
+from app.services.ai.instrucoes import (
+    Estrategia,
+    descrever,
+    prompt_detalhado,
+    prompt_detalhado_original,
+    prompt_edicao,
+)
 from app.services.ai.pedido import GENERO_PADRAO, Alteracao, PedidoCapilar
 
 log = logging.getLogger(__name__)
@@ -118,6 +125,9 @@ class Configuracao:
     caminho: Caminho = "especializado"
     #: Resolução para os modelos que têm o campo `resolution`.
     resolucao: str = "1K"
+    #: Qual instrução detalhada usar. A produção usa sempre "preservacao"; "original" (a
+    #: de 2026-11-05) existe só para o script de comparação medir a diferença.
+    variante_instrucao: Literal["preservacao", "original"] = "preservacao"
 
 
 def configuracao_de(config) -> Configuracao:
@@ -177,7 +187,12 @@ def perfil_de(modelo: str, resolucao: str = "1K") -> Perfil:
 def _plano_de_instrucao(pedido: PedidoCapilar, config: Configuracao, modo: Modo) -> Plano:
     """O pedido inteiro como instrução escrita ao modelo de texto, no formato do perfil dele."""
     perfil = perfil_de(config.modelo_texto, config.resolucao)
-    construir = prompt_detalhado if perfil.instrucao_detalhada else prompt_edicao
+    if not perfil.instrucao_detalhada:
+        construir = prompt_edicao
+    elif config.variante_instrucao == "original":
+        construir = prompt_detalhado_original
+    else:
+        construir = prompt_detalhado
     return Plano(
         modo=modo,
         modelo=config.modelo_texto,
@@ -305,16 +320,29 @@ def planejar(
     return _plano_de_instrucao(pedido, config, Modo.descricao)
 
 
-def montar_entrada(plano: Plano, imagem: str, esquema: EsquemaModelo | None) -> dict[str, Any]:
+def montar_entrada(
+    plano: Plano,
+    imagem: str,
+    esquema: EsquemaModelo | None,
+    referencias: Sequence[str] = (),
+) -> dict[str, Any]:
     """Junta a imagem e os parâmetros e confere tudo contra o schema publicado do modelo.
 
     Campo que o modelo não tem: se for essencial, a geração para (`modelo_incompativel`);
     se for acessório (proporção, formato), sai do envio e o modelo usa o padrão dele.
     Valor fora das opções: mesma regra (`parametro_fora_do_schema`). Sem schema (provedor
     local), segue como está.
+
+    `referencias` (só no experimento) vão depois da foto, na mesma lista, na ordem em que
+    a instrução as descreve. Um modelo que recebe uma imagem só não tem onde pô-las.
     """
+    if referencias and not plano.imagem_em_lista:
+        raise FalhaDoProvedor(
+            f"O modelo {plano.modelo} recebe uma imagem só: não há onde enviar referências.",
+            codigo="modelo_incompativel",
+        )
     entrada: dict[str, Any] = {
-        plano.campo_imagem: [imagem] if plano.imagem_em_lista else imagem,
+        plano.campo_imagem: [imagem, *referencias] if plano.imagem_em_lista else imagem,
         **plano.campos,
     }
     if esquema is None:

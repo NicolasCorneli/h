@@ -81,7 +81,9 @@ export default function Resultado() {
             <ImagemSimulada
               uri={simulacao?.imgEntradaUri ?? rascunho.foto?.uri}
               legenda="foto original"
+              descricao="Foto original enviada para a simulação"
               estilo={styles.imagem}
+              ampliavel="Foto original"
             />
           </View>
           <View style={styles.coluna}>
@@ -90,7 +92,9 @@ export default function Resultado() {
               uri={simulacao?.imgSaidaUri}
               claro
               legenda="imagem gerada"
+              descricao="Imagem gerada pela simulação"
               estilo={[styles.imagem, styles.imagemDestaque]}
+              ampliavel="Simulação"
             />
           </View>
         </View>

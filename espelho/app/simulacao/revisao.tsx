@@ -15,7 +15,7 @@ import { ErroApi, simulacoes } from '@/services/api';
 import { useModoDemo } from '@/services/modoDemo';
 import { textos } from '@/theme/textos';
 import { ALVO_TOQUE, cores, espaco, fontes, raios } from '@/theme/tokens';
-import { pendencias, rotuloCor, rotuloCorte, rotuloGenero, type EscolhasPedido } from '@/utils/pedido';
+import { pendencias, rotuloCor, rotuloCorte, rotuloCurvatura, rotuloGenero, type EscolhasPedido } from '@/utils/pedido';
 
 /**
  * Revisão do pedido, antes de gastar uma geração.
@@ -43,7 +43,7 @@ export default function Revisao() {
   };
   const faltas = pendencias(escolhas);
   // O gênero muda o que vai ao modelo: entra na prévia e, quando muda, ela é refeita.
-  const pedido = { ...escolhas, genero: rascunho.genero };
+  const pedido = { ...escolhas, genero: rascunho.genero, curvatura: rascunho.curvatura };
   const chavePlano = JSON.stringify(pedido);
 
   // Sem foto (recarregou a página, por exemplo), não há o que revisar. Confere só ao abrir:
@@ -128,6 +128,11 @@ export default function Revisao() {
           <LinhaPedido
             rotulo="Gênero"
             valor={rotuloGenero(rascunho.genero)}
+            acoes={[{ titulo: 'Editar', aoPressionar: () => router.back() }]}
+          />
+          <LinhaPedido
+            rotulo="Cabelo natural"
+            valor={rotuloCurvatura(rascunho.curvatura)}
             acoes={[{ titulo: 'Editar', aoPressionar: () => router.back() }]}
           />
           <LinhaPedido

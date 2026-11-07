@@ -44,7 +44,7 @@ class OpcaoCatalogo:
 
 
 CORTES_EM_ALTA: tuple[OpcaoCatalogo, ...] = (
-    OpcaoCatalogo("Long bob estruturado", "structured long bob (lob) with clean lines, just above the shoulders", ("Lob",), detalhe="a structured long bob (lob): the hair ends just above the shoulders, slightly longer in front than in the back, with a clean, blunt perimeter and smooth, polished lines"),
+    OpcaoCatalogo("Long bob estruturado", "structured long bob (lob) with clean lines, just above the shoulders", ("Lob",), detalhe="a structured long bob (lob): the hair ends just above the shoulders, slightly longer in front than in the back, with a clean, blunt perimeter and defined lines"),
     OpcaoCatalogo("Bob texturizado", "textured bob with soft layers and movement", detalhe="a textured bob ending between the jawline and the chin, with soft internal layers, piecey ends and natural movement"),
     OpcaoCatalogo("Butterfly", "butterfly haircut: short face-framing layers and longer layers in the back", detalhe="a butterfly haircut: long hair with short face-framing layers that start around the cheekbones and longer feathered layers in the back, with volume and bounce"),
     OpcaoCatalogo("Shaggy com franja", "shaggy haircut with bangs", detalhe="a shaggy haircut with bangs: choppy, feathered layers all over the head, tousled texture and wispy bangs over the forehead"),
@@ -55,12 +55,12 @@ CORTES_EM_ALTA: tuple[OpcaoCatalogo, ...] = (
 )
 
 CORTES_CLASSICOS: tuple[OpcaoCatalogo, ...] = (
-    OpcaoCatalogo("Chanel", "classic chin-length bob with a straight base", ("Bob",), detalhe="a classic chin-length bob: all the hair cut to the same length around the jawline, with a straight, blunt base"),
+    OpcaoCatalogo("Chanel", "classic chin-length bob with a straight base", ("Bob",), detalhe="a classic chin-length bob: all the hair cut to the same length around the jawline, with a blunt, even perimeter"),
     OpcaoCatalogo("Pixie", "pixie cut", ("Pixie Cut",), detalhe="a pixie cut: very short hair on the back and sides, slightly longer on top, with soft, wispy pieces around the face and forehead"),
     OpcaoCatalogo("Camadas longas", "long layered haircut", ("Layered",), detalhe="long layered hair: the length stays below the shoulders, with long, blended layers that add movement and frame the face"),
-    OpcaoCatalogo("Franja reta", "blunt bangs", ("Blunt Bangs",), detalhe="blunt bangs: a straight, full fringe cut horizontally at or just above the eyebrows; the rest of the hair keeps its current length"),
+    OpcaoCatalogo("Franja reta", "blunt bangs", ("Blunt Bangs",), detalhe="blunt bangs: a full fringe with an even, horizontal cut line at or just above the eyebrows; the rest of the hair keeps its current length"),
     OpcaoCatalogo("Corte social", "classic short men's haircut, tapered sides", detalhe="a classic short men's haircut: short, neat hair with tapered sides and back, slightly longer on top and neatly combed"),
-    OpcaoCatalogo("Caesar", "caesar cut: short, even length all over, with short straight bangs", detalhe="a Caesar cut: short hair of even length all over, combed forward, with short, straight horizontal bangs on the forehead"),
+    OpcaoCatalogo("Caesar", "caesar cut: short, even length all over, with short straight bangs", detalhe="a Caesar cut: short hair of even length all over, brushed forward, with a short fringe cut in an even, horizontal line on the forehead"),
 )
 
 CORES_EM_ALTA: tuple[OpcaoCatalogo, ...] = (

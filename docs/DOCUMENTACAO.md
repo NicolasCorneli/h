@@ -607,6 +607,10 @@ banco tenha valor probatório, o sistema precisa ser capaz de mostrar, a qualque
 
 - o texto é imutável dentro de uma versão e não pode ser alterado pela interface;
 - corrigir o conteúdo significa publicar uma versão nova, que passa a exigir revalidação;
+- a exceção é a revisão só de redação, com terceiro número (1.2 para 1.2.1): o texto é o
+  mesmo com outra pontuação, um teste compara os dois, e a revalidação compara apenas
+  "maior.menor" (`regras_consentimento.conteudo_da_versao`). Foi o caso da troca dos
+  travessões do termo 1.2 (seção 13);
 - as versões antigas continuam disponíveis para consulta;
 - se o aplicativo não conhecer o texto de uma versão antiga, ele avisa explicitamente em
   vez de exibir outro texto no lugar — admitir a lacuna é preferível a induzir o
@@ -866,3 +870,89 @@ O que continua em aberto:
    web) e publicar uma primeira distribuição de teste.
 6. Implementar o disparo das notificações de lembrete e a recuperação de senha, ambos
    fora do escopo desta etapa.
+
+---
+
+## 13. Rodada de testes com usuários (novembro de 2026)
+
+Ajustes a partir das observações de quem participou dos testes. A parte da simulação
+(curvatura e comprimento) está em `docs/NANO_BANANA.md`, seção 9.
+
+### 13.1 Travessões nos termos
+
+**Relato:** travessões longos (—) no termo. **Causa:** o verificador
+(`scripts/verificar_travessoes.py`, no `qa.sh`) deixava de fora todos os termos, por serem
+versões imutáveis, e o termo 1.2 (cliente e profissional) chegou ao ar com quatro.
+**Solução:** termo 1.2.1 (migration `c8f2a6d4e913`), o mesmo texto com cada travessão
+trocado pela pontuação equivalente; um teste confere que só isso mudou. Como o conteúdo não
+mudou, quem aceitou a 1.2 não precisa decidir de novo (seção 8.7); quem aceitou a 1.1 ou
+antes continua precisando. O verificador passou a conferir o termo vigente de cada tipo
+(as versões antigas continuam de fora: são o texto que cada cliente aceitou). As telas do
+aplicativo e as mensagens do servidor já estavam sem travessões.
+
+### 13.2 Barra inferior e botão da câmera
+
+**Relato:** a barra ficava muito perto dos botões do Android, e a câmera, apertada entre os
+ícones. **Causa:** a margem de baixo era `max(área do sistema, 12 px)`: com os três botões
+do Android, o pé da barra encostava exatamente no limite deles. E a coluna do botão central
+tinha a largura de uma aba, o que deixava poucos pixels entre ele e os ícones vizinhos em
+telas de 360 px. **Solução** (`app/(tabs)/_layout.tsx`, com o `react-native-safe-area-context`
+que o projeto já usa): com área do sistema, a margem é ela mais 8 px; sem ela (navegador),
+12 px, como antes. O botão tem coluna própria, com 16 px de cada lado; as abas dividem o
+resto, e cada uma mantém o alvo de toque de 44 px. As telas não ficam atrás da barra porque
+ela não é sobreposta: ocupa o próprio espaço. A verificação em aparelho (gestos, três
+botões) depende de um APK novo.
+
+### 13.3 Data de nascimento digitada
+
+**Relato:** no celular a data de nascimento só se escolhia no calendário, e quem nasceu em
+2004 voltava ano a ano. **Antes:** calendário do sistema (celular); campo de data do
+navegador (web). **Agora**, no celular: campo digitado `dd/mm/aaaa`, teclado numérico, com o
+calendário num botão ao lado.
+
+- **Máscara de casas fixas** (`utils/mascaras.ts`, `editarData`): cada número tem a sua
+  casa. Apagar um número do meio deixa a casa vazia ("11/_4/2004") e os outros não andam;
+  digitar preenche a casa do cursor; colar "11/04/2004" ou "11042004" preenche tudo; números
+  além do oitavo são ignorados. O cursor é controlado pelo campo (`Campo` ganhou a opção
+  `editar`), para não pular para o fim a cada tecla.
+- **Validação de calendário** (`utils/datas.ts`, `situacaoDataCurta`): vazia, incompleta,
+  inválida (31/04, 29/02 em ano comum, mês 13) ou válida. A validação é a de
+  `isoDeDataCurta`, a mesma que converte para o servidor: não há uma segunda lógica.
+  "Inválida" aparece assim que os oito números estão lá; "incompleta", só ao sair do campo.
+- **Persistência:** sem mudança. A tela trabalha com `dd/mm/aaaa`, envia `AAAA-MM-DD`
+  (`isoDeDataCurta`), e o banco guarda `DATE`. Cálculo de idade, menores de idade e
+  responsável legal usam o mesmo valor de antes.
+- Na web continua o campo de data do navegador, que já se digita por segmentos.
+
+Testes: `testes/data-digitada.mjs` (32 casos, incluindo a tabela do pedido: 11/04/2004
+válida, 29/02/2004 válida, 29/02/2003, 31/04/2004, 32/01/2004 e 15/13/2004 inválidas,
+11/04/024 e 11/04/ incompletas, vazio permitido; apagar do meio, apagar o ano, apagar tudo,
+colar, mais de oito números, editar uma data salva).
+
+### 13.4 Imagens ampliadas
+
+**Relato:** depois da simulação aparecem a foto e a simulação lado a lado, pequenas, sem
+como vê-las maiores. **O que já existia:** a tela da simulação (`simulacao/imagem/[id]`),
+com abas "Simulação", "Foto original" e "Lado a lado", limitada a 520 px e sem zoom; no
+resultado e na comparação, as imagens não respondiam ao toque. **Solução:** um único
+visualizador em tela cheia (`components/VisualizadorImagem.tsx`), aberto pelo próprio
+`ImagemSimulada` quando recebe `ampliavel`: no resultado (foto original e simulação), na
+tela da simulação e na comparação. A imagem fica na proporção original; há zoom por pinça
+(até 4x), arrastar quando ampliada, toque duplo, e botões de zoom (que servem no navegador e
+para quem não faz gestos); fecha pelo botão, pelo voltar do Android e pela tecla Esc.
+
+- usa a mesma URL assinada que a miniatura já tem: nenhum pedido novo ao servidor, nenhum
+  endereço permanente;
+- estados de carregamento e de erro (link vencido: "feche e abra de novo");
+- não há biblioteca de gestos no projeto, e esta tela não justificava um módulo nativo
+  novo: o zoom usa o `PanResponder` do React Native;
+- **não existe imagem de referência do corte** para ampliar: ela saiu do escopo numa
+  decisão anterior (migration `c6a2f9d41b87`).
+
+Teste: `e2e/ampliacao-e-curvatura.mjs`.
+
+### 13.5 O que só se confirma no aparelho
+
+A barra inferior com navegação por gestos e por três botões, o teclado sobre o campo de
+data, o cursor da data digitada e a pinça do zoom foram verificados por código e pelo
+navegador, que não reproduz o Android. Precisam de uma rodada no APK novo.

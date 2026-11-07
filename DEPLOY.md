@@ -358,6 +358,14 @@ Se a API subir com o modelo de um lado e o termo do outro (o Nano Banana ligado 
 termo 1.2, ou o Kontext com o 1.2 vigente), ela registra no log uma linha
 `TERMO E MODELO NÃO BATEM` dizendo o que fazer.
 
+**Migrations de 2026-11-07** (aplicadas sozinhas na subida, pelo serviço `migrar`):
+
+- `b5c8e1d3a742`: coluna opcional `simulacoes.curvatura` (o "cabelo natural" informado na
+  etapa "Estilo e cor"). Só acrescenta; os registros existentes ficam vazios;
+- `c8f2a6d4e913`: termo 1.2.1 (cliente e profissional), a 1.2 sem travessões. Quem aceitou a
+  1.2 **não** precisa decidir de novo (revisão só de redação); quem aceitou a 1.1 ou antes
+  continua precisando.
+
 **Voltar ao caminho original** é trocar as duas variáveis de volta
 (`AI_ESTRATEGIA=especializado` e `AI_MODELO_TEXTO=black-forest-labs/flux-kontext-pro`) e
 rodar `docker compose up -d`. O termo 1.2, porém, continua dizendo que a foto vai ao

@@ -17,7 +17,7 @@ import { idadeEm } from '@/services/consentService';
 import { reduzirParaEnvio } from '@/services/imagemLocal';
 import { ErroApi } from '@/services/api';
 import { cores, espaco } from '@/theme/tokens';
-import { dataCurta, diaLocalIso, isoDeDataCurta } from '@/utils/datas';
+import { dataCurta, diaLocalIso, isoDeDataCurta, situacaoDataCurta } from '@/utils/datas';
 import { mascaraTelefone } from '@/utils/mascaras';
 
 // Mesmos limites que a tela já valida ao salvar (nem futuro, nem antes de 1900).
@@ -100,7 +100,10 @@ function FormularioCliente({ existente }: { existente: Cliente | undefined }) {
     }
     const nascimentoIso = isoDeDataCurta(nascimento);
     if (nascimento.trim() && !nascimentoIso) {
-      novosErros.nascimento = 'Data de nascimento incompleta ou inválida.';
+      novosErros.nascimento =
+        situacaoDataCurta(nascimento) === 'invalida'
+          ? 'Essa data de nascimento não existe. Confira o dia e o mês.'
+          : 'Data de nascimento incompleta: use dd/mm/aaaa.';
     } else if (nascimentoIso && nascimentoIso > diaLocalIso()) {
       // Mesma regra do servidor, avisada antes de enviar.
       novosErros.nascimento = 'A data de nascimento não pode estar no futuro.';

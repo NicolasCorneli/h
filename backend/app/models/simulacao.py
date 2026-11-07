@@ -59,6 +59,10 @@ class Simulacao(IdUUID, CriadoEm, Base):
         CheckConstraint("NOT (preferida AND status <> 'concluida')", name="preferida_concluida"),
         CheckConstraint("tempo_ms IS NULL OR tempo_ms >= 0", name="tempo_nao_negativo"),
         CheckConstraint("genero IN ('none', 'male', 'female')", name="genero_valido"),
+        CheckConstraint(
+            "curvatura IS NULL OR curvatura IN ('liso', 'ondulado', 'cacheado', 'crespo', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C')",
+            name="curvatura_valida",
+        ),
         # O mesmo envio repetido devolve a simulação já criada (ver `chave_envio`).
         Index(
             "uq_simulacoes_chave_envio_por_usuario",
@@ -97,6 +101,10 @@ class Simulacao(IdUUID, CriadoEm, Base):
     genero: Mapped[str] = mapped_column(
         String(10), nullable=False, default="none", server_default="none"
     )
+    #: Padrão natural de curvatura informado no pedido (categoria ou tipo 1A a 4C), ou
+    #: nulo ("Não sei informar"). Gravado pelo mesmo motivo do gênero: a geração em segundo
+    #: plano remonta a instrução a partir daqui.
+    curvatura: Mapped[str | None] = mapped_column(String(10), nullable=True)
     observacoes: Mapped[str] = mapped_column(Text, nullable=False, default="")
     #: O que foi pedido ao modelo (opções ou instrução em texto), sem a imagem.
     instrucao_ia: Mapped[str | None] = mapped_column(Text, nullable=True)

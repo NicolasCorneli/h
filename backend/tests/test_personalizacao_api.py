@@ -28,9 +28,9 @@ ACEITE = {
 
 @contextmanager
 def aceites_sobre_o_termo_1_1() -> Iterator[None]:
-    """Deixa a 1.1 vigente enquanto o teste cria aceites e simulações, e depois a 1.2.
+    """Deixa a 1.1 vigente enquanto o teste cria aceites e simulações, e depois a de antes.
 
-    Os testes de volta das migrations descem abaixo da migration do termo 1.2, que se
+    Os testes de volta das migrations descem abaixo das migrations dos termos 1.2 e 1.2.1, que se
     recusa a remover uma versão já aceita por algum cliente: é a proteção do vínculo entre
     a decisão e o texto lido (art. 37). Com os aceites do teste sobre a 1.1, a volta
     exercita só as colunas, que é o que esses testes medem.
@@ -52,11 +52,15 @@ def aceites_sobre_o_termo_1_1() -> Iterator[None]:
                     {"versao": versao},
                 )
 
+    with engine.begin() as conexao:
+        anterior = conexao.execute(
+            text("SELECT versao FROM termos WHERE tipo = 'cliente' AND vigente = true")
+        ).scalar_one()
     tornar_vigente("1.1")
     try:
         yield
     finally:
-        tornar_vigente("1.2")
+        tornar_vigente(anterior)
 
 
 def cliente_com_aceite(cliente_http: TestClient, cabecalhos) -> dict:
@@ -233,13 +237,15 @@ def test_volta_da_migration_recusa_cortar_descricao(cliente_http: TestClient, co
         longa = "Cabelo longo com franja cortininha e camadas ao redor do rosto, sem tirar comprimento"
         criada = enviar(cliente_http, cabecalhos, cliente["id"], corte=longa)
         assert criada.status_code == 202
-        configuracao = Config(str(RAIZ / "alembic.ini"))
-        configuracao.set_main_option("script_location", str(RAIZ / "migrations"))
-        with pytest.raises(RuntimeError, match="acima de 60 caracteres"):
-            command.downgrade(configuracao, "a3e7b5c90d14")
-        # Nada foi desfeito: a descrição continua inteira.
-        final = cliente_http.get(f"/api/v1/simulacoes/{criada.json()['id']}", headers=cabecalhos).json()
-        assert final["parametros"]["estilo"] == longa
+    # A volta roda com a vigência de verdade: as migrations dos termos devolvem a vigência à
+    # versão anterior, e com a 1.1 já vigente isso daria duas versões vigentes.
+    configuracao = Config(str(RAIZ / "alembic.ini"))
+    configuracao.set_main_option("script_location", str(RAIZ / "migrations"))
+    with pytest.raises(RuntimeError, match="acima de 60 caracteres"):
+        command.downgrade(configuracao, "a3e7b5c90d14")
+    # Nada foi desfeito: a descrição continua inteira.
+    final = cliente_http.get(f"/api/v1/simulacoes/{criada.json()['id']}", headers=cabecalhos).json()
+    assert final["parametros"]["estilo"] == longa
 
 
 def test_migration_vai_e_volta_sem_descricoes_longas():

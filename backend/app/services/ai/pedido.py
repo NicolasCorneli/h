@@ -38,6 +38,20 @@ Genero = Literal["none", "male", "female"]
 GENEROS: tuple[Genero, ...] = ("none", "male", "female")
 GENERO_PADRAO: Genero = "none"
 
+#: Padrão natural de curvatura, informado (opcionalmente) na etapa "Estilo e cor": a
+#: categoria ("liso", "ondulado", "cacheado", "crespo") ou o tipo detalhado (1A a 4C, da
+#: classificação usada em salões). Ausente (None) é "Não sei informar": a foto é a única
+#: referência. Não é parâmetro de nenhum modelo; entra só como frase da instrução
+#: (`instrucoes.py`), e a foto continua sendo a referência principal.
+CATEGORIAS_DE_CURVATURA: tuple[str, ...] = ("liso", "ondulado", "cacheado", "crespo")
+TIPOS_DE_CURVATURA: tuple[str, ...] = tuple(f"{n}{l}" for n in "1234" for l in "ABC")
+CURVATURAS: tuple[str, ...] = CATEGORIAS_DE_CURVATURA + TIPOS_DE_CURVATURA
+
+#: Papel de cada imagem que acompanha a foto do cliente. O aplicativo não envia
+#: referências (a foto de referência saiu do escopo, ver a migration c6a2f9d41b87); elas
+#: existem para o experimento de `scripts/comparar_simulacoes.py`.
+Papel = Literal["corte", "textura"]
+
 #: Letras (com acento), números, espaço e a pontuação de uma frase comum. Ficam de fora os
 #: sinais que só servem para montar código ou marcação: < > { } [ ] \ | ` $ @ # * ~ ^ =.
 _PERMITIDO = re.compile(r"^[\w\s.,;:!?()'\"/+&%ºª°-]*$")
@@ -69,6 +83,10 @@ class PedidoCapilar:
     #: None: manter a cor atual.
     cor: Alteracao | None
     genero: Genero = GENERO_PADRAO
+    #: Padrão natural de curvatura (`CURVATURAS`), ou None ("Não sei informar").
+    curvatura: str | None = None
+    #: Papéis das imagens de referência que seguem a foto, na ordem (só no experimento).
+    referencias: tuple[Papel, ...] = ()
 
     @property
     def rotulo_corte(self) -> str:
@@ -136,6 +154,22 @@ def validar_genero(genero: str | None) -> Genero:
     return cast(Genero, genero)
 
 
+def validar_curvatura(curvatura: str | None) -> str | None:
+    """Só os valores da lista passam. Ausente ou vazio é "Não sei informar" (None)."""
+    if curvatura is None or curvatura.strip() == "":
+        return None
+    valor = curvatura.strip()
+    valor = valor.upper() if len(valor) == 2 else valor.lower()
+    if valor not in CURVATURAS:
+        raise ValidacaoFalhou(
+            "Curvatura inválida: escolha liso, ondulado, cacheado, crespo, um tipo de 1A a 4C, "
+            "ou não informe.",
+            codigo="curvatura_invalida",
+            detalhes=[{"campo": "curvatura", "permitidos": list(CURVATURAS)}],
+        )
+    return valor
+
+
 def interpretar(
     corte: str | None,
     cor: str | None,
@@ -143,9 +177,11 @@ def interpretar(
     manter_corte: bool = False,
     manter_cor: bool = False,
     genero: str | None = GENERO_PADRAO,
+    curvatura: str | None = None,
 ) -> PedidoCapilar:
     """Valida e monta o pedido. Levanta 422 com código próprio para cada caso."""
     genero_valido = validar_genero(genero)
+    curvatura_valida = validar_curvatura(curvatura)
     texto_corte = "" if manter_corte else limpar_descricao(corte, "corte")
     texto_cor = "" if manter_cor else limpar_descricao(cor, "cor")
 
@@ -171,10 +207,13 @@ def interpretar(
         corte=alteracao_de_corte(texto_corte) if texto_corte else None,
         cor=alteracao_de_cor(texto_cor) if texto_cor else None,
         genero=genero_valido,
+        curvatura=curvatura_valida,
     )
 
 
-def pedido_registrado(estilo: str, cor: str, genero: str = GENERO_PADRAO) -> PedidoCapilar:
+def pedido_registrado(
+    estilo: str, cor: str, genero: str = GENERO_PADRAO, curvatura: str | None = None
+) -> PedidoCapilar:
     """Reconstrói o pedido a partir do que ficou gravado na simulação.
 
     O processamento em segundo plano recebe só o identificador; o pedido volta daqui, com
@@ -182,4 +221,6 @@ def pedido_registrado(estilo: str, cor: str, genero: str = GENERO_PADRAO) -> Ped
     """
     corte = None if estilo in (CORTE_MANTIDO, "") else alteracao_de_corte(estilo)
     tom = None if cor in (COR_MANTIDA, "") else alteracao_de_cor(cor)
-    return PedidoCapilar(corte=corte, cor=tom, genero=validar_genero(genero))
+    return PedidoCapilar(
+        corte=corte, cor=tom, genero=validar_genero(genero), curvatura=validar_curvatura(curvatura)
+    )

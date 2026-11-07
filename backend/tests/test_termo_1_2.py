@@ -33,7 +33,8 @@ def texto_de(termo: dict) -> str:
 def test_1_2_vigente_e_1_1_preservada_para_os_dois_tipos(versao_vigente):
     for tipo in ("cliente", "profissional"):
         publicados = termos(tipo)
-        assert versao_vigente(tipo) == "1.2", f"termo de {tipo} não está na 1.2"
+        # Vigente é a 1.2 ou uma revisão só de redação dela (1.2.1, sem travessões).
+        assert versao_vigente(tipo).startswith("1.2"), f"termo de {tipo} não está na 1.2"
         assert publicados["1.1"]["vigente"] is False
         # O texto que os clientes anteriores leram continua lá, sem alteração.
         assert "outra empresa" in texto_de(publicados["1.1"])
@@ -64,26 +65,27 @@ def test_termo_do_profissional_manda_explicar_as_duas_empresas():
     assert "Replicate" in texto and "Google" in texto and "treinar" in texto
 
 
-def test_aceite_sobre_a_1_1_exige_revalidacao_antes_da_proxima_foto(cliente_http: TestClient, conta):
+def test_aceite_sobre_a_1_1_exige_revalidacao_antes_da_proxima_foto(cliente_http: TestClient, conta, versao_vigente):
     """Quem aceitou a 1.1 precisa decidir de novo, já sabendo do Google."""
     cabecalhos, _ = conta()
+    atual = versao_vigente()
     cliente = novo_cliente(cliente_http, cabecalhos)
 
     # Volta a vigência à 1.1 só para registrar um aceite sobre ela, como em produção.
     with engine.begin() as conexao:
-        conexao.execute(text("UPDATE termos SET vigente = false WHERE tipo = 'cliente' AND versao = '1.2'"))
+        conexao.execute(text("UPDATE termos SET vigente = false WHERE tipo = 'cliente' AND versao = :v"), {"v": atual})
         conexao.execute(text("UPDATE termos SET vigente = true WHERE tipo = 'cliente' AND versao = '1.1'"))
     try:
         assert registrar(cliente_http, cabecalhos, cliente["id"]).status_code == 201
     finally:
         with engine.begin() as conexao:
             conexao.execute(text("UPDATE termos SET vigente = false WHERE tipo = 'cliente' AND versao = '1.1'"))
-            conexao.execute(text("UPDATE termos SET vigente = true WHERE tipo = 'cliente' AND versao = '1.2'"))
+            conexao.execute(text("UPDATE termos SET vigente = true WHERE tipo = 'cliente' AND versao = :v"), {"v": atual})
 
     resumo = cliente_http.get(f"/api/v1/clientes/{cliente['id']}/consentimento", headers=cabecalhos).json()
     assert resumo["status"] == "aceito"
     assert resumo["revalidar"] is True
-    assert resumo["versaoVigente"] == "1.2"
+    assert resumo["versaoVigente"] == atual
 
     bloqueada = cliente_http.post(
         "/api/v1/simulacoes",

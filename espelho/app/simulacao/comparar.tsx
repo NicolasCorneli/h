@@ -74,6 +74,7 @@ export default function Comparar() {
           descricao={`Simulação de ${diaMes(simulacao.criadoEm)}: ${simulacao.parametros.estilo}, ${simulacao.parametros.cor}`}
           legenda={`simulação ${diaMes(simulacao.criadoEm)}`}
           estilo={styles.imagem}
+          ampliavel={`${rotulo} · ${diaMes(simulacao.criadoEm)}`}
         />
         <Cartao estilo={styles.ficha}>
           <Text style={textos.corpoForte} numberOfLines={2}>
