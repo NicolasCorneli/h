@@ -7,7 +7,9 @@
  * 2. Data na web: apagar um número só esvazia aquele segmento (o resto da data fica), a
  *    tela avisa que está incompleta e redigitar o ano dígito a dígito completa a data. O
  *    campo com máscara antigo deslocava os dígitos seguintes ("01/12/026").
- * 3. Data de nascimento (opcional): o mesmo campo, e pela metade a tela avisa.
+ * 3. Data de nascimento (opcional): campo digitado; o 0 inicial aparece, as barras entram
+ *    sozinhas, apagar no meio não reorganiza nada, "4/5/2000" é aceito, data impossível e
+ *    incompleta são apontadas (esta só ao sair do campo).
  *
  * Rodar com a API e o `expo start --web` no ar, com os dados de demonstração recriados.
  */
@@ -98,18 +100,52 @@ await page.waitForTimeout(300);
 ok('redigitar o ano dígito a dígito completa a data', (await data.inputValue()) === '2027-12-01' && !/Data incompleta/.test(await page.locator('body').innerText()), await data.inputValue());
 await page.screenshot({ path: `${SAIDA}/data-corrigida.png` });
 
-// 3. Data de nascimento (opcional) no cadastro de cliente.
+// 3. Data de nascimento (opcional): campo digitado, sem regra rígida durante a digitação.
 await page.goto(`${APP}/cliente/editar`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(2500);
-const nasc = page.locator('input[type="date"]').first();
-ok('cadastro: nascimento com campo de data do navegador', (await nasc.count()) === 1);
-await nasc.fill('1990-05-20');
-await nasc.click({ position: { x: 8, y: 10 } });
-await page.keyboard.press('Backspace');
+const nasc = page.getByRole('textbox', { name: 'Data de nascimento' }).first();
+const textoDaTela = () => page.locator('body').innerText();
+const teclar = async (teclas) => {
+  for (const tecla of teclas) {
+    await page.keyboard.press(tecla);
+    await page.waitForTimeout(80);
+  }
+};
+ok('cadastro: nascimento é um campo digitado', (await nasc.count()) === 1);
+await nasc.click();
+await teclar('0');
+ok('cadastro: o primeiro 0 aparece', (await nasc.inputValue()) === '0', await nasc.inputValue());
+await teclar('4052000');
+ok('cadastro: 04052000 vira 04/05/2000 enquanto se digita', (await nasc.inputValue()) === '04/05/2000', await nasc.inputValue());
+ok('cadastro: data válida, sem aviso', !/Data incompleta|não existe/.test(await textoDaTela()));
+// Apagar um número do meio não reorganiza nada; redigitar no lugar volta a data.
+await nasc.evaluate((el) => el.setSelectionRange(4, 4));
+await teclar(['Backspace']);
+ok('cadastro: apagar um número do meio deixa o resto no lugar', (await nasc.inputValue()) === '04/5/2000', await nasc.inputValue());
+await teclar('0');
+ok('cadastro: redigitar no lugar volta a data', (await nasc.inputValue()) === '04/05/2000', await nasc.inputValue());
+// "4/5/2000" é aceito e organizado ao sair do campo.
+await nasc.fill('');
+await nasc.click();
+await teclar('4/5/2000');
+await page.keyboard.press('Tab');
 await page.waitForTimeout(300);
-ok('cadastro: nascimento pela metade avisa', /Data incompleta: preencha dia, mês e ano/.test(await page.locator('body').innerText()));
+ok('cadastro: "4/5/2000" vira 04/05/2000', (await nasc.inputValue()) === '04/05/2000', await nasc.inputValue());
+// Data impossível: aviso assim que os oito números estão lá.
+await nasc.fill('');
+await nasc.click();
+await teclar('31042000');
+ok('cadastro: 31/04 é apontada como data que não existe', /Essa data não existe/.test(await textoDaTela()));
+// Incompleta: o aviso só aparece ao sair do campo.
+await nasc.fill('');
+await nasc.click();
+await teclar('0405');
+ok('cadastro: sem aviso enquanto se digita', !/Data incompleta/.test(await textoDaTela()));
+await page.keyboard.press('Tab');
+await page.waitForTimeout(300);
+ok('cadastro: incompleta avisa ao sair do campo', /Data incompleta/.test(await textoDaTela()));
+await page.screenshot({ path: `${SAIDA}/nascimento-incompleto.png` });
 
-console.log(resultados.join('\n'));
 await b.close();
 
 const falhas = resultados.filter((l) => l.startsWith('FALHA')).length;

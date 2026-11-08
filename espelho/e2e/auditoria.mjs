@@ -83,12 +83,9 @@ const consoleErros = [];
 page.on('pageerror', (e) => consoleErros.push(`pageerror: ${String(e).slice(0, 300)}`));
 const botao = (nome) => page.getByRole('button', { name: nome }).filter({ visible: true }).first();
 const caixa = (i) => page.getByRole('textbox').filter({ visible: true }).nth(i);
-// Na web a data de nascimento é o campo de data do navegador (AAAA-MM-DD). Os passos
-// continuam escritos como a pessoa lê (dd/mm/aaaa); aqui se traduz.
-const preencherNascimento = async (ddmmaaaa) => {
-  const [d, m, a] = ddmmaaaa.split('/');
-  await page.locator('input[type="date"]:visible').first().fill(`${a}-${m}-${d}`);
-};
+// A data de nascimento é digitada (dd/mm/aaaa), encontrada pelo rótulo do campo.
+const preencherNascimento = (ddmmaaaa) =>
+  page.getByRole('textbox', { name: 'Data de nascimento' }).filter({ visible: true }).first().fill(ddmmaaaa);
 
 // 1. Sem sessão ---------------------------------------------------------------
 for (const rota of ['/agenda', '/cliente/00000000-0000-0000-0000-000000000000', '/meus-dados']) {

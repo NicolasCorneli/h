@@ -5,7 +5,7 @@ import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewS
 import { textos } from '@/theme/textos';
 import { cores, espaco, raios } from '@/theme/tokens';
 import { dataCurta, diaLocalIso, hora as formatarHora, isoDeDataCurta, paraData, situacaoDataCurta } from '@/utils/datas';
-import { editarData, mascaraHora } from '@/utils/mascaras';
+import { digitarData, mascaraHora, normalizarDataDigitada } from '@/utils/mascaras';
 
 import { Campo } from './Campo';
 import { CampoDataHoraWeb } from './CampoDataHoraWeb';
@@ -149,9 +149,6 @@ export function CampoData({ rotulo, valor, aoMudar, modo, erro, estilo, aoMudarV
   );
 }
 
-/** Valor de `CampoDataOpcional` quando a data foi digitada pela metade no navegador. */
-export const DATA_INCOMPLETA = '__/__/____';
-
 type PropsOpcional = {
   rotulo: string;
   /** Data em dd/mm/aaaa, ou vazio quando não informada. */
@@ -166,67 +163,20 @@ type PropsOpcional = {
 };
 
 /**
- * Data que pode ficar em branco (nascimento). No celular, o calendário do sistema, com a
- * opção de limpar; no navegador, o mesmo campo digitado dd/mm/aaaa de antes.
+ * Data que pode ficar em branco (nascimento): digitada (dd/mm/aaaa), com o calendário num
+ * botão ao lado. O mesmo campo no celular e no navegador.
  *
- * O valor continua sendo o texto dd/mm/aaaa nos dois casos, então a tela valida e envia
- * do mesmo jeito.
+ * A digitação não tem regra rígida (`digitarData`): as barras entram sozinhas, nada é
+ * reorganizado quando se apaga ou corrige no meio, e ao sair do campo as formas comuns
+ * ("4/5/2000", "04052000") viram dd/mm/aaaa. Se a data existe, quem diz é
+ * `situacaoDataCurta`, e só no fim: data impossível (31/04, 29/02 em ano comum, mês 13)
+ * quando os oito números estão lá; incompleta só depois que a pessoa sai do campo, e o
+ * aviso some assim que ela volta a digitar.
+ *
+ * O valor é o texto dd/mm/aaaa, convertido para AAAA-MM-DD pela tela ao salvar
+ * (`isoDeDataCurta`).
  */
 export function CampoDataOpcional({ rotulo, valor, aoMudar, inicial, minimo, maximo, ajuda, erro }: PropsOpcional) {
-  const iso = isoDeDataCurta(valor);
-
-  if (Platform.OS === 'web') {
-    return (
-      <CampoDataHoraWeb
-        rotulo={rotulo}
-        tipo="data"
-        valor={iso ?? ''}
-        minimo={minimo ? diaLocalIso(minimo) : undefined}
-        maximo={maximo ? diaLocalIso(maximo) : undefined}
-        aoMudar={(entrada) => {
-          // Pela metade (ou com o ano ainda sendo digitado), vai como DATA_INCOMPLETA: a
-          // tela não consegue convertê-la e recusa salvar, em vez de gravar a data antiga
-          // ou nenhuma data sem avisar.
-          if (entrada === null) return aoMudar(DATA_INCOMPLETA);
-          if (entrada === '') return aoMudar('');
-          const ano = Number(entrada.slice(0, 4));
-          if (ano < 1900 || ano > 2100) return aoMudar(DATA_INCOMPLETA);
-          aoMudar(dataCurta(entrada));
-        }}
-        ajuda={ajuda}
-        erro={erro ?? (valor === DATA_INCOMPLETA ? 'Data incompleta: preencha dia, mês e ano.' : null)}
-      />
-    );
-  }
-
-  return (
-    <CampoDataDigitada
-      rotulo={rotulo}
-      valor={valor}
-      aoMudar={aoMudar}
-      inicial={inicial}
-      minimo={minimo}
-      maximo={maximo}
-      ajuda={ajuda}
-      erro={erro}
-    />
-  );
-}
-
-/**
- * Data de nascimento no celular: digitada (dd/mm/aaaa, teclado numérico), com o
- * calendário do sistema num botão ao lado.
- *
- * Antes era só o calendário: quem nasceu em 2004 voltava ano a ano até chegar lá. A
- * digitação usa casas fixas (`editarData`): apagar ou corrigir um número do meio não
- * desloca os outros, e colar uma data a preenche inteira. O valor continua sendo o texto
- * dd/mm/aaaa, convertido para AAAA-MM-DD pela tela na hora de salvar (`isoDeDataCurta`).
- *
- * Avisos: data impossível (31/04, 29/02 em ano comum, mês 13) assim que os oito números
- * estão lá; incompleta só quando a pessoa sai do campo, para não reclamar enquanto ela
- * digita.
- */
-function CampoDataDigitada({ rotulo, valor, aoMudar, inicial, minimo, maximo, ajuda, erro }: PropsOpcional) {
   const [saiu, setSaiu] = useState(false);
   const iso = isoDeDataCurta(valor);
   const situacao = situacaoDataCurta(valor);
@@ -234,7 +184,7 @@ function CampoDataDigitada({ rotulo, valor, aoMudar, inicial, minimo, maximo, aj
     situacao === 'invalida'
       ? 'Essa data não existe. Confira o dia e o mês.'
       : situacao === 'incompleta' && saiu
-        ? 'Data incompleta: use dd/mm/aaaa, por exemplo 11/04/2004.'
+        ? 'Data incompleta: use dd/mm/aaaa, por exemplo 04/05/2000.'
         : iso && maximo && iso > diaLocalIso(maximo)
           ? 'A data não pode estar no futuro.'
           : iso && minimo && iso < diaLocalIso(minimo)
@@ -247,15 +197,18 @@ function CampoDataDigitada({ rotulo, valor, aoMudar, inicial, minimo, maximo, aj
         rotulo={rotulo}
         valor={valor}
         aoMudar={(texto) => {
-          aoMudar(texto);
-          if (!texto) setSaiu(false);
+          setSaiu(false);
+          aoMudar(digitarData(valor, texto));
         }}
-        editar={editarData}
         placeholder="dd/mm/aaaa"
         tipoTeclado="number-pad"
         ajuda={ajuda}
         erro={erro ?? aviso}
-        aoSair={() => setSaiu(true)}
+        aoSair={() => {
+          setSaiu(true);
+          const normalizada = normalizarDataDigitada(valor);
+          if (normalizada !== valor) aoMudar(normalizada);
+        }}
         acessorio={
           <SeletorData
             valor={iso ? paraData(iso) : inicial}
@@ -270,7 +223,10 @@ function CampoDataDigitada({ rotulo, valor, aoMudar, inicial, minimo, maximo, aj
       />
       {valor ? (
         <Pressable
-          onPress={() => aoMudar('')}
+          onPress={() => {
+            setSaiu(false);
+            aoMudar('');
+          }}
           accessibilityRole="button"
           accessibilityLabel={`Limpar ${rotulo.toLowerCase()}`}
           hitSlop={8}

@@ -65,7 +65,7 @@ for fuso in America/Sao_Paulo Asia/Tokyo; do
   (cd "$RAIZ/espelho" && TZ=$fuso node --experimental-strip-types --no-warnings \
     --import ./testes/carregar-ts.mjs testes/datas.mjs)
 done
-# Data de nascimento digitada: casas fixas, validação de calendário e colar.
+# Data de nascimento digitada: barras automáticas, sem reorganizar no meio, colar e validação.
 (cd "$RAIZ/espelho" && node --experimental-strip-types --no-warnings \
   --import ./testes/carregar-ts.mjs testes/data-digitada.mjs)
 

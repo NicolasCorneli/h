@@ -907,27 +907,37 @@ botões) depende de um APK novo.
 
 **Relato:** no celular a data de nascimento só se escolhia no calendário, e quem nasceu em
 2004 voltava ano a ano. **Antes:** calendário do sistema (celular); campo de data do
-navegador (web). **Agora**, no celular: campo digitado `dd/mm/aaaa`, teclado numérico, com o
-calendário num botão ao lado.
+navegador (web). **Agora**, no celular e na web: campo digitado `dd/mm/aaaa` (teclado
+numérico no celular), com o calendário num botão ao lado.
 
-- **Máscara de casas fixas** (`utils/mascaras.ts`, `editarData`): cada número tem a sua
-  casa. Apagar um número do meio deixa a casa vazia ("11/_4/2004") e os outros não andam;
-  digitar preenche a casa do cursor; colar "11/04/2004" ou "11042004" preenche tudo; números
-  além do oitavo são ignorados. O cursor é controlado pelo campo (`Campo` ganhou a opção
-  `editar`), para não pular para o fim a cada tecla.
+**Segunda versão (2026-11-08).** A primeira usava "casas fixas": apagar um número do meio
+deixava uma casa marcada com "_", e o campo controlava o cursor. Num teste de uso, ao digitar
+04/05/2000 começando pelo 0, o número não aparecia e a data saía quebrada: a regra era
+rígida demais para a digitação comum. Ela foi substituída por uma digitação sem regra
+rígida, e a validade só é conferida no fim:
+
+- **Digitação** (`utils/mascaras.ts`, `digitarData`): digitando no fim, as barras entram
+  sozinhas ("04052000" vira "04/05/2000"), e uma barra digitada depois de um número só
+  completa o zero ("4/" vira "04/"). Apagando ou corrigindo no meio, o texto fica
+  exatamente como a pessoa deixou: nada é reorganizado, e o cursor não pula. Colar uma data
+  inteira ("04/05/2000", "04052000", "04.05.2000") a organiza. Só números e barras, até 10
+  caracteres. O campo não controla mais o cursor (a opção `editar` saiu do `Campo`).
+- **Ao sair do campo** (`normalizarDataDigitada`): "4/5/2000", "04052000" e "0405/2000"
+  viram "04/05/2000". A tela de cadastro faz o mesmo ao salvar.
 - **Validação de calendário** (`utils/datas.ts`, `situacaoDataCurta`): vazia, incompleta,
   inválida (31/04, 29/02 em ano comum, mês 13) ou válida. A validação é a de
-  `isoDeDataCurta`, a mesma que converte para o servidor: não há uma segunda lógica.
-  "Inválida" aparece assim que os oito números estão lá; "incompleta", só ao sair do campo.
+  `isoDeDataCurta`, a mesma que converte para o servidor. "Essa data não existe" aparece
+  quando os oito números estão lá; "Data incompleta", só depois de sair do campo, e some
+  assim que a pessoa volta a digitar.
 - **Persistência:** sem mudança. A tela trabalha com `dd/mm/aaaa`, envia `AAAA-MM-DD`
   (`isoDeDataCurta`), e o banco guarda `DATE`. Cálculo de idade, menores de idade e
   responsável legal usam o mesmo valor de antes.
-- Na web continua o campo de data do navegador, que já se digita por segmentos.
 
-Testes: `testes/data-digitada.mjs` (32 casos, incluindo a tabela do pedido: 11/04/2004
-válida, 29/02/2004 válida, 29/02/2003, 31/04/2004, 32/01/2004 e 15/13/2004 inválidas,
-11/04/024 e 11/04/ incompletas, vazio permitido; apagar do meio, apagar o ano, apagar tudo,
-colar, mais de oito números, editar uma data salva).
+Testes: `testes/data-digitada.mjs` (37 casos: 04/05/2000 digitado número a número a partir
+do 0, barras digitadas pela pessoa, mais de oito números, apagar e corrigir no meio, colar,
+normalização ao sair, e a tabela de validade: 11/04/2004 e 29/02/2004 válidas; 29/02/2003,
+31/04/2004, 32/01/2004 e 15/13/2004 inválidas; 11/04/024 e 11/04/ incompletas; vazio
+permitido) e `e2e/datas.mjs` no navegador.
 
 ### 13.4 Imagens ampliadas
 

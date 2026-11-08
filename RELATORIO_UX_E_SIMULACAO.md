@@ -12,7 +12,7 @@ a única consulta real foi a leitura do schema publicado, que não gera cobranç
 |---|---|---|
 | Travessões nos termos | Termo 1.2.1 sem travessões (revisão só de redação, sem nova aceitação para quem aceitou a 1.2); verificador passou a conferir o termo vigente | implementado e testado |
 | Barra inferior colada nos botões do Android; câmera apertada | Folga acima da área do sistema; coluna própria para o botão da câmera | implementado; confirmação em aparelho pendente |
-| Data de nascimento só no calendário | Campo digitado dd/mm/aaaa com casas fixas, validação de calendário, colar; calendário mantido como botão | implementado e testado (unidade e navegador); cursor a confirmar em aparelho |
+| Data de nascimento só no calendário | Campo digitado dd/mm/aaaa, barras automáticas, sem regra rígida durante a digitação, validação de calendário no fim, colar; calendário mantido como botão (segunda versão, 2026-11-08) | implementado e testado (unidade e navegador); teclado do aparelho a confirmar |
 | Fotos pequenas no resultado | Visualizador em tela cheia com zoom, aberto pelas imagens do resultado, da ficha e da comparação | implementado e testado no navegador; pinça a confirmar em aparelho |
 | "A IA abriu meus cachos e aumentou o comprimento" | Instrução do Nano Banana reorganizada por prioridades, com preservação da curvatura, textura, volume e comprimento; pergunta opcional "Cabelo natural"; experimento ampliado | implementado e testado (montagem); **qualidade não medida** (sem fotos autorizadas nem autorização de gasto) |
 
@@ -44,7 +44,7 @@ a única consulta real foi a leitura do schema publicado, que não gera cobranç
 | `backend/tests/test_preservacao_capilar.py` | 44 testes: regras da instrução, curvatura de ponta a ponta, referências |
 | `backend/tests/test_termo_1_2_1.py` | 6 testes: só a pontuação mudou, regra de versão, sem revalidação para quem aceitou a 1.2 |
 | `espelho/src/components/VisualizadorImagem.tsx` | tela cheia com zoom |
-| `espelho/testes/data-digitada.mjs` | 32 casos da data digitada |
+| `espelho/testes/data-digitada.mjs` | 37 casos da data digitada |
 | `espelho/e2e/ampliacao-e-curvatura.mjs` | bateria do navegador (19 verificações) |
 
 **Alterados (principais)**
@@ -61,9 +61,9 @@ a única consulta real foi a leitura do schema publicado, que não gera cobranç
 | `backend/scripts/comparar_simulacoes.py` | estratégias `nano-original`, `nano`, `nano-curvatura`, `nano-textura`, `nano-referencia`, `nano-etapas`, `atual`; critérios de avaliação novos |
 | `scripts/verificar_travessoes.py` | confere o termo vigente de cada tipo |
 | `espelho/app/(tabs)/_layout.tsx` | barra inferior e botão da câmera |
-| `espelho/src/components/Campo.tsx` | opções `editar` (cursor controlado) e `acessorio` |
+| `espelho/src/components/Campo.tsx` | opção `acessorio` (botão do calendário) |
 | `espelho/src/components/CampoData.tsx` | data de nascimento digitada no celular |
-| `espelho/src/utils/mascaras.ts`, `datas.ts` | `editarData` (casas fixas) e `situacaoDataCurta` |
+| `espelho/src/utils/mascaras.ts`, `datas.ts` | `digitarData`, `normalizarDataDigitada` e `situacaoDataCurta` |
 | `espelho/src/components/ImagemSimulada.tsx` | `ampliavel` abre o visualizador |
 | `espelho/app/simulacao/parametros.tsx`, `revisao.tsx`, `processando.tsx`, `imagem/[id].tsx`, `resultado.tsx`, `comparar.tsx` | pergunta "Cabelo natural", revisão, envio, ficha e ampliação |
 | `espelho/src/utils/pedido.ts`, `data/rascunho.tsx`, `data/tipos.ts`, `services/api/index.ts` | curvatura no rascunho, no tipo e no envio |
@@ -80,12 +80,15 @@ Detalhes em `docs/DOCUMENTACAO.md`, seção 13.
 - **Barra inferior:** margem de baixo = área do sistema + 8 px (antes, exatamente a área);
   12 px sem área do sistema (navegador). Botão da câmera com coluna própria (54 px + 16 px
   de cada lado); as abas dividem o resto, com alvo de 44 px. Nenhuma biblioteca nova.
-- **Data de nascimento (celular):** digitada, teclado numérico, casas fixas ("11/_4/2004"
-  ao apagar um número do meio), colar com ou sem barras, oito números no máximo, cursor
-  controlado. Validação de calendário pela mesma função que converte para o servidor
-  (`isoDeDataCurta`). Mensagens: "Essa data não existe" (completa e impossível) e "Data
-  incompleta" (ao sair do campo). Calendário continua num botão ao lado. Formato da API e
-  do banco inalterado (`AAAA-MM-DD`, `DATE`); idade, menores e responsável legal inalterados.
+- **Data de nascimento (celular e web):** digitada, teclado numérico no celular, barras
+  automáticas, sem regra rígida durante a digitação (apagar ou corrigir no meio não
+  reorganiza nada; "4/5/2000" é aceito e organizado ao sair do campo), colar com ou sem
+  barras. Validação de calendário pela mesma função que converte para o servidor
+  (`isoDeDataCurta`), só no fim: "Essa data não existe" (completa e impossível) e "Data
+  incompleta" (ao sair do campo). A primeira versão, com casas fixas e cursor controlado,
+  foi rígida demais num teste de uso (o 0 inicial não aparecia) e foi substituída em
+  2026-11-08. Calendário continua num botão ao lado. Formato da API e do banco inalterado
+  (`AAAA-MM-DD`, `DATE`); idade, menores e responsável legal inalterados.
 - **Imagens ampliadas:** um visualizador só (`VisualizadorImagem`), aberto pelo
   `ImagemSimulada` no resultado (foto original e simulação), na ficha e na comparação.
   Proporção original, pinça até 4x, arrastar, toque duplo, botões de zoom, fecha pelo
@@ -141,7 +144,7 @@ há evidência de que 2K (50% mais caro) melhore a textura.
 | `pytest` (backend inteiro) | 668 passaram, 1 falhou: `test_testes_se_recusam_a_rodar_fora_de_um_banco_de_teste`, que já falhava nesta máquina (o Windows recusa o subprocesso, WinError 10106) |
 | `tsc --noEmit --noUnusedLocals` | sem erros |
 | `eslint` | 0 erros; os mesmos 18 avisos de antes, em arquivos não alterados |
-| Testes de unidade do app | todos passam, incluindo `data-digitada.mjs` (32 casos) |
+| Testes de unidade do app | todos passam, incluindo `data-digitada.mjs` (37 casos) |
 | `scripts/verificar_travessoes.py` | 0 ocorrências (e acusa as 4 da 1.2 se a 1.2.1 for removida) |
 | Build web (`expo export --platform web`) | gerado sem erros |
 | Migrations | sobem e descem na suíte (`downgrade base` e `upgrade head` a cada execução); aplicadas no banco local |
@@ -167,8 +170,7 @@ Duas migrations, ambas aditivas e com volta:
   fundamentada; pode não resolver o caso relatado, porque o modelo segue instruções só em
   parte e não aceita semente.
 - **Não verificado em aparelho:** barra inferior com gestos e com três botões, teclado
-  sobre a data, cursor da data digitada (o controle de cursor do Android às vezes atrasa um
-  evento; o código cai num método de comparação de textos nesse caso), e a pinça do zoom.
+  sobre a data e a pinça do zoom.
   O navegador não reproduz isso. Precisa de um APK novo.
 - A curvatura informada pode contradizer a foto; a instrução manda a foto prevalecer.
 - Referências de corte e textura e a edição em etapas existem só no experimento.

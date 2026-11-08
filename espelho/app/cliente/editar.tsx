@@ -18,7 +18,7 @@ import { reduzirParaEnvio } from '@/services/imagemLocal';
 import { ErroApi } from '@/services/api';
 import { cores, espaco } from '@/theme/tokens';
 import { dataCurta, diaLocalIso, isoDeDataCurta, situacaoDataCurta } from '@/utils/datas';
-import { mascaraTelefone } from '@/utils/mascaras';
+import { mascaraTelefone, normalizarDataDigitada } from '@/utils/mascaras';
 
 // Mesmos limites que a tela já valida ao salvar (nem futuro, nem antes de 1900).
 const NASCIMENTO_MINIMO = new Date(1900, 0, 1);
@@ -98,10 +98,13 @@ function FormularioCliente({ existente }: { existente: Cliente | undefined }) {
     if (telefone.replace(/\D/g, '').length < 10) {
       novosErros.telefone = 'Informe um telefone com DDD.';
     }
-    const nascimentoIso = isoDeDataCurta(nascimento);
-    if (nascimento.trim() && !nascimentoIso) {
+    // "4/5/2000" e "04052000" também valem: o campo normaliza ao sair, e aqui de novo, caso
+    // o toque em "Salvar" chegue antes de o campo perder o foco.
+    const nascimentoDigitado = normalizarDataDigitada(nascimento);
+    const nascimentoIso = isoDeDataCurta(nascimentoDigitado);
+    if (nascimentoDigitado && !nascimentoIso) {
       novosErros.nascimento =
-        situacaoDataCurta(nascimento) === 'invalida'
+        situacaoDataCurta(nascimentoDigitado) === 'invalida'
           ? 'Essa data de nascimento não existe. Confira o dia e o mês.'
           : 'Data de nascimento incompleta: use dd/mm/aaaa.';
     } else if (nascimentoIso && nascimentoIso > diaLocalIso()) {
@@ -124,7 +127,7 @@ function FormularioCliente({ existente }: { existente: Cliente | undefined }) {
           nome: nome.trim(),
           telefone: telefone.trim(),
           observacoes: observacoes.trim(),
-          dataNascimento: isoDeDataCurta(nascimento),
+          dataNascimento: nascimentoIso,
         },
         existente?.id
       );

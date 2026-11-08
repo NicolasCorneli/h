@@ -37,19 +37,10 @@ type Props = {
   marcaOpcional?: boolean;
   /** Máximo de caracteres: limita a digitação e mostra a contagem ao lado do rótulo. */
   limite?: number;
-  /**
-   * Edição com controle do cursor, no lugar da `mascara`: recebe o texto anterior, o
-   * digitado e onde estava o cursor, e devolve o texto e a nova posição do cursor. Serve
-   * para formatos de casas fixas (a data digitada, `editarData`), em que reformatar o
-   * texto mandaria o cursor para o fim.
-   */
-  editar?: (anterior: string, digitado: string, selecao: Selecao) => { texto: string; cursor: number };
   /** Elemento à direita, dentro da caixa (ex.: o botão do calendário). */
   acessorio?: React.ReactNode;
   estilo?: StyleProp<ViewStyle>;
 };
-
-type Selecao = { start: number; end: number };
 
 /**
  * Campo de entrada. O rótulo fica sempre visível (não é placeholder), para que o
@@ -72,14 +63,11 @@ export function Campo({
   aoSair,
   marcaOpcional = false,
   limite,
-  editar,
   acessorio,
   estilo,
 }: Props) {
   const [oculto, setOculto] = useState(segredo);
   const [focado, setFocado] = useState(false);
-  // Só com `editar`: o cursor é controlado por aqui, para ficar onde a pessoa mexeu.
-  const [selecao, setSelecao] = useState<Selecao>({ start: valor.length, end: valor.length });
 
   return (
     <View style={estilo}>
@@ -106,23 +94,7 @@ export function Campo({
           <TextInput
             value={valor}
             maxLength={limite}
-            onChangeText={(t) => {
-              if (editar) {
-                const resultado = editar(valor, t, selecao);
-                setSelecao({ start: resultado.cursor, end: resultado.cursor });
-                aoMudar(resultado.texto);
-                return;
-              }
-              aoMudar(mascara ? mascara(t) : t);
-            }}
-            // Limitada ao texto: o valor pode mudar por fora (calendário, "Limpar data"), e
-            // uma seleção além do fim gera erro em algumas versões do Android.
-            selection={
-              editar
-                ? { start: Math.min(selecao.start, valor.length), end: Math.min(selecao.end, valor.length) }
-                : undefined
-            }
-            onSelectionChange={editar ? (evento) => setSelecao(evento.nativeEvent.selection) : undefined}
+            onChangeText={(t) => aoMudar(mascara ? mascara(t) : t)}
             onFocus={() => setFocado(true)}
             onBlur={() => {
               setFocado(false);
