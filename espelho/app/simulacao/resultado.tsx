@@ -12,7 +12,7 @@ import { useSimulacoesDoCliente, useStore } from '@/data/store';
 import { Icone } from '@/components/Icone';
 import { textos } from '@/theme/textos';
 import { ALVO_TOQUE, cores, espaco, fontes, raios } from '@/theme/tokens';
-import { rotuloCor, rotuloCorte } from '@/utils/pedido';
+import { rotuloCor, rotuloCorte, rotuloTextura } from '@/utils/pedido';
 
 /**
  * T7 — antes/depois, parâmetros usados e o aviso de aproximação visual (seção 5.11).
@@ -114,6 +114,15 @@ export default function Resultado() {
               {simulacao?.parametros.cor ?? rotuloCor(escolhas)}
             </Text>
           </View>
+          {(simulacao?.parametros.textura ?? rascunho.textura) ? (
+            <View style={styles.linhaPedido}>
+              <Icone nome="textura" tamanho={14} cor={cores.textoTerciario} />
+              <Text style={[textos.apoio, styles.flex]}>
+                <Text style={styles.rotuloPedido}>Tipo de cabelo: </Text>
+                {rotuloTextura(simulacao?.parametros.textura ?? rascunho.textura)}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.chips}>

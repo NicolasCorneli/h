@@ -17,8 +17,9 @@ instrução (`AI_MODELO_TEXTO`, o `google/nano-banana-2.1`), com a instrução d
    especializado e o primeiro a ser tentado.
 2. **O modelo principal aceita texto livre nesses campos** (se o schema publicado não tiver
    lista de opções) → ele mesmo, com a descrição.
-3. **Descrição livre** que não cabe nas opções → modelo de edição por texto
-   (`AI_MODELO_TEXTO`), com instrução montada em `instrucoes.py`.
+3. **Descrição livre** que não cabe nas opções, ou **tipo de cabelo escolhido** (o modelo
+   principal não tem esse campo) → modelo de edição por texto (`AI_MODELO_TEXTO`), com
+   instrução montada em `instrucoes.py`.
 
 O gênero do corte (`gender`) só existe no modelo principal e vai a ele nos caminhos 1 e 2,
 com o valor escolhido na tela. No caminho 3 o modelo de texto não tem esse campo: o gênero
@@ -263,6 +264,11 @@ def planejar(
         # A configuração recusa este caminho sem modelo de texto (`config.py`).
         return _plano_de_instrucao(pedido, config, Modo.instrucao)
 
+    # O modelo principal não tem campo de tipo de cabelo: com um tipo escolhido, o pedido
+    # vai direto ao modelo de edição por texto, que recebe o tipo como frase da instrução.
+    if pedido.textura is not None:
+        return _plano_de_texto(pedido, config)
+
     # 1. Opções fechadas do modelo principal.
     valores: dict[str, str] = {}
     cabe_nas_opcoes = True
@@ -311,6 +317,10 @@ def planejar(
         )
 
     # 3. Modelo de edição por texto.
+    return _plano_de_texto(pedido, config)
+
+
+def _plano_de_texto(pedido: PedidoCapilar, config: Configuracao) -> Plano:
     if not config.modelo_texto:
         raise ValidacaoFalhou(
             "A descrição livre está desligada neste servidor (AI_MODELO_TEXTO vazio). "

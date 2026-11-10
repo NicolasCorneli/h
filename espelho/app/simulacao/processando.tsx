@@ -36,6 +36,7 @@ const ERROS_DO_PEDIDO = new Set([
   'cor_vazia',
   'pedido_vazio',
   'genero_invalido',
+  'textura_invalida',
   'chave_reutilizada',
 ]);
 
@@ -103,7 +104,7 @@ export default function Processando() {
           cor: rascunho.cor,
           manterCor: rascunho.manterCor,
           genero: rascunho.genero,
-          curvatura: rascunho.curvatura,
+          textura: rascunho.textura,
           observacoes: rascunho.observacoes,
           foto,
           chaveEnvio,

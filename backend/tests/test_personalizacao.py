@@ -59,7 +59,7 @@ def esquema(modelo: str, cenario: str = "sucesso") -> EsquemaModelo:
 def test_corte_e_cor_livres_seguem_como_foram_escritos():
     pedido = interpretar("Bob na altura do queixo, com camadas suaves.", "castanho chocolate com reflexos caramelo")
     assert pedido.corte == Alteracao("Bob na altura do queixo, com camadas suaves.")
-    assert pedido.cor == Alteracao("castanho chocolate com reflexos caramelo")
+    assert pedido.cor == Alteracao("castanho chocolate com reflexos caramelo", campo="cor")
     assert not pedido.corte.do_catalogo
 
 
@@ -177,6 +177,7 @@ def test_termos_em_ingles_na_ordem_e_sem_repetir():
         "long",
         "curtain bangs",
         "layers",
+        "face-framing",
     ]
     assert termos_em_ingles("castanho escuro") == ["dark brown"]
     assert termos_em_ingles("loiro manteiga com raiz esfumada") == ["blonde", "butter", "roots"]

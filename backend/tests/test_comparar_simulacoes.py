@@ -148,54 +148,68 @@ def test_geracao_confirmada_entrega_csv_e_pagina(monkeypatch, pasta_de_fotos, tm
         assert trecho in pagina
 
 
-# --- Estratégias da investigação de curvatura -------------------------------
+# --- Estratégias da investigação de textura ---------------------------------
 
 
 @pytest.fixture
-def fotos_com_curvatura(tmp_path: Path) -> Path:
-    pasta = tmp_path / "fotos-curvatura"
+def fotos_com_close(tmp_path: Path) -> Path:
+    pasta = tmp_path / "fotos-textura"
     pasta.mkdir()
-    (pasta / "ana.3C.jpg").write_bytes(retrato_valido())
+    (pasta / "ana.jpg").write_bytes(retrato_valido())
     (pasta / "ana.textura.jpg").write_bytes(retrato_valido())
     (pasta / "bia.jpg").write_bytes(retrato_valido())
     return pasta
 
 
-def test_estrategias_so_entram_onde_se_aplicam(monkeypatch, fotos_com_curvatura, capsys):
+def test_estrategias_so_entram_onde_se_aplicam(monkeypatch, fotos_com_close, capsys):
     proibir_rede(monkeypatch)
     script = carregar_script()
-    fotos = script.ler_fotos(fotos_com_curvatura)
-    assert [(f.nome, f.curvatura, f.textura is not None) for f in fotos] == [("ana", "3C", True), ("bia", None, False)]
+    fotos = script.ler_fotos(fotos_com_close)
+    assert [(f.nome, f.close_textura is not None) for f in fotos] == [("ana", True), ("bia", False)]
 
     pedidos = script.ler_pedidos(SCRIPT.parent / "pedidos_cacheados.json")
-    tarefas = script.planejar_tarefas(fotos, pedidos, ["nano", "nano-curvatura", "nano-textura", "nano-etapas"], "1K", "pt_com_termos")
+    tarefas = script.planejar_tarefas(fotos, pedidos, ["nano", "nano-textura", "nano-etapas"], "1K", "pt_com_termos")
     por_estrategia = {}
     for tarefa in tarefas:
         por_estrategia.setdefault(tarefa.caminho, []).append(tarefa)
-    # 2 fotos x 6 pedidos no nano; curvatura e textura só para "ana"; etapas só no pedido com corte e cor.
+    # 2 fotos x 6 pedidos no nano; close da textura só para "ana"; etapas só no pedido com corte e cor.
     assert len(por_estrategia["nano"]) == 12
-    assert len(por_estrategia["nano-curvatura"]) == 6
     assert len(por_estrategia["nano-textura"]) == 6
     assert len(por_estrategia["nano-etapas"]) == 2
     etapas = por_estrategia["nano-etapas"][0]
     assert len(etapas.etapas) == 2 and etapas.custo == pytest.approx(2 * 0.0336)
-    assert "type 3C" in por_estrategia["nano-curvatura"][0].instrucao
-    assert "type 3C" not in por_estrategia["nano"][0].instrucao, "o nano não pode levar a curvatura (isola o efeito)"
     assert "Image 2 is a close-up" in por_estrategia["nano-textura"][0].instrucao
     assert "combinação(ões)" in capsys.readouterr().out
 
 
-def test_variante_original_usa_a_instrucao_anterior(monkeypatch, fotos_com_curvatura):
+def test_pedidos_de_estilo_e_cor_cobrem_os_cenarios(monkeypatch, fotos_com_close):
+    """Os cenários A a E: o tipo de cabelo pedido chega à instrução e ao CSV."""
     proibir_rede(monkeypatch)
     script = carregar_script()
-    fotos = script.ler_fotos(fotos_com_curvatura)
+    fotos = script.ler_fotos(fotos_com_close)[:1]
+    pedidos = script.ler_pedidos(SCRIPT.parent / "pedidos_estilo_e_cor.json")
+    assert [p.pedido.textura for p in pedidos] == ["2B", None, None, None, "3C"]
+    tarefas = script.planejar_tarefas(fotos, pedidos, ["nano", "nano-etapas"], "1K", "pt_com_termos")
+    nano = [t for t in tarefas if t.caminho == "nano"]
+    assert "change the hair texture to type 2B" in nano[0].instrucao
+    assert "keep the client's natural hair texture" in nano[1].instrucao
+    assert "gender-neutral" in nano[2].instrucao
+    # Nas etapas, o tipo pedido vai na primeira; a segunda mantém o que recebe.
+    (etapas,) = [t for t in tarefas if t.caminho == "nano-etapas"]
+    assert etapas.etapas[0].pedido.textura == "2B" and etapas.etapas[1].pedido.textura is None
+
+
+def test_variante_original_usa_a_instrucao_anterior(monkeypatch, fotos_com_close):
+    proibir_rede(monkeypatch)
+    script = carregar_script()
+    fotos = script.ler_fotos(fotos_com_close)
     pedidos = script.ler_pedidos(SCRIPT.parent / "pedidos_cacheados.json")[:1]
     (original, nova) = script.planejar_tarefas(fotos[:1], pedidos, ["nano-original", "nano"], "1K", "pt_com_termos")
     assert original.instrucao.startswith("Edit this photograph of a real person")
     assert nova.instrucao.startswith("Using the provided photo of a real person")
 
 
-def test_etapas_encadeiam_a_imagem_e_textura_vai_como_segunda_imagem(monkeypatch, fotos_com_curvatura, tmp_path):
+def test_etapas_encadeiam_a_imagem_e_textura_vai_como_segunda_imagem(monkeypatch, fotos_com_close, tmp_path):
     monkeypatch.setenv("AI_API_KEY", "token-de-teste")
     monkeypatch.setenv("AI_INTERVALO_CONSULTA_S", "0")
     modulo_config.obter_config.cache_clear()
@@ -228,7 +242,7 @@ def test_etapas_encadeiam_a_imagem_e_textura_vai_como_segunda_imagem(monkeypatch
     saida = tmp_path / "saida"
     try:
         codigo = carregar_script().main(
-            ["--fotos", str(fotos_com_curvatura), "--pedidos", str(pedidos), "--estrategias", "nano-etapas,nano-textura",
+            ["--fotos", str(fotos_com_close), "--pedidos", str(pedidos), "--estrategias", "nano-etapas,nano-textura",
              "--saida", str(saida), "--confirmar-custo"]
         )
     finally:

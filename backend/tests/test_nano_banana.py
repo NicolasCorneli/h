@@ -103,14 +103,18 @@ def test_manter_corte_e_manter_cor_viram_frases_explicitas():
 
 @pytest.mark.parametrize(
     ("genero", "frase"),
-    [("female", "It is a women's haircut."), ("male", "It is a men's haircut."), ("none", None)],
+    [
+        ("female", "It is a women's haircut."),
+        ("male", "It is a men's haircut."),
+        ("none", "It is a gender-neutral haircut"),
+    ],
 )
 def test_genero_do_corte_vira_frase_da_instrucao(genero, frase):
+    """"Neutro" (none) é uma escolha, e não ausência: vira frase própria."""
     prompt = planejar(interpretar("Pixie", "Loiro", genero=genero), CONFIG_NANO).campos["prompt"]
-    if frase:
-        assert frase in prompt
-    else:
-        assert "women's" not in prompt and "men's haircut." not in prompt
+    assert frase in prompt
+    outras = {"It is a women's haircut.", "It is a men's haircut.", "It is a gender-neutral haircut"} - {frase}
+    assert not any(outra in prompt for outra in outras)
 
 
 def test_genero_nao_aparece_quando_o_corte_e_mantido():

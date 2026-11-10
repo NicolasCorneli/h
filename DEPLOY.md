@@ -366,6 +366,14 @@ termo 1.2, ou o Kontext com o 1.2 vigente), ela registra no log uma linha
   1.2 **não** precisa decidir de novo (revisão só de redação); quem aceitou a 1.1 ou antes
   continua precisando.
 
+**Migration de 2026-11-10** (aplicada sozinha na subida, pelo serviço `migrar`):
+
+- `c7d3f9a1e64b`: coluna opcional `simulacoes.textura` (o tipo de cabelo **desejado** na
+  etapa "Estilo e cor"). Só acrescenta; os registros existentes ficam vazios ("manter o
+  tipo atual"). A coluna `curvatura` fica como está e deixa de ser preenchida. O APK antigo
+  continua funcionando (o campo que ele manda é ignorado e a textura da foto é mantida);
+  a tela nova no Android exige um APK novo.
+
 **Voltar ao caminho original** é trocar as duas variáveis de volta
 (`AI_ESTRATEGIA=especializado` e `AI_MODELO_TEXTO=black-forest-labs/flux-kontext-pro`) e
 rodar `docker compose up -d`. O termo 1.2, porém, continua dizendo que a foto vai ao

@@ -111,7 +111,7 @@ if [ "$INTERFACE" = "1" ]; then
   echo "━━ Interface: imagens ampliadas e cabelo natural ━━"
   (cd "$RAIZ/backend" && "$PY" -m app.seed --reset > /dev/null)
   cd "$RAIZ/espelho"
-  node e2e/ampliacao-e-curvatura.mjs
+  node e2e/ampliacao-e-tipo-de-cabelo.mjs
 
   echo
   echo "━━ Interface: agendamentos, conclusão e atendimento avulso ━━"

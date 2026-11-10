@@ -43,7 +43,7 @@ def plano(pedido_in: PedidoIn, usuario: UsuarioDep) -> PlanoOut:
         manter_corte=pedido_in.manter_corte,
         manter_cor=pedido_in.manter_cor,
         genero=pedido_in.genero,
-        curvatura=pedido_in.curvatura,
+        textura=pedido_in.textura,
     )
     config = obter_config()
     escolhido = planejar(pedido, configuracao_de(config))
@@ -72,9 +72,11 @@ def criar(
     manter_cor: Annotated[bool, Form(alias="manterCor")] = False,
     # "none", "male" ou "female": o valor do campo `gender` do modelo. Ausente é "none".
     genero: Annotated[str, Form(max_length=20)] = "none",
-    # Padrão natural de curvatura (liso, ondulado, cacheado, crespo ou 1A a 4C). Opcional:
-    # ausente ou vazio é "Não sei informar". Vira frase da instrução, não parâmetro do modelo.
-    curvatura: Annotated[str, Form(max_length=20)] = "",
+    # Tipo de cabelo desejado (liso, ondulado, cacheado, crespo ou 1A a 4C). Opcional:
+    # ausente ou vazio é "Manter meu tipo de cabelo atual". Vira frase da instrução, não
+    # parâmetro do modelo. O campo antigo `curvatura` (o cabelo natural, enviado pelas
+    # versões anteriores do aplicativo) não é lido: sem `textura`, a textura da foto fica.
+    textura: Annotated[str, Form(max_length=20)] = "",
     chave_envio: Annotated[uuid.UUID | None, Form(alias="chaveEnvio")] = None,
     observacoes: Annotated[str, Form(max_length=2000)] = "",
     demo_recusar_foto: Annotated[bool, Form(alias="demoRecusarFoto")] = False,
@@ -96,7 +98,7 @@ def criar(
         manter_corte=manter_corte,
         manter_cor=manter_cor,
         genero=genero,
-        curvatura=curvatura,
+        textura=textura,
     )
 
     # Antes de ler a foto, validar ou chamar o provedor: com a cota esgotada, nenhum

@@ -1,5 +1,8 @@
 # Relatório: UX/UI, acessibilidade e preservação capilar na simulação
 
+> Atualização de 2026-11-10: a pergunta "Cabelo natural" descrita aqui foi substituída
+> pelo tipo de cabelo **desejado** na simulação. Ver `RELATORIO_ESTILO_E_COR.md`.
+
 Rodada de evolução a partir dos testes com usuários de novembro de 2026. Feita sobre a
 `main` em `81b55ec`, sem alterações locais pendentes no início. **Nada foi commitado,
 enviado ao GitHub ou implantado**, e nenhuma migration rodou contra a produção (só contra o

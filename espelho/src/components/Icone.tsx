@@ -25,6 +25,8 @@ const MAPA = {
   imagem: 'image',
   trocarCamera: 'refresh-cw',
   cor: 'droplet',
+  /** Tipo de cabelo (liso, ondulado, cacheado, crespo): linhas em onda. */
+  textura: 'wind',
   voltar: 'arrow-left',
   avancar: 'arrow-right',
   fechar: 'x',

@@ -15,11 +15,11 @@ class ParametrosSimulacao(ModeloBase):
     estilo: str = Field(max_length=300)
     #: Cor pedida: a descrição ou "Cor atual".
     cor: str = Field(max_length=300)
-    #: Gênero do corte enviado ao modelo: "none" (não especificado), "male" ou "female".
+    #: Gênero do corte: "none" (neutro), "male" ou "female".
     genero: Genero = "none"
-    #: Padrão natural de curvatura informado (liso, ondulado, cacheado, crespo ou 1A a 4C),
-    #: ou null quando não foi informado.
-    curvatura: str | None = None
+    #: Tipo de cabelo desejado (liso, ondulado, cacheado, crespo ou 1A a 4C), ou null
+    #: ("Manter meu tipo de cabelo atual").
+    textura: str | None = None
     observacoes: str = Field(default="", max_length=2000)
 
 
@@ -71,8 +71,8 @@ class PedidoIn(ModeloBase):
     manter_cor: bool = False
     #: "none", "male" ou "female". Validado em `interpretar`, com a mesma mensagem do envio.
     genero: str = Field(default="none", max_length=20)
-    #: Padrão natural de curvatura, opcional. Validado em `interpretar`.
-    curvatura: str | None = Field(default=None, max_length=20)
+    #: Tipo de cabelo desejado, opcional (ausente é manter o atual). Validado em `interpretar`.
+    textura: str | None = Field(default=None, max_length=20)
 
 
 class PlanoOut(ModeloBase):

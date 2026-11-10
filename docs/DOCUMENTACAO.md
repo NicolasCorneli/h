@@ -959,9 +959,34 @@ para quem não faz gestos); fecha pelo botão, pelo voltar do Android e pela tec
 - **não existe imagem de referência do corte** para ampliar: ela saiu do escopo numa
   decisão anterior (migration `c6a2f9d41b87`).
 
-Teste: `e2e/ampliacao-e-curvatura.mjs`.
+Teste: `e2e/ampliacao-e-tipo-de-cabelo.mjs`.
 
-### 13.5 O que só se confirma no aparelho
+### 13.5 Etapa "Estilo e cor" reestruturada (2026-11-10)
+
+**Pedido:** deixar a etapa 3/3 simples para quem não é técnico, em qualquer tela, e fazer a
+escolha de textura dizer o tipo de cabelo **desejado** na simulação. **Solução** (detalhes
+da instrução em `docs/NANO_BANANA.md`, seção 10, e o relatório em
+`RELATORIO_ESTILO_E_COR.md`):
+
+- três seções, na ordem de uma conversa de salão: corte ("Como você quer que seu cabelo
+  fique?"), cor ("Qual cor você deseja no seu cabelo?") e tipo de cabelo ("Qual tipo de
+  cabelo você deseja na simulação?"). Cada uma abre com a escolha "Quero mudar" ou
+  "Manter..." (`components/EscolhaSegmentada.tsx`) e um selo de situação;
+- descrições livres, sem lista fechada; as ideias de cortes e cores ficam recolhidas;
+- "Estilo do corte" com Feminino, Masculino e Neutro;
+- tipo de cabelo: "Manter meu tipo de cabelo atual" (com a foto do cliente) ou uma
+  categoria e, se quiser, um tipo de 1A a 4C, cada um com ilustração própria
+  (`components/IlustracaoTextura.tsx`, desenho gerado por `utils/ilustracaoTextura.ts`);
+- "manter" com texto já escrito pede uma decisão, sem apagar nada em silêncio;
+- o botão "Revisar pedido" fica sempre ativo: com algo faltando, leva até a seção, mostra o
+  erro no campo e anuncia a mensagem ao leitor de tela;
+- a revisão mostra um resumo em palavras simples (corte, estilo do corte, cor, tipo de
+  cabelo), com "Alterar"; a instrução enviada à IA fica recolhida.
+
+Testes: `testes/pedido.mjs` (75 verificações), `tests/test_preservacao_capilar.py` e
+`e2e/personalizacao.mjs` (97 verificações, em 320, 390 e 1280 px).
+
+### 13.6 O que só se confirma no aparelho
 
 A barra inferior com navegação por gestos e por três botões, o teclado sobre o campo de
 data, o cursor da data digitada e a pinça do zoom foram verificados por código e pelo

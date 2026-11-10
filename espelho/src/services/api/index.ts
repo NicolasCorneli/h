@@ -11,13 +11,13 @@ import type {
   Catalogo,
   CienciaProfissional,
   Cliente,
-  Curvatura,
   ConfirmacaoIdentidade,
   DadosConclusao,
   Genero,
   HistoricoServico,
   NovoAtendimento,
   PlanoSimulacao,
+  Textura,
   RegistroConsentimento,
   ResumoConsentimento,
   Sessao,
@@ -186,8 +186,8 @@ export type PedidoSimulacao = {
   manterCor: boolean;
   /** Gênero do corte: vai ao modelo como `gender` ("none", "male" ou "female"). */
   genero: Genero;
-  /** Padrão natural de curvatura, ou null ("Não sei informar"). Vira frase da instrução. */
-  curvatura: Curvatura | null;
+  /** Tipo de cabelo desejado, ou null ("Manter meu tipo de cabelo atual"). Vira frase da instrução. */
+  textura: Textura | null;
 };
 
 export type ParametrosEnvio = PedidoSimulacao & {
@@ -210,7 +210,7 @@ export const simulacoes = {
     formulario.append('cor', dados.manterCor ? '' : dados.cor);
     formulario.append('manterCor', dados.manterCor ? 'true' : 'false');
     formulario.append('genero', dados.genero);
-    formulario.append('curvatura', dados.curvatura ?? '');
+    formulario.append('textura', dados.textura ?? '');
     formulario.append('observacoes', dados.observacoes);
     formulario.append('chaveEnvio', dados.chaveEnvio);
     if (dados.demoRecusarFoto) formulario.append('demoRecusarFoto', 'true');

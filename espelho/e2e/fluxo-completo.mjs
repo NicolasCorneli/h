@@ -190,8 +190,8 @@ try {
   else falha('pré-checagem', params.slice(0, 200));
 
   // Etapa "Estilo e cor": corte e cor escritos (dois dos exemplos da tela), depois a revisão.
-  await page.getByLabel('Novo corte', { exact: true }).filter({ visible: true }).first().fill('Chanel');
-  await page.getByLabel('Nova cor', { exact: true }).filter({ visible: true }).first().fill('Ruivo');
+  await page.getByLabel('Descrição do corte', { exact: true }).filter({ visible: true }).first().fill('Chanel');
+  await page.getByLabel('Descrição da cor', { exact: true }).filter({ visible: true }).first().fill('Ruivo');
   await botao('Revisar pedido', false).click();
   await page.waitForTimeout(1500);
   const revisao = await page.locator('body').innerText();

@@ -4,7 +4,7 @@ Uso (na pasta `backend`, com o `.env` que já tem a `AI_API_KEY`):
 
     # Ensaio: mostra o que seria gerado e quanto custaria. Nenhuma chamada é feita.
     python scripts/comparar_simulacoes.py --fotos ../fotos-teste --pedidos scripts/pedidos_cacheados.json \\
-        --estrategias nano-original,nano,nano-curvatura
+        --estrategias nano-original,nano,nano-textura
 
     # Para valer: repita com --confirmar-custo.
 
@@ -13,10 +13,8 @@ Estratégias (`--estrategias`, separadas por vírgula). Cada uma muda uma coisa 
 
 - `atual`: o caminho especializado (change-haircut e flux-kontext-pro);
 - `nano-original`: Nano Banana com a primeira instrução detalhada (2026-11-05);
-- `nano`: Nano Banana com a instrução da produção, por prioridades e com a preservação do
-  cabelo natural, sem curvatura informada;
-- `nano-curvatura`: a anterior com a curvatura informada da foto (precisa do sufixo de
-  curvatura no nome do arquivo);
+- `nano`: Nano Banana com a instrução da produção, por prioridades: preserva a textura
+  natural ou, quando o pedido tem `textura`, aplica o tipo de cabelo desejado;
 - `nano-textura`: `nano` com uma segunda imagem, um close da textura natural (precisa do
   arquivo `.textura`);
 - `nano-referencia`: `nano` com a foto do corte desejado como referência (precisa de
@@ -24,20 +22,20 @@ Estratégias (`--estrategias`, separadas por vírgula). Cada uma muda uma coisa 
 - `nano-etapas`: `nano` em duas chamadas, primeiro o corte e depois a cor sobre o
   resultado (só em pedidos que mudam os dois; custa o dobro).
 
-Estratégia que não se aplica a uma foto ou a um pedido (sem curvatura, sem textura, sem
+Estratégia que não se aplica a uma foto ou a um pedido (sem close da textura, sem
 referência, sem os dois pedidos) fica de fora, e o ensaio diz quantas ficaram.
 
 Fotos (`--fotos`): só de adultos que autorizaram o uso. Cada foto passa pela validação da
 produção (`validar_e_normalizar`: tamanho, luz, rosto, EXIF removido); a recusada fica de
-fora, com o motivo. Convenções de nome:
+fora, com o motivo. Convenção de nome:
 
-- `maria.3C.jpg`: a curvatura natural de "maria" é 3C (aceita as categorias "liso",
-  "ondulado", "cacheado", "crespo" ou um tipo de 1A a 4C);
 - `maria.textura.jpg`: close da textura natural de "maria" (não é uma foto a simular).
 
 Pedidos (`--pedidos`): lista JSON com `id`, `descricao`, `corte`, `cor`, `manter_corte`,
-`manter_cor`, `genero` e, opcional, `referencia_corte` (caminho de uma foto do corte,
-relativo ao arquivo de pedidos). Valem as regras da tela (`pedido.interpretar`).
+`manter_cor`, `genero` e, opcionais, `textura` (o tipo de cabelo desejado: "liso",
+"ondulado", "cacheado", "crespo" ou um tipo de 1A a 4C; ausente é manter o atual) e
+`referencia_corte` (caminho de uma foto do corte, relativo ao arquivo de pedidos). Valem as
+regras da tela (`pedido.interpretar`).
 
 A geração é a do `ProvedorReplicate`, com a montagem de parâmetros e a instrução da
 produção: o que este script mostra é o que o aplicativo geraria.
@@ -45,7 +43,7 @@ produção: o que este script mostra é o que o aplicativo geraria.
 Saída (em `--saida`, padrão `resultados/comparacao-AAAAMMDD-HHMM`):
 
 - `originais/` e `simulacoes/`: as imagens;
-- `resultado.csv`: foto, pedido, estratégia, curvatura, modelo, chamadas, tempo, sucesso ou
+- `resultado.csv`: foto, pedido, estratégia, tipo de cabelo pedido, modelo, chamadas, tempo, sucesso ou
   código de erro, e a instrução enviada;
 - `comparacao.html`: o original e as simulações lado a lado, com notas de 1 a 5 para os
   critérios de `CRITERIOS`. As notas ficam no navegador e podem ser exportadas em CSV.
@@ -74,7 +72,7 @@ if str(RAIZ) not in sys.path:
 from app.core.config import Configuracao as ConfigServidor  # noqa: E402
 from app.core.erros import FotoRecusada, ValidacaoFalhou  # noqa: E402
 from app.services.ai.base import EntradaSimulacao, FalhaDoProvedor  # noqa: E402
-from app.services.ai.pedido import PedidoCapilar, interpretar, validar_curvatura  # noqa: E402
+from app.services.ai.pedido import PedidoCapilar, interpretar  # noqa: E402
 from app.services.ai.planos import Configuracao, planejar  # noqa: E402
 from app.services.validacao_foto import FotoValidada, validar_e_normalizar  # noqa: E402
 
@@ -94,7 +92,6 @@ ESTRATEGIAS = (
     "atual",
     "nano-original",
     "nano",
-    "nano-curvatura",
     "nano-textura",
     "nano-referencia",
     "nano-etapas",
@@ -118,10 +115,8 @@ class Pedido:
 class Foto:
     nome: str
     validada: FotoValidada
-    #: Curvatura natural informada no nome do arquivo, para `nano-curvatura`.
-    curvatura: str | None = None
     #: Close da textura natural (JPEG sem EXIF), para `nano-textura`.
-    textura: bytes | None = None
+    close_textura: bytes | None = None
 
 
 @dataclass(frozen=True)
@@ -199,6 +194,7 @@ def ler_pedidos(arquivo: Path) -> list[Pedido]:
                 manter_corte=bool(item.get("manter_corte")),
                 manter_cor=bool(item.get("manter_cor")),
                 genero=item.get("genero"),
+                textura=item.get("textura"),
             )
         except ValidacaoFalhou as erro:
             raise SystemExit(f"Pedido {identificador} inválido: {erro}") from erro
@@ -222,39 +218,30 @@ def ler_fotos(pasta: Path) -> list[Foto]:
     for arquivo in sorted(pasta.iterdir()):
         if arquivo.suffix.lower() not in EXTENSOES or ".textura." in arquivo.name.lower():
             continue
-        partes = arquivo.name.split(".")
-        nome = partes[0]
-        curvatura = None
-        if len(partes) > 2:
-            try:
-                curvatura = validar_curvatura(partes[1])
-            except ValidacaoFalhou:
-                print(f"  sufixo de curvatura não reconhecido em {arquivo.name}: ignorado")
+        nome = arquivo.name.split(".")[0]
         try:
             validada = validar_e_normalizar(arquivo.read_bytes())
         except FotoRecusada as recusa:
             motivos = "; ".join(p.get("titulo", "") for p in (recusa.detalhes or []))
             print(f"  foto recusada pela validação, fica de fora: {arquivo.name} ({motivos or recusa})")
             continue
-        fotos.append(Foto(nome, validada, curvatura, texturas.get(nome)))
+        fotos.append(Foto(nome, validada, texturas.get(nome)))
     return fotos
 
 
 def _etapas(foto: Foto, pedido: Pedido, estrategia: str, configuracao: Configuracao) -> tuple[Etapa, ...] | None:
     """O que cada estratégia manda ao provedor; None quando ela não se aplica."""
-    base = replace(pedido.pedido, curvatura=None, referencias=())
+    base = replace(pedido.pedido, referencias=())
 
     def etapa(p: PedidoCapilar, referencias: tuple[bytes, ...] = ()) -> Etapa:
         return Etapa(p, planejar(p, configuracao).instrucao, referencias)
 
     if estrategia in ("atual", "nano-original", "nano"):
         return (etapa(base),)
-    if estrategia == "nano-curvatura":
-        return (etapa(replace(base, curvatura=foto.curvatura)),) if foto.curvatura else None
     if estrategia == "nano-textura":
-        if foto.textura is None:
+        if foto.close_textura is None:
             return None
-        return (etapa(replace(base, referencias=("textura",)), (foto.textura,)),)
+        return (etapa(replace(base, referencias=("textura",)), (foto.close_textura,)),)
     if estrategia == "nano-referencia":
         if pedido.referencia_corte is None or base.corte is None:
             return None
@@ -262,7 +249,9 @@ def _etapas(foto: Foto, pedido: Pedido, estrategia: str, configuracao: Configura
     if estrategia == "nano-etapas":
         if base.corte is None or base.cor is None:
             return None
-        return (etapa(replace(base, cor=None)), etapa(replace(base, corte=None)))
+        # O tipo de cabelo pedido vai na primeira etapa; a segunda o mantém, como na foto
+        # que ela recebe (a gerada na primeira).
+        return (etapa(replace(base, cor=None)), etapa(replace(base, corte=None, textura=None)))
     raise ValueError(estrategia)
 
 
@@ -312,7 +301,7 @@ def resumir(tarefas: list[Tarefa]) -> None:
     print("\nInstruções (uma por pedido e estratégia):")
     vistos = set()
     for tarefa in tarefas:
-        chave = (tarefa.pedido.id, tarefa.caminho, tarefa.foto.curvatura)
+        chave = (tarefa.pedido.id, tarefa.caminho)
         if chave in vistos:
             continue
         vistos.add(chave)
@@ -341,7 +330,7 @@ def gerar(tarefas: list[Tarefa], saida: Path) -> list[dict]:
             "corte": tarefa.pedido.pedido.rotulo_corte,
             "cor": tarefa.pedido.pedido.rotulo_cor,
             "genero": tarefa.pedido.pedido.genero,
-            "curvatura": tarefa.foto.curvatura or "",
+            "textura": tarefa.pedido.pedido.textura or "",
             "caminho": tarefa.caminho,
             "modelo": tarefa.modelo,
             "chamadas": len(tarefa.etapas),
@@ -394,7 +383,7 @@ def _como_jpeg(conteudo: bytes) -> bytes:
 
 
 CAMPOS_CSV = [
-    "foto", "pedido", "descricao_pedido", "corte", "cor", "genero", "curvatura", "caminho",
+    "foto", "pedido", "descricao_pedido", "corte", "cor", "genero", "textura", "caminho",
     "modelo", "chamadas", "tempo_ms", "sucesso", "codigo_erro", "arquivo", "instrucao",
 ]
 
@@ -458,7 +447,7 @@ def gravar_html(linhas: list[dict], arquivo: Path, titulo: str) -> None:
         blocos.append(
             f'<section><h2>{e(foto)} · {e(pedido)}</h2><p class="pedido">Corte: {e(primeiro["corte"])} · '
             f'Cor: {e(primeiro["cor"])} · Gênero: {e(primeiro["genero"])}'
-            f'{" · Curvatura informada: " + e(primeiro["curvatura"]) if primeiro["curvatura"] else ""}'
+            f'{" · Tipo de cabelo pedido: " + e(primeiro["textura"]) if primeiro["textura"] else ""}'
             f'{" · " + e(primeiro["descricao_pedido"]) if primeiro["descricao_pedido"] else ""}</p>'
             f'<div class="grade">{"".join(cartoes)}</div></section>'
         )

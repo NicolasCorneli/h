@@ -38,14 +38,18 @@ Genero = Literal["none", "male", "female"]
 GENEROS: tuple[Genero, ...] = ("none", "male", "female")
 GENERO_PADRAO: Genero = "none"
 
-#: Padrão natural de curvatura, informado (opcionalmente) na etapa "Estilo e cor": a
+#: Tipo de cabelo **desejado** na simulação, escolhido na etapa "Estilo e cor": a
 #: categoria ("liso", "ondulado", "cacheado", "crespo") ou o tipo detalhado (1A a 4C, da
-#: classificação usada em salões). Ausente (None) é "Não sei informar": a foto é a única
-#: referência. Não é parâmetro de nenhum modelo; entra só como frase da instrução
-#: (`instrucoes.py`), e a foto continua sendo a referência principal.
-CATEGORIAS_DE_CURVATURA: tuple[str, ...] = ("liso", "ondulado", "cacheado", "crespo")
-TIPOS_DE_CURVATURA: tuple[str, ...] = tuple(f"{n}{l}" for n in "1234" for l in "ABC")
-CURVATURAS: tuple[str, ...] = CATEGORIAS_DE_CURVATURA + TIPOS_DE_CURVATURA
+#: classificação usada em salões). Ausente (None) é "Manter meu tipo de cabelo atual": uma
+#: instrução positiva de preservar a textura da foto, e não falta de informação. Não é
+#: parâmetro de nenhum modelo; entra como frase da instrução (`instrucoes.py`).
+#:
+#: Até 2026-11-10 a mesma lista servia para informar o cabelo *natural* (campo
+#: `curvatura`), só como apoio à leitura da foto. O significado mudou, e por isso o valor
+#: novo tem campo próprio (`textura`), sem reaproveitar o antigo.
+CATEGORIAS_DE_TEXTURA: tuple[str, ...] = ("liso", "ondulado", "cacheado", "crespo")
+TIPOS_DE_TEXTURA: tuple[str, ...] = tuple(f"{n}{l}" for n in "1234" for l in "ABC")
+TEXTURAS: tuple[str, ...] = CATEGORIAS_DE_TEXTURA + TIPOS_DE_TEXTURA
 
 #: Papel de cada imagem que acompanha a foto do cliente. O aplicativo não envia
 #: referências (a foto de referência saiu do escopo, ver a migration c6a2f9d41b87); elas
@@ -70,6 +74,9 @@ class Alteracao:
     #: Descrição completa em inglês, quando o texto é um nome do catálogo: é a que vai nas
     #: instruções detalhadas (`instrucoes.prompt_detalhado`).
     detalhe: str | None = None
+    #: De qual campo veio: alguns termos mudam de sentido ("degradê" é um corte no corte e
+    #: uma transição de cor na cor), e o glossário precisa saber.
+    campo: Literal["corte", "cor"] = "corte"
 
     @property
     def do_catalogo(self) -> bool:
@@ -83,8 +90,8 @@ class PedidoCapilar:
     #: None: manter a cor atual.
     cor: Alteracao | None
     genero: Genero = GENERO_PADRAO
-    #: Padrão natural de curvatura (`CURVATURAS`), ou None ("Não sei informar").
-    curvatura: str | None = None
+    #: Tipo de cabelo desejado (`TEXTURAS`), ou None ("Manter meu tipo de cabelo atual").
+    textura: str | None = None
     #: Papéis das imagens de referência que seguem a foto, na ordem (só no experimento).
     referencias: tuple[Papel, ...] = ()
 
@@ -137,8 +144,10 @@ def alteracao_de_corte(texto: str) -> Alteracao:
 def alteracao_de_cor(texto: str) -> Alteracao:
     opcao = opcao_de_cor(texto)
     if opcao is None:
-        return Alteracao(texto)
-    return Alteracao(opcao.rotulo, opcao.ingles, opcao.opcoes_do_modelo, opcao.detalhe or None)
+        return Alteracao(texto, campo="cor")
+    return Alteracao(
+        opcao.rotulo, opcao.ingles, opcao.opcoes_do_modelo, opcao.detalhe or None, campo="cor"
+    )
 
 
 def validar_genero(genero: str | None) -> Genero:
@@ -147,25 +156,25 @@ def validar_genero(genero: str | None) -> Genero:
         return GENERO_PADRAO
     if genero not in GENEROS:
         raise ValidacaoFalhou(
-            "Gênero inválido: escolha feminino, masculino ou não especificar.",
+            "Gênero inválido: escolha feminino, masculino ou neutro.",
             codigo="genero_invalido",
             detalhes=[{"campo": "genero", "permitidos": list(GENEROS)}],
         )
     return cast(Genero, genero)
 
 
-def validar_curvatura(curvatura: str | None) -> str | None:
-    """Só os valores da lista passam. Ausente ou vazio é "Não sei informar" (None)."""
-    if curvatura is None or curvatura.strip() == "":
+def validar_textura(textura: str | None) -> str | None:
+    """Só os valores da lista passam. Ausente ou vazio é "Manter meu tipo de cabelo atual"."""
+    if textura is None or textura.strip() == "":
         return None
-    valor = curvatura.strip()
+    valor = textura.strip()
     valor = valor.upper() if len(valor) == 2 else valor.lower()
-    if valor not in CURVATURAS:
+    if valor not in TEXTURAS:
         raise ValidacaoFalhou(
-            "Curvatura inválida: escolha liso, ondulado, cacheado, crespo, um tipo de 1A a 4C, "
-            "ou não informe.",
-            codigo="curvatura_invalida",
-            detalhes=[{"campo": "curvatura", "permitidos": list(CURVATURAS)}],
+            "Tipo de cabelo inválido: escolha liso, ondulado, cacheado, crespo, um tipo de 1A "
+            "a 4C, ou manter o tipo atual.",
+            codigo="textura_invalida",
+            detalhes=[{"campo": "textura", "permitidos": list(TEXTURAS)}],
         )
     return valor
 
@@ -177,11 +186,15 @@ def interpretar(
     manter_corte: bool = False,
     manter_cor: bool = False,
     genero: str | None = GENERO_PADRAO,
-    curvatura: str | None = None,
+    textura: str | None = None,
 ) -> PedidoCapilar:
-    """Valida e monta o pedido. Levanta 422 com código próprio para cada caso."""
+    """Valida e monta o pedido. Levanta 422 com código próprio para cada caso.
+
+    Manter o corte, a cor e o tipo de cabelo ao mesmo tempo não é pedido: não há o que
+    simular. Manter o corte e a cor e mudar só o tipo de cabelo, sim.
+    """
     genero_valido = validar_genero(genero)
-    curvatura_valida = validar_curvatura(curvatura)
+    textura_valida = validar_textura(textura)
     texto_corte = "" if manter_corte else limpar_descricao(corte, "corte")
     texto_cor = "" if manter_cor else limpar_descricao(cor, "cor")
 
@@ -197,9 +210,9 @@ def interpretar(
             codigo="cor_vazia",
             detalhes=[{"campo": "cor"}],
         )
-    if manter_corte and manter_cor:
+    if manter_corte and manter_cor and textura_valida is None:
         raise ValidacaoFalhou(
-            "Nada a simular: escolha mudar o corte, a cor ou os dois.",
+            "Nada a simular: escolha mudar o corte, a cor ou o tipo de cabelo.",
             codigo="pedido_vazio",
         )
 
@@ -207,12 +220,12 @@ def interpretar(
         corte=alteracao_de_corte(texto_corte) if texto_corte else None,
         cor=alteracao_de_cor(texto_cor) if texto_cor else None,
         genero=genero_valido,
-        curvatura=curvatura_valida,
+        textura=textura_valida,
     )
 
 
 def pedido_registrado(
-    estilo: str, cor: str, genero: str = GENERO_PADRAO, curvatura: str | None = None
+    estilo: str, cor: str, genero: str = GENERO_PADRAO, textura: str | None = None
 ) -> PedidoCapilar:
     """Reconstrói o pedido a partir do que ficou gravado na simulação.
 
@@ -222,5 +235,5 @@ def pedido_registrado(
     corte = None if estilo in (CORTE_MANTIDO, "") else alteracao_de_corte(estilo)
     tom = None if cor in (COR_MANTIDA, "") else alteracao_de_cor(cor)
     return PedidoCapilar(
-        corte=corte, cor=tom, genero=validar_genero(genero), curvatura=validar_curvatura(curvatura)
+        corte=corte, cor=tom, genero=validar_genero(genero), textura=validar_textura(textura)
     )

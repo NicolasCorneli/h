@@ -53,7 +53,7 @@ def como_saida(simulacao: Simulacao, usuario_id: uuid.UUID) -> SimulacaoOut:
             estilo=simulacao.estilo,
             cor=simulacao.cor,
             genero=simulacao.genero,
-            curvatura=simulacao.curvatura,
+            textura=simulacao.textura,
             observacoes=simulacao.observacoes,
         ),
         status=simulacao.status,
@@ -169,7 +169,7 @@ def criar(
         estilo=pedido.rotulo_corte,
         cor=pedido.rotulo_cor,
         genero=pedido.genero,
-        curvatura=pedido.curvatura,
+        textura=pedido.textura,
         observacoes=observacoes,
         instrucao_ia=plano.instrucao,
         chave_envio=chave_envio,
@@ -213,7 +213,7 @@ def processar(simulacao_id: uuid.UUID, *, demo_falhar: bool = False) -> None:
             return
 
         pedido = pedido_registrado(
-            simulacao.estilo, simulacao.cor, simulacao.genero, simulacao.curvatura
+            simulacao.estilo, simulacao.cor, simulacao.genero, simulacao.textura
         )
 
         usuario = sessao.get(Usuario, simulacao.usuario_id)

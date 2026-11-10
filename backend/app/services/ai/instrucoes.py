@@ -10,9 +10,9 @@ Há duas formas de instrução, uma para cada família de modelo (a escolha fica
   recomenda: dizer o que muda e dizer explicitamente o que deve ficar igual (rosto, pele,
   roupa, fundo). É a instrução do caminho atual e não mudou;
 - `prompt_detalhado`, longa, para o Nano Banana (Gemini), que segue bem instruções longas e
-  específicas. Diz o contexto (prévia de salão), o corte e a cor com a descrição completa
-  do catálogo, como o cabelo deve parecer, e lista um a um os elementos que não podem
-  mudar, inclusive retoques no rosto, que esse tipo de modelo às vezes faz sem que se peça.
+  específicas. Organizada por prioridade: a pessoa, a textura (mantida ou escolhida), o
+  corte e a cor pedidos, e a naturalidade. A descrição livre vai como foi escrita, com a
+  ordem de seguir cada detalhe e de manter local o que é local.
 
 Nenhuma frase garante fidelidade: modelos generativos interpretam o pedido de forma
 aproximada, e a qualidade real só se conhece no teste com o serviço
@@ -25,7 +25,8 @@ A estratégia de idioma (`AI_INSTRUCAO_IDIOMA`) fica em um lugar só:
 - `pt`: a descrição vai só em português, sem os termos.
 
 O gênero do corte, que no modelo principal é o campo `gender`, aqui vira uma frase junto do
-corte novo. Sem gênero escolhido ("none"), a instrução é a mesma de antes da opção existir.
+corte novo. Na instrução curta (Kontext), "none" não gera frase (é o padrão do modelo); na
+detalhada (Nano Banana), "none" é a escolha "Neutro" e gera a frase de corte neutro.
 """
 
 from __future__ import annotations
@@ -58,7 +59,7 @@ def descrever(alteracao: Alteracao, estrategia: Estrategia = "pt_com_termos") ->
     texto = alteracao.texto.replace('"', "'")
     if estrategia == "pt":
         return f'"{texto}" (described in Brazilian Portuguese)'
-    termos = termos_em_ingles(alteracao.texto)
+    termos = termos_em_ingles(alteracao.texto, alteracao.campo)
     if not termos:
         return f'"{texto}" (described in Brazilian Portuguese)'
     return f'"{texto}" (described in Brazilian Portuguese; key terms: {", ".join(termos)})'
@@ -77,6 +78,10 @@ def prompt_edicao(pedido: PedidoCapilar, estrategia: Estrategia = "pt_com_termos
         partes.append(f"New hair color: {descrever(pedido.cor, estrategia)}.")
     else:
         partes.append("Keep the current hair color exactly as it is.")
+    # O tipo de cabelo escolhido também vale no Kontext (sem ele, a frase não existe e a
+    # instrução é a mesma de antes).
+    if pedido.textura is not None:
+        partes.append(f"New hair texture: {TEXTURA_EM_INGLES[pedido.textura]}.")
     partes.append(PRESERVAR)
     return " ".join(partes)
 
@@ -149,55 +154,75 @@ def prompt_detalhado_original(pedido: PedidoCapilar, estrategia: Estrategia = "p
     return " ".join(partes)
 
 
-#: Cada padrão de curvatura na língua da instrução. O tipo detalhado diz o tamanho do
-#: cacho comparado a objetos comuns, como se faz em salão: é o que diferencia 3A de 3C, e
-#: é exatamente a medida que o modelo tende a perder (abrindo cachos fechados).
-CURVATURA_EM_INGLES = {
+#: Cada tipo de cabelo na língua da instrução. O tipo detalhado diz o tamanho do cacho
+#: comparado a objetos comuns, como se faz em salão: é o que diferencia 3A de 3C.
+TEXTURA_EM_INGLES = {
     "liso": "straight hair",
     "ondulado": "wavy hair, with S-shaped waves",
     "cacheado": "curly hair, with defined spiral curls",
-    "crespo": "coily, afro-textured hair, with very tight coils and zigzags",
-    "1A": "straight hair (type 1A): fine, completely straight strands with no bend",
-    "1B": "straight hair (type 1B): straight, with a little body and a slight bend at the ends",
-    "1C": "straight hair (type 1C): straight but coarse, with a slight bend and some volume",
-    "2A": "wavy hair (type 2A): loose, gentle S-shaped waves lying close to the head",
-    "2B": "wavy hair (type 2B): defined S-shaped waves that start around mid-length",
-    "2C": "wavy hair (type 2C): strong S-shaped waves from the roots, close to loose curls",
-    "3A": "curly hair (type 3A): large, loose spiral curls about as wide as a thick marker",
-    "3B": "curly hair (type 3B): springy ringlets about as wide as a finger",
-    "3C": "curly hair (type 3C): tight corkscrew curls about as wide as a pencil, dense and voluminous",
-    "4A": "coily hair (type 4A): tight S-shaped coils about as wide as a knitting needle, dense",
-    "4B": "coily hair (type 4B): very tight Z-shaped zigzag coils with little visible curl definition, dense",
-    "4C": "coily hair (type 4C): extremely tight zigzag coils with very little definition, strong shrinkage and dense volume",
+    "crespo": "coily, afro-textured hair, with tight coils and zigzags",
+    "1A": "type 1A straight hair: very fine, completely straight and flat, with little volume",
+    "1B": "type 1B straight hair: straight, with a little more body and volume",
+    "1C": "type 1C straight hair: straight but thicker and coarser, with a slight tendency to bend",
+    "2A": "type 2A wavy hair: loose, open, gentle waves",
+    "2B": "type 2B wavy hair: well-defined S-shaped waves",
+    "2C": "type 2C wavy hair: deep, voluminous S-shaped waves, close to curls",
+    "3A": "type 3A curly hair: large, loose spiral curls, about as wide as a thick marker",
+    "3B": "type 3B curly hair: medium, well-defined springy curls, about as wide as a finger",
+    "3C": "type 3C curly hair: small, tight, voluminous corkscrew curls, about as wide as a pencil",
+    "4A": "type 4A coily hair: small, tightly wound, defined S-shaped coils, about as wide as a knitting needle",
+    "4B": "type 4B coily hair: a Z-shaped zigzag pattern with sharp angles and little curl definition, dense",
+    "4C": "type 4C coily hair: very tight zigzag coils with very little definition, strong shrinkage and dense volume",
+}
+
+#: O gênero do corte na instrução detalhada. "Neutro" (o valor "none" do modelo
+#: especializado) é uma escolha da pessoa, e não falta dela: vira uma frase própria.
+GENERO_DO_CORTE_DETALHADO = {
+    **GENERO_DO_CORTE,
+    "none": "It is a gender-neutral haircut, not styled as typically feminine or masculine.",
 }
 
 #: Prioridade 1: a pessoa. É o que, se mudar, invalida a prévia inteira.
 PESSOA = (
     "Priority 1, the person: keep the same person exactly as in the photo. The face and "
-    "identity, facial features and proportions, expression, eyes, eyebrows, skin tone and "
-    "skin texture, makeup, ears, neck, body, clothing, jewelry and accessories, head "
-    "position, background, lighting, camera angle, framing and image proportions stay "
-    "unchanged. Do not retouch, beautify, slim or age the face, and do not add text, logos "
-    "or borders."
+    "identity, facial features and proportions, apparent age, head shape, expression, eyes, "
+    "eyebrows, skin tone and skin texture, makeup, ears, neck, body, clothing, jewelry and "
+    "accessories, head position, background, lighting, camera angle, framing and image "
+    "proportions stay unchanged. Do not retouch, beautify, slim or age the face, and do not "
+    "add text, logos or borders."
 )
 
-#: Prioridade 2: a textura natural. Responde ao relato dos testes ("a IA abriu os meus
-#: cachos"): diz o que manter e, em seguida, os desvios que esse tipo de modelo comete.
+#: A textura natural, quando a pessoa escolhe "Manter meu tipo de cabelo atual". Diz o que
+#: manter e, em seguida, os desvios que esse tipo de modelo comete (o relato dos testes:
+#: "a IA abriu os meus cachos").
 TEXTURA_NATURAL = (
-    "Keep the natural texture of the hair in the photo: the same curl pattern, the same "
-    "size and tightness of each wave, curl or coil, the same density, the same volume and "
-    "the same natural frizz and definition. Straight hair stays straight; wavy, curly and "
-    "coily hair keep exactly their own pattern. Do not loosen, open up, stretch, relax or "
-    "straighten curls or coils, and do not make them more uniform, shinier or more defined "
-    "than they are."
+    "the same curl pattern, the same size and tightness of each wave, curl or coil, the "
+    "same density, the same volume and the same natural frizz and definition. Straight hair "
+    "stays straight; wavy, curly and coily hair keep exactly their own pattern. Do not "
+    "loosen, open up, stretch, relax or straighten curls or coils, and do not make them more "
+    "uniform, shinier or more defined than they are."
+)
+
+#: Descrição livre: tudo o que a pessoa escreveu vale, inclusive onde cada mudança vai.
+FIEL_AO_CORTE = (
+    "Follow every detail of this description, such as length, fringe, layers, volume, ends "
+    "and sides, and keep any part it says to keep. Do not add details that were not asked for."
+)
+FIEL_A_COR = (
+    "Follow every detail of this description, including where each color goes (roots, "
+    "lengths, ends, strands around the face, the under-layer or only some highlights) and "
+    "any part it says to keep. Keep localized changes local: do not spread them to the "
+    "whole hair, and do not add colors that were not asked for."
 )
 
 #: Prioridade 4: a naturalidade. Diz como deve parecer, não só o que evitar.
 NATURALIDADE = (
     "Priority 4, a real photograph: the result must look like an unedited photo, with "
-    "individual strands, a believable hairline and parting, hair that falls naturally "
-    "around the face, ears, neck and shoulders, and highlights and shadows that match the "
-    "lighting of the original photo. Avoid a wig-like, painted or overly uniform look."
+    "individual strands, a natural hairline and parting, a natural transition between hair "
+    "and skin, hair that falls naturally around the face, ears, neck and shoulders, volume "
+    "that suits the haircut, color with natural depth, and highlights and shadows that match "
+    "the lighting of the original photo. Avoid a wig-like, plastic, painted or overly "
+    "uniform look."
 )
 
 
@@ -225,57 +250,71 @@ def _papeis_das_imagens(pedido: PedidoCapilar) -> list[str]:
     return frases
 
 
-def _cabelo_natural(pedido: PedidoCapilar) -> str:
-    """Prioridade 2: o que é do cabelo da cliente e não muda com o pedido."""
-    frases = ["Priority 2, the client's natural hair: the result keeps the client's own hair.", TEXTURA_NATURAL]
-    if pedido.corte is not None:
-        # Sem esta exceção, "manter a textura" contradiria um pedido de escova ou de
-        # permanente, e o modelo teria de escolher qual instrução desobedecer.
-        frases.append(
-            "The only exception is a requested haircut that explicitly asks for a different "
-            "texture (for example straightened, blow-dried, permed or curled): then apply "
-            "that texture."
+def _textura(pedido: PedidoCapilar) -> str:
+    """Prioridade 2: a textura do cabelo, mantida ou trocada pela escolhida.
+
+    Manter é uma instrução positiva (preservar o que a foto mostra) e vence qualquer
+    menção a outra textura nas descrições. Trocar aplica a textura escolhida no cabelo
+    todo; a densidade continua a da foto.
+    """
+    if pedido.textura is None:
+        return (
+            "Priority 2, the hair texture: keep the client's natural hair texture exactly as "
+            f"in the photo: {TEXTURA_NATURAL} This takes priority over any texture mentioned "
+            "in the descriptions below."
         )
-    if pedido.curvatura is not None:
-        frases.append(
-            f"The client describes their natural hair as {CURVATURA_EM_INGLES[pedido.curvatura]}. "
-            "Use this to read the curl pattern in the photo; the photo remains the main reference."
-        )
-    if pedido.corte is None:
-        frases.append("Keep the current length exactly: the hair must not become longer or shorter.")
-    else:
-        frases.append(
-            "Change the length only as much as the requested haircut requires, and never make "
-            "the hair longer than in the photo unless the requested haircut explicitly asks "
-            "for longer hair."
-        )
-    frases.append(
-        "Judge length by how the hair falls in the photo, with its natural shrinkage, not by "
-        "its stretched length, and do not turn volume into length."
+    return (
+        f"Priority 2, the hair texture: change the hair texture to {TEXTURA_EM_INGLES[pedido.textura]}. "
+        "Apply this texture to all of the hair, with a realistic, consistent pattern and the "
+        "volume and natural shrinkage this texture has, and keep the same hair density as in "
+        "the photo. This chosen texture takes priority over any texture mentioned in the "
+        "descriptions below."
     )
-    return " ".join(frases)
+
+
+def _comprimento(pedido: PedidoCapilar) -> str:
+    """O comprimento: o relato dos testes foi "aumentou o comprimento do meu cabelo"."""
+    if pedido.corte is None and pedido.textura is None:
+        frase = "Keep the current length exactly: the hair must not become longer or shorter."
+    elif pedido.corte is None:
+        frase = (
+            "Keep the current length: the hair is not cut or lengthened. A tighter texture "
+            "naturally looks shorter because of shrinkage, and that is expected."
+        )
+    else:
+        frase = (
+            "Change the length only as much as the requested haircut requires, and never make "
+            "the hair longer than in the photo unless the description explicitly asks for "
+            "longer hair."
+        )
+    return (
+        f"{frase} Judge length by how the hair falls in the photo, with its natural shrinkage, "
+        "not by its stretched length, and do not turn volume into length."
+    )
 
 
 def _mudanca_pedida(pedido: PedidoCapilar, estrategia: Estrategia) -> str:
-    """Prioridade 3: o corte e a cor pedidos, cada um só quando foi pedido."""
+    """Prioridade 3: o corte e a cor, cada um só quando foi pedido, e o comprimento."""
     frases = ["Priority 3, the requested change:"]
+    textura_do_corte = "the chosen texture" if pedido.textura else "the client's own hair texture"
     if pedido.corte is not None:
         frases.append(f"New haircut: {descrever_detalhado(pedido.corte, estrategia)}.")
-        if pedido.genero in GENERO_DO_CORTE:
-            frases.append(GENERO_DO_CORTE[pedido.genero])
-        frases.append(
-            "Shape this haircut with the client's own hair texture, the way a stylist would "
-            "cut this kind of hair."
-        )
+        if not pedido.corte.detalhe:
+            frases.append(FIEL_AO_CORTE)
+        frases.append(GENERO_DO_CORTE_DETALHADO[pedido.genero])
+        frases.append(f"Shape this haircut with {textura_do_corte}, the way a stylist would cut it.")
     else:
         frases.append(
             "Keep the current haircut exactly as it is: the same shape, layers, parting and fringe."
         )
+    frases.append(_comprimento(pedido))
     if pedido.cor is not None:
         frases.append(f"New hair color: {descrever_detalhado(pedido.cor, estrategia)}.")
+        if not pedido.cor.detalhe:
+            frases.append(FIEL_A_COR)
         frases.append(
-            "Apply the color with natural variation in tone and shine along the strands, "
-            "without changing the curl pattern or the texture."
+            "Apply the color with natural depth and variation in tone and shine along the "
+            "strands. Coloring does not change the curl pattern or the texture set in priority 2."
         )
     else:
         frases.append(
@@ -287,25 +326,28 @@ def _mudanca_pedida(pedido: PedidoCapilar, estrategia: Estrategia) -> str:
 def prompt_detalhado(pedido: PedidoCapilar, estrategia: Estrategia = "pt_com_termos") -> str:
     """Instrução do Nano Banana, organizada por prioridade.
 
-    1. a pessoa (identidade, rosto, fundo, luz, enquadramento);
-    2. o cabelo natural da cliente (curvatura, textura, densidade, volume e comprimento),
-       com a curvatura informada como apoio à leitura da foto;
-    3. a mudança pedida (corte e cor, cada um só se foi pedido);
+    1. a pessoa (identidade, rosto, idade aparente, formato da cabeça, fundo, luz,
+       enquadramento);
+    2. a textura do cabelo: a da foto ("Manter meu tipo de cabelo atual") ou a escolhida
+       (liso, ondulado, cacheado, crespo, ou um tipo de 1A a 4C);
+    3. a mudança pedida: o corte e a cor, cada um só se foi pedido, com o comprimento; a
+       descrição livre vai como foi escrita, com a ordem de seguir cada detalhe e de manter
+       local o que é local (mechas só nas pontas não viram mechas no cabelo todo);
     4. a naturalidade da foto.
 
     A abertura segue o modelo de "máscara semântica" da documentação do Google ("Using the
     provided image, change only the [element]... Keep everything else exactly the same").
-    Cada frase depende do pedido: sem corte, o comprimento e o corte ficam como estão; sem
-    cor, a cor fica; o pedido de outra textura (escova, permanente) é a única exceção à
-    preservação da curvatura, para que nenhuma frase contradiga outra.
+    Cada frase depende do pedido, para nenhuma contradizer outra: sem corte, o corte e o
+    comprimento ficam; sem cor, a cor fica; a textura escolhida (ou a mantida) vence
+    qualquer textura citada nas descrições.
     """
     partes = [
         "Using the provided photo of a real person, change only the hair to preview a new "
-        "look at a hair salon, and keep everything else exactly the same. Follow these "
-        "priorities in order.",
+        "look at a hair salon, and keep everything else exactly the same. This is an edit of "
+        "an existing photograph, not a new image. Follow these priorities in order.",
         *_papeis_das_imagens(pedido),
         PESSOA,
-        _cabelo_natural(pedido),
+        _textura(pedido),
         _mudanca_pedida(pedido, estrategia),
         NATURALIDADE,
     ]

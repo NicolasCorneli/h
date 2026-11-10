@@ -104,17 +104,19 @@ export type Cliente = {
 
 /**
  * Gênero do corte, com os valores exatos do campo `gender` do modelo `change-haircut`.
- * "none" (não especificar) é o padrão do próprio modelo.
+ * "none" aparece na tela como "Neutro" (corte sem gênero definido): no modelo
+ * especializado é o padrão dele; na instrução do Nano Banana vira a frase de corte neutro.
  */
 export type Genero = 'none' | 'male' | 'female';
 
 /**
- * Padrão natural de curvatura (opcional): a categoria ou o tipo detalhado de 1A a 4C. Os
- * mesmos valores do servidor (`CURVATURAS` em `services/ai/pedido.py`).
+ * Tipo de cabelo **desejado** na simulação: a categoria ou o tipo detalhado de 1A a 4C. Os
+ * mesmos valores do servidor (`TEXTURAS` em `services/ai/pedido.py`). Ausente (null) é
+ * "Manter meu tipo de cabelo atual".
  */
-export type CategoriaCurvatura = 'liso' | 'ondulado' | 'cacheado' | 'crespo';
-export type TipoCurvatura = `${1 | 2 | 3 | 4}${'A' | 'B' | 'C'}`;
-export type Curvatura = CategoriaCurvatura | TipoCurvatura;
+export type CategoriaTextura = 'liso' | 'ondulado' | 'cacheado' | 'crespo';
+export type TipoTextura = `${1 | 2 | 3 | 4}${'A' | 'B' | 'C'}`;
+export type Textura = CategoriaTextura | TipoTextura;
 
 export type ParametrosSimulacao = {
   /** Corte pedido: a descrição escrita ou "Corte atual". */
@@ -123,8 +125,8 @@ export type ParametrosSimulacao = {
   cor: string;
   /** Gênero do corte enviado ao modelo. */
   genero: Genero;
-  /** Padrão natural de curvatura informado, ou null ("Não sei informar"). */
-  curvatura: Curvatura | null;
+  /** Tipo de cabelo desejado, ou null ("Manter meu tipo de cabelo atual"). */
+  textura: Textura | null;
   observacoes: string;
 };
 

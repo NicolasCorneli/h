@@ -46,7 +46,12 @@ TERMOS: tuple[tuple[tuple[str, ...], str], ...] = (
     (("estruturado", "estruturada"), "structured"),
     (("repicado", "repicada", "picotado", "picotada"), "choppy layers"),
     (("desfiado", "desfiada", "desfiadas", "desfiados"), "wispy textured ends"),
+    (("camadas longas", "camada longa"), "long layers"),
+    (("camadas curtas", "camada curta"), "short layers"),
     (("em camadas", "camadas", "camada"), "layers"),
+    (("pontas mais leves", "pontas leves", "pontas desfiadas"), "lighter, softly thinned ends"),
+    (("tirar volume", "menos volume", "reduzir o volume"), "less volume"),
+    (("mais volume",), "more volume"),
     (("maquina zero", "raspado", "raspada", "maquina"), "buzzed"),
     (("corte militar", "militar"), "crew cut"),
     (("corte social",), "classic short men's cut"),
@@ -65,6 +70,8 @@ TERMOS: tuple[tuple[tuple[str, ...], str], ...] = (
     (("medio", "media"), "medium-length"),
     (("longo", "longa", "comprido", "comprida"), "long"),
     (("preservar o comprimento", "preserve o comprimento", "manter o comprimento", "mesmo comprimento", "sem tirar comprimento"), "keep the current length"),
+    (("ao redor do rosto", "em volta do rosto", "contornando o rosto", "contorno do rosto", "emoldurando o rosto"), "face-framing"),
+    (("nas pontas", "pontas", "ponta"), "ends"),
     # Textura e acabamento
     (("cacheado", "cacheada", "cachos", "cacho"), "curly"),
     (("ondulado", "ondulada", "ondas"), "wavy"),
@@ -120,21 +127,51 @@ TERMOS: tuple[tuple[tuple[str, ...], str], ...] = (
 )
 
 
-def _padroes() -> list[tuple[re.Pattern[str], str]]:
-    pares = [(padrao, ingles) for padroes, ingles in TERMOS for padrao in padroes]
-    pares.sort(key=lambda par: len(par[0]), reverse=True)
+#: Termos que só existem, ou mudam de sentido, quando a descrição é de cor. Valem antes dos
+#: gerais: na cor, "degradê" é a transição de tons (no corte, é o fade nas laterais) e
+#: "comprimento" é a parte do cabelo entre a raiz e as pontas.
+TERMOS_DA_COR: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("degrade", "degradê", "esfumado", "esfumada"), "ombre gradient, blended from roots to ends"),
+    (("raiz esfumada", "raiz esfumado", "raiz difusa"), "smudged, blended roots"),
+    (("no comprimento", "comprimento", "comprimentos"), "lengths"),
+    (("morena iluminada",), "brunette balayage"),
+    (("balayage",), "balayage"),
+    (("babylights", "baby lights"), "babylights"),
+    (("luzes californianas", "californiana"), "californian highlights, lighter towards the ends"),
+    (("mechas finas", "luzes finas"), "fine highlights"),
+    (("mechas grossas", "mechas largas"), "chunky highlights"),
+    (("money piece", "mechas na frente", "mechas no rosto"), "face-framing money piece highlights"),
+    (("por baixo", "camada de baixo", "embaixo"), "under-layer (peekaboo)"),
+    (("acinzentado", "acinzentada", "cinzento"), "ashy"),
+    (("matizado", "matizada"), "toned"),
+    (("cabelo todo", "todo o cabelo", "inteiro"), "all-over"),
+)
+
+
+def _padroes(*tabelas) -> list[tuple[re.Pattern[str], str]]:
+    """Os padrões das tabelas, os mais longos primeiro. Uma tabela anterior tem prioridade
+    sobre as seguintes no mesmo padrão."""
+    vistos: dict[str, str] = {}
+    for tabela in tabelas:
+        for padroes, ingles in tabela:
+            for padrao in padroes:
+                vistos.setdefault(normalizar(padrao), ingles)
+    pares = sorted(vistos.items(), key=lambda par: len(par[0]), reverse=True)
     return [(re.compile(rf"\b{re.escape(padrao)}\b"), ingles) for padrao, ingles in pares]
 
 
-_PADROES = _padroes()
+_PADROES = {"corte": _padroes(TERMOS), "cor": _padroes(TERMOS_DA_COR, TERMOS)}
 
 
-def termos_em_ingles(texto: str) -> list[str]:
-    """Termos técnicos reconhecidos no texto, na ordem em que aparecem, sem repetição."""
+def termos_em_ingles(texto: str, campo: str = "corte") -> list[str]:
+    """Termos técnicos reconhecidos no texto, na ordem em que aparecem, sem repetição.
+
+    `campo` ("corte" ou "cor") diz de qual campo veio o texto: a cor tem termos próprios.
+    """
     base = normalizar(texto)
     ocupado = [False] * len(base)
     achados: list[tuple[int, str]] = []
-    for padrao, ingles in _PADROES:
+    for padrao, ingles in _PADROES.get(campo, _PADROES["corte"]):
         for encontro in padrao.finditer(base):
             inicio, fim = encontro.span()
             if any(ocupado[inicio:fim]):

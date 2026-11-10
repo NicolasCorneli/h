@@ -68,7 +68,7 @@ O `./qa.sh --interface` roda as treze (a do Google, a décima quarta, só com os
 | `qa-interface.mjs` | larguras, teclado, alvos de toque, estados vazio e de erro, console |
 | `mudancas-interface.mjs` | mudanças de fluxo da etapa anterior (câmera, horário digitado, serviço "Outro") |
 | `agenda.mjs` | editar, confirmar, cancelar, concluir, datas passadas |
-| `ampliacao-e-curvatura.mjs` | "Cabelo natural" na etapa "Estilo e cor" (categoria, tipo, revisão, gravado no servidor); foto original e simulação em tela cheia com zoom, no resultado e na ficha |
+| `ampliacao-e-tipo-de-cabelo.mjs` | Tipo de cabelo desejado na etapa "Estilo e cor" (categoria, tipo com ilustração, revisão, gravado no servidor); foto original e simulação em tela cheia com zoom, no resultado e na ficha |
 | `datas.mjs` | calendário da agenda com 7 colunas de 320 a 1280 px; campos de data e hora da web (apagar um número não desloca a data, data pela metade é apontada) |
 | `atendimentos.mjs` | conclusão pela agenda e atendimento avulso |
 | `painel-e-comparacao.mjs` | painel inicial e comparação de simulações |

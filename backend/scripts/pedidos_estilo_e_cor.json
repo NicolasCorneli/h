@@ -1,0 +1,37 @@
+[
+  {
+    "id": "a-corte-cor-textura",
+    "descricao": "Cenário A: corte, cor e tipo de cabelo mudam juntos",
+    "corte": "Quero manter o comprimento, adicionar camadas longas, uma franja cortininha e deixar as pontas mais leves",
+    "cor": "Castanho chocolate com mechas caramelo suaves só nas pontas",
+    "textura": "2B",
+    "genero": "female"
+  },
+  {
+    "id": "b-so-cor-localizada",
+    "descricao": "Cenário B: só a cor muda, e a mudança é localizada (raiz fica, mechas só no comprimento)",
+    "cor": "Quero manter a raiz castanho escuro, com mechas caramelo suaves no comprimento e pontas um pouco mais claras",
+    "manter_corte": true
+  },
+  {
+    "id": "c-so-corte-neutro",
+    "descricao": "Cenário C: só o corte muda, com gênero neutro; cor e textura ficam",
+    "corte": "Corte curto texturizado, com franja reta e nuca curta",
+    "manter_cor": true,
+    "genero": "none"
+  },
+  {
+    "id": "d-corte-mantendo-textura",
+    "descricao": "Cenário D: corte novo com a textura natural mantida, mesmo que a descrição cite outra",
+    "corte": "Chanel na altura do queixo, liso e alinhado",
+    "manter_cor": true,
+    "genero": "female"
+  },
+  {
+    "id": "e-so-textura",
+    "descricao": "Cenário E: só o tipo de cabelo muda; corte e cor ficam como na foto",
+    "manter_corte": true,
+    "manter_cor": true,
+    "textura": "3C"
+  }
+]

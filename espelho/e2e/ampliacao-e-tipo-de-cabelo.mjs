@@ -1,10 +1,10 @@
 /**
- * Ampliação das imagens e curvatura do cabelo natural, no navegador.
+ * Ampliação das imagens e tipo de cabelo desejado, no navegador.
  *
- *  1  "Estilo e cor" pergunta o cabelo natural (opcional): começa em "Não sei informar";
- *     escolher "Cacheado" mostra os tipos 3A a 3C e "Não sei o tipo";
- *  2  a revisão mostra "Cabelo natural: Cacheado 3C"; o envio leva a curvatura, que o
- *     servidor grava na simulação;
+ *  1  "Estilo e cor" pergunta o tipo de cabelo desejado: começa em "Manter meu tipo de
+ *     cabelo atual"; escolher "Cacheado" mostra os tipos 3A a 3C, cada um com ilustração;
+ *  2  a revisão mostra "Tipo de cabelo: Cacheado 3C"; o envio leva o tipo, que o servidor
+ *     grava na simulação (campo `textura`);
  *  3  no resultado, a foto original e a simulação abrem em tela cheia com zoom (botões de
  *     zoom, "1,5x"), e fecham pelo botão e pela tecla Esc;
  *  4  na tela da simulação, a imagem também amplia; console sem erros.
@@ -44,7 +44,9 @@ const corpo = () => page.locator('body').innerText();
 const espera = (ms = 1200) => page.waitForTimeout(ms);
 const botao = (nome) =>
   page.getByRole('button', { name: nome, exact: typeof nome === 'string' }).filter({ visible: true }).first();
-const marcado = async (nome) => (await botao(nome).getAttribute('aria-selected')) === 'true';
+const opcao = (nome) =>
+  page.getByRole('radio', { name: nome, exact: typeof nome === 'string' }).filter({ visible: true }).first();
+const marcado = async (nome) => (await opcao(nome).getAttribute('aria-checked')) === 'true';
 
 try {
   await page.goto(`${APP}/login`, { waitUntil: 'networkidle' });
@@ -54,7 +56,7 @@ try {
   await botao(/^Entrar$/).click();
   await espera(4000);
 
-  // --- 1. Cabelo natural ---------------------------------------------------------
+  // --- 1. Tipo de cabelo desejado ------------------------------------------------
   await page.goto(`${APP}/simulacao/cliente`, { waitUntil: 'networkidle' });
   await espera(2500);
   await page.getByRole('button', { name: /^Simular para Marina/ }).first().click();
@@ -65,27 +67,31 @@ try {
   await espera(3000);
 
   let tela = await corpo();
-  conferir(/Cabelo natural \(opcional\)/i.test(tela), '1. a etapa pergunta o cabelo natural', tela.slice(0, 300));
-  conferir(await marcado('Não sei informar'), '1. começa em "Não sei informar"');
-  await botao('Cacheado').click();
+  conferir(/Qual tipo de cabelo você deseja na simulação\?/.test(tela), '1. a etapa pergunta o tipo de cabelo desejado', tela.slice(0, 300));
+  conferir(await marcado('Manter meu tipo de cabelo atual'), '1. começa em "Manter meu tipo de cabelo atual"');
+  await opcao('Cacheado: Cachos em espiral').click();
   await espera(400);
   tela = await corpo();
-  conferir(/3A · cachos largos e soltos/.test(tela) && /3C · cachos fechados/.test(tela) && /Não sei o tipo/.test(tela), '1. "Cacheado" mostra os tipos 3A a 3C');
-  conferir(await marcado('Não sei o tipo'), '1. só a categoria fica marcada até escolher um tipo');
-  await botao(/^3C · /).click();
+  conferir(/Cachos largos e soltos/.test(tela) && /Cachos pequenos e fechados/.test(tela) && /Qual cacheado você deseja\?/.test(tela), '1. "Cacheado" mostra os tipos 3A a 3C');
+  conferir(
+    (await page.getByRole('radio', { name: /^3[ABC]: / }).filter({ visible: true }).locator('svg').count()) === 3,
+    '1. cada tipo tem a sua ilustração'
+  );
+  conferir(await marcado('Cacheado: Cachos em espiral') && !(await marcado('3C: Cachos pequenos e fechados')), '1. só a categoria fica marcada até escolher um tipo');
+  await opcao('3C: Cachos pequenos e fechados').click();
   await espera(300);
-  conferir(await marcado(/^3C · /), '1. o tipo 3C fica marcado');
-  await page.screenshot({ path: `${TELAS}/01-cabelo-natural.png`, fullPage: true });
+  conferir(await marcado('3C: Cachos pequenos e fechados'), '1. o tipo 3C fica marcado');
+  await page.screenshot({ path: `${TELAS}/01-tipo-de-cabelo.png`, fullPage: true });
 
-  await page.getByLabel('Novo corte', { exact: true }).filter({ visible: true }).first().fill('Chanel');
-  await page.getByLabel('Nova cor', { exact: true }).filter({ visible: true }).first().fill('Ruivo');
+  await page.getByLabel('Descrição do corte', { exact: true }).filter({ visible: true }).first().fill('Chanel');
+  await page.getByLabel('Descrição da cor', { exact: true }).filter({ visible: true }).first().fill('Ruivo');
   await espera(400);
 
   // --- 2. Revisão e envio ------------------------------------------------------
   await botao('Revisar pedido').click();
-  for (let i = 0; i < 10 && !/Como será gerado/.test(await corpo()); i++) await espera(500);
+  for (let i = 0; i < 10 && !/Ver a instrução enviada à IA/.test(await corpo()); i++) await espera(500);
   tela = await corpo();
-  conferir(/Cabelo natural[\s\S]{0,40}Cacheado 3C/i.test(tela), '2. a revisão mostra "Cacheado 3C"', tela.slice(0, 600));
+  conferir(/Tipo de cabelo[\s\S]{0,40}Cacheado 3C/i.test(tela), '2. a revisão mostra "Cacheado 3C"', tela.slice(0, 600));
 
   await botao('Gerar simulação').click();
   for (let i = 0; i < 30 && !/aproximação visual/.test(await corpo()); i++) await espera(700);
@@ -101,7 +107,8 @@ try {
     headers: { Authorization: `Bearer ${login.tokens.accessToken}` },
   }).then((r) => r.json());
   const recente = [...lista].sort((a, b) => b.criadoEm.localeCompare(a.criadoEm))[0];
-  conferir(recente?.parametros?.curvatura === '3C', '2. o servidor gravou a curvatura 3C', JSON.stringify(recente?.parametros));
+  conferir(recente?.parametros?.textura === '3C', '2. o servidor gravou o tipo de cabelo 3C', JSON.stringify(recente?.parametros));
+  conferir(/type 3C curly hair/.test(recente?.instrucaoIa ?? ''), '2. a instrução gravada leva o tipo 3C', (recente?.instrucaoIa ?? '').slice(0, 300));
 
   // --- 3. Ampliar no resultado -------------------------------------------------
   for (const [rotulo, titulo] of [['Foto original: ampliar', 'Foto original'], ['Simulação: ampliar', 'Simulação']]) {
@@ -128,7 +135,7 @@ try {
   await page.goto(`${APP}/simulacao/imagem/${recente.id}`, { waitUntil: 'networkidle' });
   await espera(2500);
   tela = await corpo();
-  conferir(/Cabelo natural[\s\S]{0,40}Cacheado 3C/i.test(tela), '4. a ficha da simulação mostra o cabelo natural', tela.slice(0, 500));
+  conferir(/Tipo de cabelo[\s\S]{0,40}Cacheado 3C/i.test(tela), '4. a ficha da simulação mostra o tipo de cabelo', tela.slice(0, 500));
   await botao('Simulação: ampliar').click();
   await espera(1500);
   conferir(await botao('Fechar a imagem ampliada').isVisible().catch(() => false), '4. a imagem da ficha amplia');

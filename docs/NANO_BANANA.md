@@ -322,7 +322,7 @@ lidas como pedido de alisar.
 
 A instrução curta do Kontext (`prompt_edicao`) não mudou, nem o caminho especializado.
 
-### Curvatura informada
+### Curvatura informada (substituída em 2026-11-10, ver seção 10)
 
 A etapa "Estilo e cor" ganhou a pergunta opcional **"Cabelo natural"**: liso, ondulado,
 cacheado ou crespo e, se a pessoa souber, o tipo de 1A a 4C, com uma descrição de salão
@@ -352,7 +352,7 @@ Decisão de implementar, e seus limites:
 | `atual` | Kontext (caminho especializado) | implementada, referência |
 | `nano-original` | instrução de 2026-11-05 | implementada, para comparar |
 | `nano` | instrução por prioridades (a da produção) | **implementada e em uso** |
-| `nano-curvatura` | a anterior com a curvatura informada | implementada; eficácia a medir |
+| `nano-curvatura` | a anterior com a curvatura informada | removida em 2026-11-10 com a pergunta (seção 10) |
 | `nano-textura` | `nano` com um close da textura natural como segunda imagem | só no experimento; hipótese |
 | `nano-referencia` | `nano` com a foto do corte desejado como segunda imagem | só no experimento; hipótese |
 | `nano-etapas` | corte numa chamada, cor sobre o resultado em outra | só no experimento; hipótese, custa o dobro |
@@ -373,13 +373,12 @@ hipótese fundamentada, a confirmar.
 Protocolo para reproduzir (na pasta `backend`):
 
 1. Reúna de 4 a 8 fotos de adultos que autorizaram o uso, de frente e com boa luz, cobrindo
-   liso, ondulado, cacheado e crespo, com comprimentos e volumes variados. Nomeie com a
-   curvatura (`maria.3C.jpg`) e, para `nano-textura`, junte um close do cabelo
-   (`maria.textura.jpg`).
+   liso, ondulado, cacheado e crespo, com comprimentos e volumes variados. Para
+   `nano-textura`, junte um close do cabelo (`maria.textura.jpg`).
 2. Ensaio, sem custo:
 
    ```
-   .venv\Scripts\python scripts\comparar_simulacoes.py --fotos C:\fotos-cacheados --pedidos scripts\pedidos_cacheados.json --estrategias nano-original,nano,nano-curvatura
+   .venv\Scripts\python scripts\comparar_simulacoes.py --fotos C:\fotos-cacheados --pedidos scripts\pedidos_cacheados.json --estrategias nano-original,nano,nano-textura
    ```
 
    Com 4 fotos e os 6 pedidos de `pedidos_cacheados.json`: 72 chamadas, cerca de US$ 2,42
@@ -411,6 +410,141 @@ registrado em `simulacoes.tempo_ms` e no CSV do experimento.
 - nenhum parâmetro controla textura ou comprimento: tudo depende de o modelo seguir a
   instrução, e o próprio Google declara "partial instruction following";
 - o resultado varia entre execuções (sem semente);
-- a curvatura informada pode contradizer a foto (uma pessoa com escova feita, por
-  exemplo); a instrução manda a foto prevalecer, mas o modelo pode não obedecer;
+- (até 2026-11-10) a curvatura informada podia contradizer a foto; a pergunta foi
+  substituída pelo tipo de cabelo desejado (seção 10);
 - o filtro "Child" do Google pode recusar fotos de crianças (seção 5).
+
+## 10. Tipo de cabelo desejado, gênero neutro e descrições livres (2026-11-10)
+
+### O que mudou no pedido
+
+| Antes | Agora |
+|---|---|
+| "Cabelo natural (opcional)": a curvatura que a pessoa **tem**, só um apoio para o modelo ler a foto | "Qual tipo de cabelo você deseja na simulação?": o tipo que a pessoa **quer**, aplicado na imagem |
+| "Não sei informar" (ausência de informação) | "Manter meu tipo de cabelo atual" (já vem marcado): instrução **positiva** de preservar a textura da foto |
+| Gênero "Não especificar" (sem frase na instrução) | "Neutro": corte sem gênero definido, com frase própria na instrução |
+| Manter corte e cor ao mesmo tempo era recusado | Manter corte e cor e mudar só o tipo de cabelo é um pedido válido |
+| Texto escrito antes de marcar "manter" era ignorado em silêncio | A tela mostra o texto e pede uma decisão: usar a descrição ou apagá-la |
+
+Contrato e banco:
+
+- o aplicativo manda `textura` (formulário do envio e JSON da prévia do plano): uma das 4
+  categorias ou um dos 12 tipos de 1A a 4C, ou vazio (manter). O servidor valida
+  (`pedido.validar_textura`, código `textura_invalida`) e grava em `simulacoes.textura`
+  (migration `c7d3f9a1e64b`, só acrescenta);
+- a coluna antiga `simulacoes.curvatura` fica com os valores já gravados e deixa de ser
+  preenchida; o campo `curvatura` que um APK antigo ainda manda é ignorado. Sem `textura`,
+  a textura da foto é mantida, que era o que aquele pedido queria;
+- o tipo de cabelo não é parâmetro de nenhum modelo: o schema do Nano Banana 2.1 na
+  Replicate não tem campo de textura (seção 9). Ele vira frase da instrução. Nada como
+  `hair_texture`, `curl_pattern`, `seed` ou `temperature` foi acrescentado ao envio, e a
+  conferência do schema publicado antes de cada geração continua valendo.
+
+### A instrução por prioridades, com a textura no lugar do "cabelo natural"
+
+1. **A pessoa.** Como antes, com a abertura "This is an edit of an existing photograph, not
+   a new image" e a lista do que não muda (identidade, idade aparente, formato da cabeça,
+   expressão, pele, roupa, fundo, luz, enquadramento; sem retoque no rosto).
+2. **A textura.**
+   - *Manter* (padrão): "keep the client's natural hair texture exactly as in the photo",
+     seguida da descrição do que preservar (o mesmo padrão de onda, cacho ou mola, o
+     tamanho, a densidade, o volume) e dos desvios que esse tipo de modelo comete (abrir,
+     esticar, alisar). Termina com "This takes priority over any texture mentioned in the
+     descriptions below": um corte descrito como "liso e alinhado" num cabelo 3C não alisa
+     o cabelo. A exceção da versão anterior ("a não ser que o corte peça outra textura")
+     saiu: quem quer outra textura agora escolhe o tipo.
+   - *Trocar*: "change the hair texture to {tipo}. Apply this texture to all of the hair,
+     with a realistic, consistent pattern and the volume and natural shrinkage this texture
+     has, and keep the same hair density as in the photo", e a mesma frase de prioridade.
+3. **A mudança pedida.** O corte e a cor, cada um só quando pedido:
+   - a descrição livre vai **inteira**, entre aspas, como foi escrita, com os termos técnicos
+     em inglês ao lado (`glossario.termos_em_ingles`). Nada é resumido nem trocado por um
+     nome de corte;
+   - descrição livre de corte: "Follow every detail of this description, such as length,
+     fringe, layers, volume, ends and sides, and keep any part it says to keep. Do not add
+     details that were not asked for";
+   - descrição livre de cor: "Follow every detail of this description, including where each
+     color goes (roots, lengths, ends, strands around the face, the under-layer or only some
+     highlights) and any part it says to keep. Keep localized changes local: do not spread
+     them to the whole hair, and do not add colors that were not asked for." É o que impede
+     "mechas só nas pontas" de virar mechas no cabelo todo;
+   - o gênero do corte novo: feminino, masculino ou "It is a gender-neutral haircut, not
+     styled as typically feminine or masculine";
+   - o corte é moldado "with the chosen texture" ou "with the client's own hair texture";
+   - o comprimento, por caso: sem corte e sem troca de textura, "exatamente o mesmo"; sem
+     corte e com troca de textura, "não é cortado nem alongado", e o encolhimento de uma
+     textura mais fechada é esperado; com corte, muda só o que o corte exige;
+   - a cor "não muda o padrão nem a textura definidos na prioridade 2".
+4. **A naturalidade.** Fios individuais, linha do cabelo natural, cor com profundidade, luz
+   da foto original; sem aspecto de peruca, plástico ou pintura.
+
+A instrução continua sem prometer o impossível: pede preservação e fidelidade, mas o modelo
+pode não obedecer em tudo (seção 9, "partial instruction following").
+
+Cada tipo vai com a descrição de salão em inglês, com o tamanho do cacho comparado a objetos
+comuns, que é o que diferencia 3A de 3C (`instrucoes.TEXTURA_EM_INGLES`):
+
+| Tipo | Na tela | Na instrução |
+|---|---|---|
+| 1A | Muito fino, sem volume | very fine, completely straight and flat, with little volume |
+| 1B | Liso com mais corpo | straight, with a little more body and volume |
+| 1C | Grosso, quase ondulado | straight but thicker and coarser, with a slight tendency to bend |
+| 2A | Ondas leves e abertas | loose, open, gentle waves |
+| 2B | Ondas definidas em S | well-defined S-shaped waves |
+| 2C | Ondas fortes, quase cachos | deep, voluminous S-shaped waves, close to curls |
+| 3A | Cachos largos e soltos | large, loose spiral curls, about as wide as a thick marker |
+| 3B | Cachos médios e definidos | medium, well-defined springy curls, about as wide as a finger |
+| 3C | Cachos pequenos e fechados | small, tight, voluminous corkscrew curls, about as wide as a pencil |
+| 4A | Molas pequenas e definidas | small, tightly wound, defined S-shaped coils |
+| 4B | Zigue-zague em Z | a Z-shaped zigzag pattern with sharp angles and little curl definition |
+| 4C | Bem fechado, encolhe muito | very tight zigzag coils with very little definition, strong shrinkage |
+
+Revisão da nomenclatura sugerida no pedido: o 1C deixa claro que ainda é liso ("quase
+ondulado", e não ondulado); o 4A passa a "molas", porque é o primeiro tipo crespo, e não um
+cacho do tipo 3; o 4B fica no "zigue-zague em Z".
+
+### Glossário por campo
+
+Alguns termos mudam de sentido conforme o campo (`glossario.TERMOS_DA_COR`): "degradê" é
+`fade` no corte e `ombre gradient, blended from roots to ends` na cor; "comprimento" é
+`lengths` (a parte entre a raiz e as pontas) na cor. Entraram termos de região e de técnica:
+`face-framing` (ao redor do rosto), `ends` (pontas), `long layers`, `lighter, softly thinned
+ends`, `balayage`, `babylights`, `brunette balayage` (morena iluminada), `californian
+highlights`, `fine` e `chunky highlights`, `money piece`, `under-layer (peekaboo)`, `ashy`,
+`toned` e `all-over`.
+
+### Caminho especializado (Kontext)
+
+O `change-haircut` não tem campo de textura: com um tipo escolhido, o pedido vai direto ao
+modelo de edição por texto, com a frase "New hair texture: {tipo}". Sem tipo escolhido, o
+caminho e a instrução são os mesmos de antes.
+
+### Cenários
+
+| Cenário | Pedido | O que a instrução garante |
+|---|---|---|
+| A | corte, cor e tipo novos | troca de textura (prioridade 2) e corte e cor (prioridade 3), com o corte moldado na textura escolhida |
+| B | só a cor | textura, corte e comprimento mantidos; cor fiel às regiões descritas |
+| C | só o corte | textura e cor mantidas; corte moldado na textura da própria cliente |
+| D | corte novo, textura mantida | a preservação vence qualquer textura citada no corte |
+| E | só o tipo de cabelo | corte e cor mantidos; comprimento não cortado nem alongado (encolhimento esperado) |
+
+Os cinco têm teste automático em `tests/test_preservacao_capilar.py` e um pedido pronto
+para o experimento pago em `scripts/pedidos_estilo_e_cor.json`:
+
+```
+.venv\Scripts\python scripts\comparar_simulacoes.py --fotos C:\fotos-teste --pedidos scripts\pedidos_estilo_e_cor.json --estrategias nano
+```
+
+Com 4 fotos: 20 chamadas, cerca de US$ 0,67 em 1K. O comando acima é o ensaio (não chama
+nada); só gera com `--confirmar-custo`.
+
+### Limitações
+
+- trocar a textura é a mudança mais difícil para o modelo: ele pode alterar o volume, o
+  comprimento aparente ou a linha do cabelo junto. A instrução pede densidade igual e
+  encolhimento natural, mas não há medição ainda;
+- o resultado varia entre execuções (sem semente);
+- nesta etapa o schema da Replicate não foi consultado de novo (nenhuma chamada à Replicate
+  foi feita). A conferência automática antes de cada geração para o envio se o schema
+  mudar.

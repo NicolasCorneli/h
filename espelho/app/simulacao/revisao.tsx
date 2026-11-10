@@ -6,7 +6,7 @@ import { Aviso, Tela } from '@/components/Basicos';
 import { Botao } from '@/components/Botao';
 import { Cabecalho } from '@/components/Cabecalho';
 import { Campo } from '@/components/Campo';
-import { Icone } from '@/components/Icone';
+import { Icone, type NomeIcone } from '@/components/Icone';
 import { useRascunho } from '@/data/rascunho';
 import { RESUMO_ENVIO } from '@/data/servicoExterno';
 import { useStore } from '@/data/store';
@@ -15,14 +15,24 @@ import { ErroApi, simulacoes } from '@/services/api';
 import { useModoDemo } from '@/services/modoDemo';
 import { textos } from '@/theme/textos';
 import { ALVO_TOQUE, cores, espaco, fontes, raios } from '@/theme/tokens';
-import { pendencias, rotuloCor, rotuloCorte, rotuloCurvatura, rotuloGenero, type EscolhasPedido } from '@/utils/pedido';
+import {
+  pendencias,
+  rotuloCor,
+  rotuloCorte,
+  rotuloGenero,
+  rotuloTextura,
+  TEXTURA_MANTIDA,
+  type EscolhasPedido,
+} from '@/utils/pedido';
 
 /**
  * Revisão do pedido, antes de gastar uma geração.
  *
- * Mostra a foto que vai ser usada, o corte e a cor, cada um com como editar ou deixar como
- * está. Pergunta ao servidor como o pedido será gerado (modo, modelo e o que vai para ele,
- * sem foto e sem custo). Só daqui sai o "Gerar simulação".
+ * Mostra a foto que vai ser usada e um resumo em linguagem simples do que vai mudar: o
+ * corte (e o estilo dele, quando há corte novo), a cor e o tipo de cabelo, cada um com
+ * "Alterar". Pergunta ao servidor como o pedido será gerado (sem foto e sem custo): a
+ * resposta confere o pedido, e a instrução que vai para a IA fica recolhida, para quem
+ * quiser conferir. Só daqui sai o "Gerar simulação".
  */
 export default function Revisao() {
   const router = useRouter();
@@ -40,10 +50,19 @@ export default function Revisao() {
     manterCorte: rascunho.manterCorte,
     cor: rascunho.cor,
     manterCor: rascunho.manterCor,
+    textura: rascunho.textura,
   };
   const faltas = pendencias(escolhas);
-  // O gênero muda o que vai ao modelo: entra na prévia e, quando muda, ela é refeita.
-  const pedido = { ...escolhas, genero: rascunho.genero, curvatura: rascunho.curvatura };
+  // O gênero e o tipo de cabelo mudam o que vai ao modelo: entram na prévia e, quando
+  // mudam, ela é refeita. O texto de um campo mantido não vai (o servidor o ignoraria).
+  const pedido = {
+    corte: rascunho.manterCorte ? '' : rascunho.corte,
+    manterCorte: rascunho.manterCorte,
+    cor: rascunho.manterCor ? '' : rascunho.cor,
+    manterCor: rascunho.manterCor,
+    genero: rascunho.genero,
+    textura: rascunho.textura,
+  };
   const chavePlano = JSON.stringify(pedido);
 
   // Sem foto (recarregou a página, por exemplo), não há o que revisar. Confere só ao abrir:
@@ -80,8 +99,7 @@ export default function Revisao() {
   // conexão na prévia, não: a prévia é informativa, e a geração diz o que houver.
   const recusado = !!erroPlano && !erroPlano.deConexao && erroPlano.status === 422;
   const podeGerar = faltas.length === 0 && !recusado;
-  // "Não mudar" só aparece quando corte e cor mudam: manter os dois não é pedido.
-  const mudaOsDois = !rascunho.manterCorte && !rascunho.manterCor;
+  const alterar = () => router.back();
 
   function gerar(demoFalharIa = false) {
     if (!podeGerar || enviando.current) return;
@@ -115,37 +133,40 @@ export default function Revisao() {
         </View>
 
         <View style={styles.cartao}>
+          <Text style={textos.secao} accessibilityRole="header">
+            O que vai mudar
+          </Text>
           <LinhaPedido
             rotulo="Corte"
-            valor={rotuloCorte(escolhas)}
-            acoes={[
-              { titulo: 'Editar', aoPressionar: () => router.back() },
-              ...(mudaOsDois
-                ? [{ titulo: 'Não mudar', aoPressionar: () => atualizar({ manterCorte: true, corte: '' }) }]
-                : []),
-            ]}
+            icone="corte"
+            valor={rascunho.manterCorte ? 'Manter o corte atual' : rotuloCorte(escolhas)}
+            mantido={rascunho.manterCorte}
+            aoAlterar={alterar}
           />
-          <LinhaPedido
-            rotulo="Gênero"
-            valor={rotuloGenero(rascunho.genero)}
-            acoes={[{ titulo: 'Editar', aoPressionar: () => router.back() }]}
-          />
-          <LinhaPedido
-            rotulo="Cabelo natural"
-            valor={rotuloCurvatura(rascunho.curvatura)}
-            acoes={[{ titulo: 'Editar', aoPressionar: () => router.back() }]}
-          />
+          {!rascunho.manterCorte ? (
+            <LinhaPedido
+              rotulo="Estilo do corte"
+              icone="cliente"
+              valor={rotuloGenero(rascunho.genero)}
+              aoAlterar={alterar}
+            />
+          ) : null}
           <LinhaPedido
             rotulo="Cor"
-            valor={rotuloCor(escolhas)}
-            acoes={[
-              { titulo: 'Editar', aoPressionar: () => router.back() },
-              ...(mudaOsDois
-                ? [{ titulo: 'Não mudar', aoPressionar: () => atualizar({ manterCor: true, cor: '' }) }]
-                : []),
-            ]}
+            icone="cor"
+            valor={rascunho.manterCor ? 'Manter a cor atual' : rotuloCor(escolhas)}
+            mantido={rascunho.manterCor}
+            aoAlterar={alterar}
+          />
+          <LinhaPedido
+            rotulo="Tipo de cabelo"
+            icone="textura"
+            valor={rascunho.textura ? rotuloTextura(rascunho.textura) : TEXTURA_MANTIDA}
+            mantido={!rascunho.textura}
+            aoAlterar={alterar}
             ultima
           />
+          <Text style={textos.meta}>Rosto, expressão, roupa, fundo e luz continuam os da foto.</Text>
         </View>
 
         {faltas.length > 0 ? (
@@ -155,28 +176,36 @@ export default function Revisao() {
         {recusado && erroPlano ? <Aviso tom="erro" texto={erroPlano.message} /> : null}
 
         {plano ? (
-          <View style={styles.cartao}>
-            <Text style={textos.etiqueta}>Como será gerado</Text>
-            <Text style={textos.corpoForte}>{plano.descricaoModo}</Text>
-            <Text style={textos.meta}>Modelo: {plano.modelo}</Text>
+          <View style={styles.cartaoDetalhe}>
             {plano.provedor === 'fake' ? (
               <Text style={textos.meta}>
-                O servidor está no modo local, sem serviço de IA: a imagem sai com aviso e o corte não muda.
+                O servidor está no modo local, sem serviço de IA: a imagem sai com aviso e o cabelo não muda.
               </Text>
             ) : null}
             <Pressable
               onPress={() => setVerInstrucao((v) => !v)}
               accessibilityRole="button"
               accessibilityState={{ expanded: verInstrucao }}
-              accessibilityLabel={verInstrucao ? 'Esconder o que vai para o modelo' : 'Ver o que vai para o modelo'}
+              aria-expanded={verInstrucao}
+              accessibilityLabel={verInstrucao ? 'Esconder a instrução enviada à IA' : 'Ver a instrução enviada à IA'}
               style={styles.alternar}>
-              <Text style={textos.link}>{verInstrucao ? 'Esconder o que vai para o modelo' : 'Ver o que vai para o modelo'}</Text>
-              <Icone nome="chevron" tamanho={14} cor={cores.acaoTexto} />
+              <Text style={[textos.link, styles.flex]}>
+                {verInstrucao ? 'Esconder a instrução enviada à IA' : 'Ver a instrução enviada à IA'}
+              </Text>
+              <View style={verInstrucao ? styles.setaAberta : undefined}>
+                <Icone nome="chevron" tamanho={14} cor={cores.acaoTexto} />
+              </View>
             </Pressable>
             {verInstrucao ? (
-              <Text style={styles.instrucao} selectable>
-                {plano.instrucao}
-              </Text>
+              <>
+                <Text style={textos.meta}>
+                  {plano.descricaoModo}. Modelo: {plano.modelo}. A instrução vai em inglês, a língua em que o
+                  modelo foi treinado; a sua descrição segue junto, como foi escrita.
+                </Text>
+                <Text style={styles.instrucao} selectable>
+                  {plano.instrucao}
+                </Text>
+              </>
             ) : null}
           </View>
         ) : null}
@@ -224,35 +253,38 @@ export default function Revisao() {
   );
 }
 
-type Acao = { titulo: string; aoPressionar: () => void };
-
+/** Uma escolha do resumo: o que é, o valor em palavras simples e como alterar. */
 function LinhaPedido({
   rotulo,
+  icone,
   valor,
-  acoes,
+  mantido = false,
+  aoAlterar,
   ultima = false,
 }: {
   rotulo: string;
+  icone: NomeIcone;
   valor: string;
-  acoes: Acao[];
+  mantido?: boolean;
+  aoAlterar: () => void;
   ultima?: boolean;
 }) {
   return (
     <View style={[styles.linha, !ultima && styles.linhaDivisoria]}>
-      <Text style={textos.etiqueta}>{rotulo}</Text>
-      <Text style={textos.corpoForte}>{valor}</Text>
-      <View style={styles.acoes}>
-        {acoes.map((acao) => (
-          <Pressable
-            key={acao.titulo}
-            onPress={acao.aoPressionar}
-            accessibilityRole="button"
-            accessibilityLabel={`${acao.titulo}: ${rotulo.toLowerCase()}`}
-            style={styles.acao}>
-            <Text style={textos.link}>{acao.titulo}</Text>
-          </Pressable>
-        ))}
+      <View style={styles.linhaIcone}>
+        <Icone nome={icone} tamanho={16} cor={mantido ? cores.textoApoio : cores.acaoTexto} />
       </View>
+      <View style={styles.flex}>
+        <Text style={textos.etiqueta}>{rotulo}</Text>
+        <Text style={[textos.corpoForte, mantido && styles.valorMantido]}>{valor}</Text>
+      </View>
+      <Pressable
+        onPress={aoAlterar}
+        accessibilityRole="button"
+        accessibilityLabel={`Alterar: ${rotulo.toLowerCase()}`}
+        style={styles.acao}>
+        <Text style={textos.link}>Alterar</Text>
+      </Pressable>
     </View>
   );
 }
@@ -270,11 +302,28 @@ const styles = StyleSheet.create({
     padding: espaco.lg,
     gap: espaco.xs,
   },
-  linha: { gap: espaco.xs, paddingVertical: espaco.sm },
+  cartaoDetalhe: {
+    borderRadius: raios.cartao,
+    backgroundColor: cores.superficieSuave,
+    paddingHorizontal: espaco.lg,
+    paddingVertical: espaco.xs,
+    gap: espaco.sm,
+  },
+  flex: { flex: 1, minWidth: 0 },
+  linha: { flexDirection: 'row', alignItems: 'center', gap: espaco.md, paddingVertical: espaco.sm },
   linhaDivisoria: { borderBottomWidth: 1, borderBottomColor: cores.bordaSuave },
-  acoes: { flexDirection: 'row', flexWrap: 'wrap', columnGap: espaco.lg },
-  acao: { minHeight: ALVO_TOQUE, justifyContent: 'center' },
+  linhaIcone: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: cores.superficieSuave,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  valorMantido: { color: cores.textoSecundario, fontFamily: fontes.sansMedio },
+  acao: { minHeight: ALVO_TOQUE, minWidth: ALVO_TOQUE, justifyContent: 'center', alignItems: 'flex-end' },
   alternar: { flexDirection: 'row', alignItems: 'center', gap: espaco.xs, minHeight: ALVO_TOQUE },
+  setaAberta: { transform: [{ rotate: '90deg' }] },
   instrucao: {
     fontFamily: fontes.mono,
     fontSize: 12,

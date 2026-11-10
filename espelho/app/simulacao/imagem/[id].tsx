@@ -10,7 +10,7 @@ import { useCliente, useSimulacao, useSimulacoesDoCliente } from '@/data/store';
 import { textos } from '@/theme/textos';
 import { cores, espaco, raios } from '@/theme/tokens';
 import { dataCurta, hora } from '@/utils/datas';
-import { rotuloCurvatura } from '@/utils/pedido';
+import { rotuloTextura } from '@/utils/pedido';
 
 type Vista = 'resultado' | 'original' | 'lado_a_lado';
 
@@ -153,8 +153,8 @@ export default function VerSimulacao() {
             valor={`${dataCurta(simulacao.criadoEm)} às ${hora(simulacao.criadoEm)}`}
           />
           <Linha rotulo="Situação" valor={SITUACAO[simulacao.status]} />
-          {simulacao.parametros.curvatura ? (
-            <Linha rotulo="Cabelo natural" valor={rotuloCurvatura(simulacao.parametros.curvatura)} />
+          {simulacao.parametros.textura ? (
+            <Linha rotulo="Tipo de cabelo" valor={rotuloTextura(simulacao.parametros.textura)} />
           ) : null}
           {simulacao.modeloIa ? <Linha rotulo="Modelo" valor={simulacao.modeloIa} /> : null}
           {simulacao.tempoMs ? (
