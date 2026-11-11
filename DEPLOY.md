@@ -366,13 +366,22 @@ termo 1.2, ou o Kontext com o 1.2 vigente), ela registra no log uma linha
   1.2 **não** precisa decidir de novo (revisão só de redação); quem aceitou a 1.1 ou antes
   continua precisando.
 
-**Migration de 2026-11-10** (aplicada sozinha na subida, pelo serviço `migrar`):
+**Migrations de 2026-11-10** (aplicadas sozinhas na subida, pelo serviço `migrar`):
 
 - `c7d3f9a1e64b`: coluna opcional `simulacoes.textura` (o tipo de cabelo **desejado** na
   etapa "Estilo e cor"). Só acrescenta; os registros existentes ficam vazios ("manter o
   tipo atual"). A coluna `curvatura` fica como está e deixa de ser preenchida. O APK antigo
   continua funcionando (o campo que ele manda é ignorado e a textura da foto é mantida);
   a tela nova no Android exige um APK novo.
+- `d4b7a2e9f150`: termo 1.2.2 do cliente. A lista do que vai com a foto passa a citar o
+  tipo de cabelo desejado ("o corte, o estilo do corte, a cor e o tipo de cabelo
+  desejado"); o resto é o texto da 1.2.1. Quem aceitou a 1.2 ou a 1.2.1 **não** precisa
+  decidir de novo; o termo do profissional continua na 1.2.1.
+
+**Política de privacidade pública:** `/politica-de-privacidade.html` (arquivo
+`espelho/public/politica-de-privacidade.html`), aberta sem conta. É o endereço informado ao
+Google na tela "Branding" do login com Google. Ao mudar o que o aplicativo guarda ou envia,
+atualize a página, a versão e a data no topo.
 
 **Voltar ao caminho original** é trocar as duas variáveis de volta
 (`AI_ESTRATEGIA=especializado` e `AI_MODELO_TEXTO=black-forest-labs/flux-kontext-pro`) e

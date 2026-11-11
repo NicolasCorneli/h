@@ -34,7 +34,7 @@ export const USO_DE_DADOS = {
 
   /** O que sai do sistema — verificado por teste automatizado da suíte. */
   oQueSai:
-    'Sai a foto do cliente, sem os dados que o celular grava dentro do arquivo (data, aparelho, localização), e as escolhas do atendimento: o corte, o gênero do corte (feminino, masculino ou não especificado) e a cor. Nada mais. Nome, telefone, data de nascimento e observações ficam guardados no aplicativo e nunca acompanham a imagem.',
+    'Sai a foto do cliente, sem os dados que o celular grava dentro do arquivo (data, aparelho, localização), e as escolhas do atendimento: o corte, o estilo do corte (feminino, masculino ou neutro), a cor e o tipo de cabelo desejado. Nada mais. Nome, telefone, data de nascimento e observações ficam guardados no aplicativo e nunca acompanham a imagem.',
 
   /** Por que é necessário. */
   porQue:
@@ -59,4 +59,4 @@ export const USO_DE_DADOS = {
 
 /** Resumo curto, para avisos onde não cabe o texto inteiro. */
 export const RESUMO_ENVIO =
-  'Para gerar a prévia, a foto e as escolhas de corte, gênero e cor vão para a Replicate, que as envia ao Google para gerar a imagem. Nome, telefone e observações do cliente não são enviados.';
+  'Para gerar a prévia, a foto e as escolhas de corte, estilo do corte, cor e tipo de cabelo vão para a Replicate, que as envia ao Google para gerar a imagem. Nome, telefone e observações do cliente não são enviados.';

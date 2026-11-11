@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Política de Privacidade | Salão em Dia</title>
+<meta name="description" content="Como o Salão em Dia trata os dados dos profissionais de beleza e dos clientes que eles cadastram.">
+<link rel="icon" href="/icon-192.png">
+<style>
+  /* Página estática, sem scripts nem recursos de terceiros: abre rápido e não avisa
+     ninguém de fora sobre quem a leu. As cores são as do aplicativo (src/theme/tokens.ts). */
+  :root {
+    --base: #1C1620;
+    --fundo: #F8F6F3;
+    --superficie: #FFFFFF;
+    --borda: #E7E1E4;
+    --texto: #1F1A22;
+    --texto-apoio: #574E5C;
+    --acao: #6B2D5C;
+    --acao-suave: #F4E9F0;
+    --escuro-texto: #F5F1F4;
+    --escuro-apoio: #B5AAB6;
+    --serifa: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--texto);
+    font: 17px/1.65 var(--sans);
+  }
+  .faixa { background: var(--base); color: var(--escuro-texto); }
+  .faixa .miolo { padding-block: 40px 36px; }
+  .miolo {
+    max-width: 720px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .marca {
+    font: 600 14px/1 var(--sans);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--escuro-apoio);
+    text-decoration: none;
+  }
+  h1 {
+    font: 400 clamp(32px, 6vw, 44px)/1.1 var(--serifa);
+    margin: 18px 0 12px;
+    text-wrap: balance;
+  }
+  .vigencia { margin: 0; color: var(--escuro-apoio); font-size: 15px; }
+  main .miolo { padding-block: 32px 56px; }
+  h2 {
+    font: 400 26px/1.25 var(--serifa);
+    margin: 44px 0 10px;
+    text-wrap: balance;
+  }
+  h3 { font-size: 17px; margin: 24px 0 4px; }
+  p, ul { margin: 0 0 14px; }
+  ul { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--acao); text-underline-offset: 2px; }
+  a:focus-visible { outline: 3px solid var(--acao); outline-offset: 2px; border-radius: 2px; }
+  .resumo {
+    background: var(--superficie);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 20px 22px 8px;
+  }
+  .resumo h2 { margin-top: 0; font-size: 22px; }
+  .indice { columns: 2 240px; padding-left: 22px; }
+  .contato {
+    background: var(--acao-suave);
+    border-radius: 12px;
+    padding: 18px 22px 6px;
+  }
+  .apoio { color: var(--texto-apoio); font-size: 15px; }
+  footer { border-top: 1px solid var(--borda); }
+  footer .miolo { padding-block: 20px 32px; }
+</style>
+</head>
+<body>
+<header class="faixa">
+  <div class="miolo">
+    <a class="marca" href="/">Salão em Dia</a>
+    <h1>Política de Privacidade</h1>
+    <p class="vigencia">Versão 1.0, em vigor desde 10 de novembro de 2026</p>
+  </div>
+</header>
+
+<main>
+<div class="miolo">
+
+<p>O Salão em Dia é um aplicativo para profissionais de beleza que atendem por conta própria ou em salões pequenos. Ele organiza clientes, agenda e histórico de atendimentos e, com a autorização do cliente, gera uma simulação de corte ou de cor de cabelo com inteligência artificial.</p>
+
+<p>O aplicativo foi desenvolvido por Nícolas Marin Corneli como Trabalho de Conclusão de Curso em Sistemas de Informação. Esta política explica quais dados ele trata, para quê, com quem compartilha e como você exerce seus direitos, conforme a Lei Geral de Proteção de Dados (LGPD, Lei nº 13.709/2018).</p>
+
+<section class="resumo" aria-labelledby="resumo">
+  <h2 id="resumo">Em poucas palavras</h2>
+  <ul>
+    <li>Não vendemos dados, não mostramos anúncios e não usamos ferramentas de rastreamento.</li>
+    <li>A foto de um cliente só sai do aplicativo depois que ele autoriza, e só para gerar a simulação.</li>
+    <li>Nome, telefone, data de nascimento e observações do cliente nunca acompanham a foto.</li>
+    <li>Do Google, quando você escolhe entrar com ele, recebemos só o seu nome, o seu e-mail e o identificador da conta.</li>
+    <li>Excluir a conta apaga tudo o que ela guardava.</li>
+  </ul>
+</section>
+
+<nav aria-label="Seções">
+  <h2>Nesta página</h2>
+  <ol class="indice">
+    <li><a href="#responsavel">Quem é responsável</a></li>
+    <li><a href="#dados">Dados que tratamos</a></li>
+    <li><a href="#google">Dados recebidos do Google</a></li>
+    <li><a href="#finalidades">Para que usamos</a></li>
+    <li><a href="#compartilhamento">Com quem compartilhamos</a></li>
+    <li><a href="#retencao">Por quanto tempo guardamos</a></li>
+    <li><a href="#seguranca">Segurança</a></li>
+    <li><a href="#direitos">Seus direitos</a></li>
+    <li><a href="#menores">Clientes menores de idade</a></li>
+    <li><a href="#mudancas">Mudanças nesta política</a></li>
+    <li><a href="#contato">Contato</a></li>
+  </ol>
+</nav>
+
+<h2 id="responsavel">1. Quem é responsável</h2>
+<p><strong>Pelos dados da sua conta de profissional</strong>, o responsável (controlador) é Nícolas Marin Corneli, que mantém o aplicativo. O contato está na <a href="#contato">seção 11</a>.</p>
+<p><strong>Pelos dados dos clientes</strong> que um profissional cadastra, quem decide o que registrar e para quê é o próprio profissional. Ele é o controlador desses dados, e o Salão em Dia os guarda e processa em nome dele (operador). Se você é cliente de um salão que usa o aplicativo, fale primeiro com o profissional que atende você. Também podemos ajudar pelo e-mail de contato.</p>
+
+<h2 id="dados">2. Dados que tratamos</h2>
+<h3>Conta do profissional</h3>
+<ul>
+  <li>Nome, e-mail e forma de atuação (autônomo, salão, barbearia ou estúdio).</li>
+  <li>Senha, quando a conta usa senha. Ela é guardada apenas como resumo criptográfico (bcrypt), nunca em texto.</li>
+  <li>Sua foto de perfil, se você enviar uma.</li>
+  <li>O registro de que você leu os termos e responsabilidades do profissional: a versão e a data.</li>
+</ul>
+<h3>Clientes que você cadastra</h3>
+<ul>
+  <li>Nome, telefone, data de nascimento (opcional), observações e foto de perfil (opcional).</li>
+  <li>Agendamentos e atendimentos: data, horário, serviço, duração, situação e observações.</li>
+  <li>O registro da autorização de uso de imagem: a decisão do cliente, a versão do termo, a data e a hora, a forma como foi obtida, a faixa etária e, no caso de menor de idade, o nome e o parentesco do responsável legal.</li>
+</ul>
+<h3>Simulações</h3>
+<ul>
+  <li>A foto do cliente usada na simulação e a imagem gerada.</li>
+  <li>As escolhas do atendimento: o corte, o estilo do corte (feminino, masculino ou neutro), a cor e o tipo de cabelo desejado, além do texto de instrução enviado ao serviço de inteligência artificial.</li>
+  <li>Dados de funcionamento: situação, tempo de geração e o motivo de uma falha, quando houver.</li>
+</ul>
+<h3>Dados técnicos</h3>
+<ul>
+  <li>Para manter você conectado, o aplicativo guarda códigos de sessão no aparelho: no celular, no armazenamento seguro do sistema; no navegador, no armazenamento local do site. Não usamos cookies de rastreamento nem ferramentas de análise de uso.</li>
+  <li>Para encontrar erros, o servidor registra cada requisição num log técnico: o tipo de operação, o endereço interno chamado, o resultado e o tempo de resposta. Esse log não guarda senha nem o conteúdo enviado, e os registros mais antigos são apagados automaticamente quando o espaço reservado a ele se enche.</li>
+  <li>Para frear tentativas de adivinhar senhas, o servidor anota por até 5 minutos, só na memória, o endereço de rede (IP) de quem errou a senha. Quando um endereço passa do limite de tentativas, ele também vai para o log técnico.</li>
+</ul>
+
+<h2 id="google">3. Dados recebidos do Google</h2>
+<p>Quando você escolhe <strong>Continuar com Google</strong>, o Google mostra a própria tela de login. A sua senha do Google nunca passa pelo aplicativo. Pedimos apenas as permissões básicas de identificação (<code>openid</code>, <code>email</code> e <code>profile</code>) e recebemos:</p>
+<ul>
+  <li>o identificador da sua conta Google, usado para reconhecer você nos próximos acessos;</li>
+  <li>o seu e-mail, confirmado pelo Google, que vira o e-mail da conta;</li>
+  <li>o seu nome, que vira o nome da conta (você pode alterá-lo depois).</li>
+</ul>
+<p>Não temos acesso a contatos, arquivos, agenda, Gmail ou qualquer outro dado da sua conta Google. Esses dados são usados apenas para criar a conta e permitir o login, não são compartilhados com ninguém e não são usados para publicidade nem para treinar modelos de inteligência artificial. O uso de informações recebidas das APIs do Google segue a <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Política de Dados do Usuário dos Serviços de API do Google</a>, incluindo os requisitos de Uso Limitado.</p>
+<p>Você pode desconectar o Google em <strong>Perfil, Conta Google</strong>, se a sua conta também tiver senha, e pode revogar o acesso a qualquer momento em <a href="https://myaccount.google.com/permissions" rel="noopener">myaccount.google.com/permissions</a>.</p>
+
+<h2 id="finalidades">4. Para que usamos</h2>
+<ul>
+  <li><strong>Prestar o serviço que você pediu:</strong> criar e manter a conta, organizar clientes, agenda e atendimentos e gerar simulações (LGPD, art. 7º, V).</li>
+  <li><strong>Gerar a simulação com a foto do cliente:</strong> somente com a autorização do cliente, registrada no aplicativo antes de qualquer envio (LGPD, art. 7º, I). Sem autorização registrada, o servidor recusa a simulação.</li>
+  <li><strong>Proteger as contas e o serviço:</strong> limitar tentativas de login e o número de simulações por hora (LGPD, art. 7º, IX).</li>
+</ul>
+<p>Não vendemos dados, não os usamos para publicidade e não criamos perfis de comportamento.</p>
+
+<h2 id="compartilhamento">5. Com quem compartilhamos</h2>
+<h3>Serviço de inteligência artificial (Replicate e Google)</h3>
+<p>O aplicativo não desenha a simulação sozinho. A foto vai para a Replicate, Inc., empresa de serviços de inteligência artificial nos Estados Unidos, que a envia a um modelo do Google para gerar a imagem. Vão apenas a foto, sem os dados que o celular grava dentro do arquivo (data, aparelho, localização), e as escolhas do atendimento. Nome, telefone, data de nascimento e observações nunca são enviados.</p>
+<p>Segundo os termos dessas empresas: a Replicate declara que apaga a foto e a imagem gerada cerca de uma hora depois da geração; o Google guarda o que recebe por um período limitado, para verificar se houve uso proibido; e, dependendo do contrato entre a Replicate e o Google, que não é público, o Google também pode usar as imagens para melhorar os próprios modelos, inclusive com revisão por pessoas da equipe dele. A imagem gerada leva uma marca d'água invisível do Google (SynthID), que indica que ela foi feita por inteligência artificial.</p>
+<p>Depois que a imagem sai do aplicativo, não controlamos por quanto tempo ela fica guardada, em que país é processada nem com quem é compartilhada: isso é definido nos termos dessas empresas, que podem mudar. Esse envio é uma transferência internacional de dados, feita com o consentimento específico do cliente (LGPD, art. 33, VIII). O termo que o cliente responde informa tudo isso antes da decisão.</p>
+<h3>Google, para o login</h3>
+<p>Somente se você escolher entrar com o Google, como descrito na <a href="#google">seção 3</a>.</p>
+<h3>Hospedagem</h3>
+<p>Os dados ficam no servidor que hospeda o aplicativo, num banco de dados e numa pasta de imagens sem acesso público.</p>
+<h3>Autoridades</h3>
+<p>Quando a lei ou uma ordem judicial exigir.</p>
+
+<h2 id="retencao">6. Por quanto tempo guardamos</h2>
+<ul>
+  <li><strong>Conta:</strong> enquanto ela existir. Ao excluir a conta (<strong>Perfil, Excluir conta</strong>), são apagados também os clientes, os agendamentos, os atendimentos, as autorizações, as simulações e as imagens.</li>
+  <li><strong>Cliente:</strong> enquanto o profissional o mantiver cadastrado. Excluir o cliente apaga as fotos, as simulações e o histórico dele.</li>
+  <li><strong>Imagens de simulação:</strong> até o profissional excluí-las, o que pode ser feito a qualquer momento na tela <strong>Privacidade</strong> do aplicativo, ou até o cliente ser excluído.</li>
+  <li><strong>Cópias de segurança:</strong> quando existirem, um dado excluído pode permanecer nelas até que sejam substituídas por cópias mais novas.</li>
+</ul>
+
+<h2 id="seguranca">7. Segurança</h2>
+<ul>
+  <li>Toda a comunicação com o servidor usa conexão criptografada (HTTPS).</li>
+  <li>As imagens não têm endereço público: cada uma abre por um link temporário, que expira em poucos minutos e só é gerado para a conta dona da imagem.</li>
+  <li>Cada conta enxerga apenas os próprios clientes e registros.</li>
+  <li>Senhas são guardadas com bcrypt, e tentativas repetidas de login são freadas.</li>
+</ul>
+<p>Nenhum sistema é totalmente imune a falhas. Se acontecer um incidente de segurança que possa trazer risco ou dano relevante, avisaremos as pessoas afetadas e a Autoridade Nacional de Proteção de Dados (ANPD), como a lei determina.</p>
+
+<h2 id="direitos">8. Seus direitos</h2>
+<p>Pela LGPD (art. 18), você pode pedir a confirmação de que tratamos seus dados, o acesso a eles, a correção, a eliminação, a portabilidade, informações sobre com quem foram compartilhados e a revogação do consentimento.</p>
+<ul>
+  <li><strong>No aplicativo:</strong> corrija seus dados em <strong>Meus dados</strong>, apague imagens em <strong>Privacidade</strong> e exclua a conta em <strong>Perfil</strong>.</li>
+  <li><strong>Se você é cliente de um profissional:</strong> peça a ele para corrigir ou excluir seu cadastro, ou para registrar a revogação da autorização de imagem. A revogação impede novas simulações.</li>
+  <li><strong>Por e-mail:</strong> escreva para o contato da <a href="#contato">seção 11</a>. Respondemos em até 15 dias.</li>
+</ul>
+<p>Você também pode apresentar reclamação à ANPD, em <a href="https://www.gov.br/anpd" rel="noopener">gov.br/anpd</a>.</p>
+
+<h2 id="menores">9. Clientes menores de idade</h2>
+<p>O aplicativo é feito para profissionais adultos. Quando o cliente de um profissional é menor de idade, a autorização de uso da imagem é dada pelo responsável legal, cujo nome e parentesco ficam registrados junto da decisão.</p>
+
+<h2 id="mudancas">10. Mudanças nesta política</h2>
+<p>Quando esta política mudar, a versão e a data no topo da página serão atualizadas. Mudanças importantes serão avisadas no aplicativo.</p>
+
+<h2 id="contato">11. Contato</h2>
+<div class="contato">
+  <p><strong>Nícolas Marin Corneli</strong>, responsável pelo Salão em Dia<br>
+  E-mail: <a href="mailto:nicolasmcorneli@gmail.com">nicolasmcorneli@gmail.com</a></p>
+</div>
+
+</div>
+</main>
+
+<footer>
+  <div class="miolo">
+    <p class="apoio"><a href="/">Voltar ao Salão em Dia</a></p>
+  </div>
+</footer>
+</body>
+</html>

@@ -57,10 +57,12 @@ def status_de(decisao: DecisaoConsentimento | None) -> StatusConsentimento:
 def conteudo_da_versao(versao: str | None) -> str | None:
     """A parte da versão que identifica o conteúdo do termo: "maior.menor".
 
-    Uma versão com terceiro número (1.2.1) é revisão só de redação, que não muda o que o
-    termo informa nem o que o cliente autoriza (a primeira foi a troca de travessões por
-    pontuação comum; um teste compara os textos). Quem aceitou a 1.2 já leu esse conteúdo,
-    então a 1.2.1 não exige nova decisão. Uma versão "maior.menor" nova (1.3) exige.
+    Uma versão com terceiro número é revisão que não muda o que o cliente autoriza: a 1.2.1
+    trocou travessões por pontuação comum, e a 1.2.2 completou a lista das escolhas do
+    atendimento que vão com a foto (o tipo de cabelo desejado), sem novo dado pessoal, nova
+    finalidade ou novo destino. Um teste compara cada uma com a anterior. Quem aceitou a
+    1.2 já leu esse conteúdo, então a 1.2.1 e a 1.2.2 não exigem nova decisão. Uma versão
+    "maior.menor" nova (1.3) exige.
     """
     if versao is None:
         return None

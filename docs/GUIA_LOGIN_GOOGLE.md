@@ -106,8 +106,11 @@ no pacote do site **na hora do build**, então mudar a variável exige reconstru
    - entre com uma conta Google cadastrada em **Test users**: a conta é criada, o painel
      abre, e recarregar a página mantém a sessão; **Sair** volta para a abertura.
 6. **Abrir para todos.** Enquanto o app estiver em **Testing**, só os e-mails de **Test
-   users** entram. Para liberar a qualquer conta Google, em **Audience** clique em
-   **Publish app**. Com os escopos `openid`, `email` e `profile` não há verificação de
+   users** entram. Antes de publicar, o Google exige em **Branding** o nome do app, o
+   e-mail de suporte, a página inicial (`https://SEU-DOMINIO`) e a política de privacidade
+   (`https://SEU-DOMINIO/politica-de-privacidade.html`, página pública que vem no próprio
+   site e tem link na tela de abertura), com o domínio em **Authorized domains**. Depois,
+   para liberar a qualquer conta Google, em **Audience** clique em **Publish app**. Com os escopos `openid`, `email` e `profile` não há verificação de
    escopos; enviar um logotipo na tela de **Branding** faz o Google pedir a verificação da
    marca antes de exibi-lo.
 

@@ -1,10 +1,11 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { Faixa, Tela, useTelaDividida } from '@/components/Basicos';
 import { Botao } from '@/components/Botao';
 import { Icone, type NomeIcone } from '@/components/Icone';
 import { Marca } from '@/components/Marca';
+import { URL_BASE } from '@/services/api';
 import { textos, textosEscuros } from '@/theme/textos';
 import { cores, espaco, raios } from '@/theme/tokens';
 
@@ -38,6 +39,21 @@ const ATIVIDADES: { icone: NomeIcone; titulo: string; texto: string }[] = [
 ];
 
 const PASSOS = ['Crie sua conta', 'Cadastre seus clientes', 'Marque o primeiro horário na agenda'];
+
+/**
+ * Política de privacidade: página estática do site (`public/politica-de-privacidade.html`),
+ * aberta sem conta. É o endereço informado ao Google para o login com Google, que pede um
+ * link para ela na página inicial.
+ */
+const CAMINHO_DA_POLITICA = '/politica-de-privacidade.html';
+
+/** No navegador, o próprio site; no celular, o servidor do build. Sem servidor, sem link. */
+function enderecoDaPolitica(): string | null {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    return `${window.location.origin}${CAMINHO_DA_POLITICA}`;
+  }
+  return process.env.EXPO_PUBLIC_API_URL ? `${URL_BASE}${CAMINHO_DA_POLITICA}` : null;
+}
 
 /** Abaixo desta largura de conteúdo, os itens ficam um embaixo do outro. */
 const LARGURA_DUAS_COLUNAS = 420;
@@ -76,8 +92,26 @@ export default function Onboarding() {
 
         <Botao titulo="Criar conta" aoPressionar={() => router.push('/cadastro')} estilo={styles.botao} />
         <Botao titulo="Já tenho conta" variante="secundaria" aoPressionar={() => router.push('/login')} />
+        <Politica />
       </Conteudo>
     </Tela>
+  );
+}
+
+function Politica() {
+  const endereco = enderecoDaPolitica();
+  if (!endereco) return null;
+  return (
+    <Botao
+      titulo="Política de privacidade"
+      variante="texto"
+      tamanho="pequeno"
+      larguraTotal={false}
+      estilo={styles.politica}
+      aoPressionar={() => {
+        Linking.openURL(endereco).catch(() => undefined);
+      }}
+    />
   );
 }
 
@@ -162,4 +196,5 @@ const styles = StyleSheet.create({
   },
   numeroTexto: { fontFamily: 'FamiljenGrotesk_700Bold', fontSize: 13, color: cores.acaoTexto },
   botao: { marginBottom: espaco.sm },
+  politica: { alignSelf: 'center', marginTop: espaco.md },
 });

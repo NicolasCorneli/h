@@ -4,6 +4,12 @@ Feita em 2026-11-10 sobre a `main` em `74f0a94`. Nada foi enviado ao GitHub, imp
 gerado na Replicate: as mudanças estão na cópia local, à espera de autorização para o
 commit. A única migration aplicada foi no banco **local** de desenvolvimento.
 
+> Complemento de 2026-11-11: o termo do cliente passou à versão 1.2.2 (migration
+> `d4b7a2e9f150`), que acrescenta o tipo de cabelo desejado à lista do que vai com a foto e
+> chama o gênero do corte de "estilo do corte", como na tela. Quem aceitou a 1.2 ou a 1.2.1
+> não precisa decidir de novo. Os textos do aplicativo sobre o envio (`servicoExterno.ts`)
+> foram atualizados da mesma forma.
+
 ## 1. Resumo
 
 A etapa em que se escolhe o que muda no cabelo foi redesenhada para quem não é técnico e

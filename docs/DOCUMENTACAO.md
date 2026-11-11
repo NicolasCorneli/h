@@ -607,10 +607,12 @@ banco tenha valor probatório, o sistema precisa ser capaz de mostrar, a qualque
 
 - o texto é imutável dentro de uma versão e não pode ser alterado pela interface;
 - corrigir o conteúdo significa publicar uma versão nova, que passa a exigir revalidação;
-- a exceção é a revisão só de redação, com terceiro número (1.2 para 1.2.1): o texto é o
-  mesmo com outra pontuação, um teste compara os dois, e a revalidação compara apenas
-  "maior.menor" (`regras_consentimento.conteudo_da_versao`). Foi o caso da troca dos
-  travessões do termo 1.2 (seção 13);
+- a exceção é a revisão que não muda o que o cliente autoriza, com terceiro número: um
+  teste compara o texto com o da versão anterior, e a revalidação compara apenas
+  "maior.menor" (`regras_consentimento.conteudo_da_versao`). Foram dois casos: a 1.2.1
+  trocou os travessões do termo 1.2 por pontuação comum (seção 13), e a 1.2.2 completou a
+  lista das escolhas que vão com a foto com o tipo de cabelo desejado (seção 13.5), sem
+  novo dado pessoal, nova finalidade ou novo destino;
 - as versões antigas continuam disponíveis para consulta;
 - se o aplicativo não conhecer o texto de uma versão antiga, ele avisa explicitamente em
   vez de exibir outro texto no lugar — admitir a lacuna é preferível a induzir o

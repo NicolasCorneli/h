@@ -34,7 +34,10 @@ def migration():
 def test_1_2_1_vigente_e_1_2_preservada(versao_vigente):
     for tipo in ("cliente", "profissional"):
         publicados = termos(tipo)
-        assert versao_vigente(tipo) == "1.2.1"
+        # Vigente é a 1.2.1 ou uma revisão posterior do mesmo conteúdo (o termo do cliente
+        # está na 1.2.2, ver test_termo_1_2_2.py).
+        assert "1.2.1" in publicados
+        assert conteudo_da_versao(versao_vigente(tipo)) == "1.2"
         assert publicados["1.2"]["vigente"] is False
         assert sum(1 for t in publicados.values() if t["vigente"]) == 1
 
@@ -72,22 +75,27 @@ def test_regra_de_versao():
     assert precisa_revalidar(aceito, "1.2.1", "1.3") is True
 
 
-def _vigencia(versao: str) -> None:
+def _vigencia(versao: str) -> str:
+    """Torna `versao` a vigente do termo do cliente e devolve a que estava vigente."""
     with engine.begin() as conexao:
+        anterior = conexao.execute(
+            text("SELECT versao FROM termos WHERE tipo = 'cliente' AND vigente = true")
+        ).scalar_one()
         conexao.execute(text("UPDATE termos SET vigente = false WHERE tipo = 'cliente'"))
         conexao.execute(
             text("UPDATE termos SET vigente = true WHERE tipo = 'cliente' AND versao = :v"), {"v": versao}
         )
+    return anterior
 
 
 def test_quem_aceitou_a_1_2_nao_precisa_revalidar(cliente_http: TestClient, conta):
     cabecalhos, _ = conta()
     cliente = novo_cliente(cliente_http, cabecalhos)
-    _vigencia("1.2")
+    anterior = _vigencia("1.2")
     try:
         assert registrar(cliente_http, cabecalhos, cliente["id"]).status_code == 201
     finally:
-        _vigencia("1.2.1")
+        _vigencia(anterior)
 
     resumo = cliente_http.get(f"/api/v1/clientes/{cliente['id']}/consentimento", headers=cabecalhos).json()
     assert resumo["status"] == "aceito"
